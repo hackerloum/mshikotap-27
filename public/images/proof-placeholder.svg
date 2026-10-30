@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" rx="24" fill="#0B1524"/>
+  <rect x="24" y="24" width="592" height="312" rx="16" stroke="#2DD4BF" stroke-opacity="0.35" stroke-dasharray="8 8"/>
+  <circle cx="320" cy="150" r="36" fill="#2DD4BF" fill-opacity="0.2"/>
+  <path d="M302 150l12 12 24-28" stroke="#2DD4BF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="320" y="230" text-anchor="middle" fill="#94A3B8" font-family="Arial, sans-serif" font-size="18">Screenshot proof placeholder</text>
+</svg>
