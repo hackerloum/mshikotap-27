@@ -25,7 +25,7 @@ Project → **Settings** → **Environment Variables**
 | Key | Targets | Notes |
 |---|---|---|
 | `NEXT_PUBLIC_APP_NAME` | Production, Preview, Development | `MshikoTap` |
-| `NEXT_PUBLIC_APP_URL` | Production | `https://<your-project>.vercel.app` |
+| `NEXT_PUBLIC_APP_URL` | Production | `https://mshikotap.co.tz` |
 | `NEXT_PUBLIC_DEMO_MODE` | Production, Preview | `false` |
 | `NEXT_PUBLIC_DEMO_MODE` | Development | `true` (optional) |
 | `NEXT_PUBLIC_FIREBASE_API_KEY` | All | From Firebase web config |
@@ -84,10 +84,25 @@ Hit `/api/health` — expect:
 - `firebaseAdminConfigured: true`
 - empty `missingPublic` / `missingAdmin`
 
-## 7. Authorized domains
+## 7. Custom domain (`mshikotap.co.tz`)
+
+The apex domain is added on the Vercel team. Point nameservers at your registrar to:
+
+- `ns1.vercel-dns.com`
+- `ns2.vercel-dns.com`
+
+Then attach both `mshikotap.co.tz` and `www.mshikotap.co.tz` to the Vercel project (www → redirect to apex).
+
+Optional ownership TXT (if asked):
+
+- Host: `_vercel`
+- Value: `vc-domain-verify=mshikotap.co.tz,085b49d9f4d8f7c39a20`
+
+## 8. Authorized domains (Firebase Auth)
 
 In Firebase Auth → Settings → Authorized domains, add:
 
 - `localhost`
-- your `*.vercel.app` domain
-- any custom domain
+- `mshikotap.co.tz`
+- `www.mshikotap.co.tz`
+- your `*.vercel.app` preview domain
