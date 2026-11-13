@@ -7,7 +7,7 @@ export const subscriptionTiers: SubscriptionTier[] = [
     priceMonthly: 9,
     starterCredits: 50,
     features: [
-      "User & advertiser dashboards",
+      "Player dashboard and daily quests",
       "50 starter campaign credits",
       "Standard task priority",
       "Email support",
