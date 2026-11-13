@@ -1,93 +1,189 @@
 "use client";
 
+import { useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input, Label } from "@/components/ui/input";
+import { Flame, Star } from "@/components/ui/coin";
+import { StatCard } from "@/components/ui/stat";
 import { subscriptionTiers } from "@/config/subscriptions";
 import { useAuthStore } from "@/store/auth-store";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { cn, formatCurrency, formatNumber } from "@/lib/utils";
+
+const toggles = [
+  { id: "payouts", label: "Payout updates", hint: "Cash out status changes" },
+  { id: "quests", label: "Quest reviews", hint: "Approved or rejected proofs" },
+  { id: "races", label: "Race alerts", hint: "New races and final calls" },
+  { id: "streak", label: "Streak reminders", hint: "Don't lose your flame" },
+] as const;
+
+function Toggle({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className="flex h-11 w-16 shrink-0 items-center"
+    >
+      <span
+        className={cn(
+          "relative h-8 w-14 rounded-full border-2 transition-colors",
+          checked ? "border-mint-deep bg-mint" : "border-ink-600 bg-ink-800",
+        )}
+      >
+        <span
+          className={cn(
+            "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-[0_2px_0_0_#b8bdd9] transition-all",
+            checked ? "left-[1.625rem]" : "left-0.5",
+          )}
+        />
+      </span>
+    </button>
+  );
+}
 
 export default function UserSettingsPage() {
+  const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const [prefs, setPrefs] = useState<Record<string, boolean>>({
+    payouts: true,
+    quests: true,
+    races: true,
+    streak: false,
+  });
 
   const plan =
     subscriptionTiers.find((t) => t.id === user?.subscription) ??
     subscriptionTiers.find((t) => t.id === "pro");
 
+  const initial = (user?.displayName || "P").charAt(0).toUpperCase();
+
+  async function signOut() {
+    await logout();
+    router.push("/");
+  }
+
   return (
-    <DashboardShell role="user" title="Settings">
-      <div className="space-y-6 animate-rise">
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <Label>Display name</Label>
-              <Input value={user?.displayName ?? ""} readOnly />
-            </div>
-            <div>
-              <Label>Email</Label>
-              <Input value={user?.email ?? ""} readOnly />
-            </div>
-            <div>
-              <Label>Phone</Label>
-              <Input value={user?.phone ?? "—"} readOnly />
-            </div>
-            <div>
-              <Label>Referral code</Label>
-              <Input value={user?.referralCode ?? ""} readOnly />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Subscription</CardTitle>
-            <Badge tone="brand">{user?.subscription ?? "free"}</Badge>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {plan ? (
-              <>
-                <p className="text-sm text-slate-300">
-                  {plan.name} · {formatCurrency(plan.priceMonthly)}/mo ·{" "}
-                  {formatNumber(plan.starterCredits)} starter credits
-                </p>
-                <ul className="grid gap-2 sm:grid-cols-2">
-                  {plan.features.map((f) => (
-                    <li
-                      key={f}
-                      className="rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2 text-sm text-slate-300"
-                    >
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              </>
+    <DashboardShell role="user" title="Profile">
+      <div className="space-y-6">
+        <Card className="p-5">
+          <div className="flex items-center gap-4">
+            {user?.photoURL ? (
+              <Image
+                src={user.photoURL}
+                alt=""
+                width={72}
+                height={72}
+                unoptimized
+                className="h-[72px] w-[72px] shrink-0 rounded-3xl border-2 border-coin object-cover"
+              />
             ) : (
-              <p className="text-sm text-slate-400">Free plan</p>
+              <div className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-3xl border-2 border-coin-deep bg-coin font-display text-4xl text-ink-950">
+                {initial}
+              </div>
             )}
-          </CardContent>
+            <div className="min-w-0">
+              <h2 className="truncate font-display text-3xl leading-tight text-white">
+                {user?.displayName ?? "Player"}
+              </h2>
+              <p className="truncate text-sm font-semibold text-slate-400">
+                {user?.email}
+              </p>
+              <Badge tone="info" className="mt-2">
+                Signed in with Google
+              </Badge>
+            </div>
+          </div>
         </Card>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard
+            label="Level"
+            value={String(user?.gamification.level ?? 1)}
+            hint={`${formatNumber(user?.gamification.xp ?? 0)} XP`}
+            tone="sky"
+            icon={<Star size={28} />}
+          />
+          <StatCard
+            label="Streak"
+            value={`${user?.gamification.streakDays ?? 0} days`}
+            hint={`Best ${user?.gamification.longestStreak ?? 0}`}
+            tone="flame"
+            icon={<Flame size={28} />}
+          />
+          <StatCard
+            label="Plan"
+            value={plan?.name ?? "Free"}
+            hint={
+              plan ? `${formatCurrency(plan.priceMonthly)}/mo` : undefined
+            }
+            tone="coin"
+          />
+        </div>
+
+        {(user?.gamification.badges ?? []).length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl">Your badges</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+              {(user?.gamification.badges ?? []).map((b) => (
+                <Badge key={b} tone="brand">
+                  {b.replaceAll("_", " ")}
+                </Badge>
+              ))}
+            </CardContent>
+          </Card>
+        ) : null}
 
         <Card>
           <CardHeader>
-            <CardTitle>Gamification</CardTitle>
+            <CardTitle className="text-2xl">Alerts</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            <Badge tone="info">Level {user?.gamification.level ?? 1}</Badge>
-            <Badge tone="brand">
-              {formatNumber(user?.gamification.xp ?? 0)} XP
-            </Badge>
-            <Badge tone="success">
-              {user?.gamification.streakDays ?? 0}-day streak
-            </Badge>
-            {(user?.gamification.badges ?? []).map((b) => (
-              <Badge key={b}>{b.replaceAll("_", " ")}</Badge>
+          <CardContent className="divide-y-2 divide-ink-700">
+            {toggles.map((t) => (
+              <div
+                key={t.id}
+                className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+              >
+                <div className="min-w-0">
+                  <p className="font-extrabold text-white">{t.label}</p>
+                  <p className="text-xs font-semibold text-slate-400">{t.hint}</p>
+                </div>
+                <Toggle
+                  label={t.label}
+                  checked={!!prefs[t.id]}
+                  onChange={(v) => setPrefs((p) => ({ ...p, [t.id]: v }))}
+                />
+              </div>
             ))}
           </CardContent>
         </Card>
+
+        <Button
+          variant="danger"
+          size="lg"
+          className="w-full sm:w-auto"
+          onClick={() => void signOut()}
+        >
+          <LogOut className="h-5 w-5" />
+          Sign out
+        </Button>
       </div>
     </DashboardShell>
   );

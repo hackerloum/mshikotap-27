@@ -1,38 +1,54 @@
 import { cn } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
+
+const tones = {
+  coin: "bg-coin/15 text-coin",
+  mint: "bg-mint/15 text-mint",
+  sky: "bg-sky/15 text-sky",
+  flame: "bg-flame/15 text-flame",
+  coral: "bg-coral/15 text-coral",
+} as const;
 
 export function StatCard({
   label,
   value,
   hint,
   icon,
+  tone = "coin",
   className,
 }: {
   label: string;
   value: string;
   hint?: string;
   icon?: React.ReactNode;
+  tone?: keyof typeof tones;
   className?: string;
 }) {
   return (
-    <Card className={cn("overflow-hidden", className)}>
-      <CardContent className="relative">
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-400/50 to-transparent" />
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-[0.14em] text-slate-500">
-              {label}
-            </p>
-            <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
-            {hint ? <p className="mt-1 text-xs text-slate-400">{hint}</p> : null}
-          </div>
-          {icon ? (
-            <div className="rounded-xl bg-teal-400/10 p-2 text-teal-300">
-              {icon}
-            </div>
-          ) : null}
+    <div
+      className={cn(
+        "flex items-center gap-3 rounded-3xl border-2 border-ink-700 bg-ink-900 p-4 shadow-[0_5px_0_0_var(--color-ink-700)]",
+        className,
+      )}
+    >
+      {icon ? (
+        <div
+          className={cn(
+            "grid h-12 w-12 shrink-0 place-items-center rounded-2xl",
+            tones[tone],
+          )}
+        >
+          {icon}
         </div>
-      </CardContent>
-    </Card>
+      ) : null}
+      <div className="min-w-0">
+        <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+          {label}
+        </p>
+        <p className="truncate font-display text-2xl leading-tight text-white">
+          {value}
+        </p>
+        {hint ? <p className="truncate text-xs text-slate-400">{hint}</p> : null}
+      </div>
+    </div>
   );
 }

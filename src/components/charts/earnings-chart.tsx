@@ -16,43 +16,41 @@ export function EarningsChart({ data }: { data: EarningsPoint[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Earnings analytics</CardTitle>
+        <CardTitle>Earnings</CardTitle>
       </CardHeader>
       <CardContent className="h-72">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data}>
-            <defs>
-              <linearGradient id="earn" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#2dd4bf" stopOpacity={0.45} />
-                <stop offset="100%" stopColor="#2dd4bf" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <CartesianGrid stroke="#2a3070" vertical={false} />
             <XAxis
               dataKey="date"
-              tick={{ fill: "#94a3b8", fontSize: 11 }}
+              tick={{ fill: "#8d93c4", fontSize: 11 }}
               tickFormatter={(v) => String(v).slice(5)}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fill: "#94a3b8", fontSize: 11 }}
+              tick={{ fill: "#8d93c4", fontSize: 11 }}
               axisLine={false}
               tickLine={false}
             />
             <Tooltip
               contentStyle={{
-                background: "#0b1524",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 12,
+                background: "#1c2150",
+                border: "2px solid #3b4290",
+                borderRadius: 14,
+                color: "#fff",
               }}
+              labelStyle={{ color: "#8d93c4" }}
+              cursor={{ stroke: "#3b4290" }}
             />
             <Area
               type="monotone"
               dataKey="amount"
-              stroke="#2dd4bf"
-              fill="url(#earn)"
-              strokeWidth={2}
+              stroke="#ffc21a"
+              fill="#ffc21a"
+              fillOpacity={0.18}
+              strokeWidth={3}
             />
           </AreaChart>
         </ResponsiveContainer>

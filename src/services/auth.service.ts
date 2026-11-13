@@ -1,29 +1,34 @@
 import {
-  createUserWithEmailAndPassword,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
   signOut,
-  updateProfile,
+  type User as FirebaseUser,
 } from "firebase/auth";
 import { getClientAuth, isFirebaseConfigured } from "@/lib/firebase/client";
 import { AppError, ok, fromUnknown } from "@/lib/errors/app-error";
-import { generateReferralCode } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
-import { demoAdmin, demoAdvertiser, demoUser } from "@/data/demo";
-import type { ApiResult, UserProfile, UserRole } from "@/types";
-import { activityService } from "@/services/activity.service";
+import { demoUser } from "@/data/demo";
+import type { ApiResult, UserProfile } from "@/types";
 
 const DEMO_SESSION_KEY = "mshikotap.demo.session";
+const REFERRAL_KEY = "mshikotap.referral";
 
-function demoProfileFor(role: UserRole): UserProfile {
-  if (role === "admin") return structuredClone(demoAdmin);
-  if (role === "advertiser") return structuredClone(demoAdvertiser);
-  return structuredClone(demoUser);
-}
+const inflight = new Map<string, Promise<UserProfile>>();
 
 export const authService = {
   isDemo() {
     return siteConfig.demoMode || !isFirebaseConfigured;
+  },
+
+  rememberReferral(code?: string | null) {
+    if (typeof window === "undefined" || !code) return;
+    window.localStorage.setItem(REFERRAL_KEY, code);
+  },
+
+  takeReferral(): string | undefined {
+    if (typeof window === "undefined") return undefined;
+    return window.localStorage.getItem(REFERRAL_KEY) || undefined;
   },
 
   getDemoSession(): UserProfile | null {
@@ -46,105 +51,99 @@ export const authService = {
     window.localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(profile));
   },
 
-  async login(email: string, password: string): Promise<ApiResult<UserProfile>> {
+  /** Exchanges a Firebase session for the server-owned game profile. */
+  loadProfile(firebaseUser: FirebaseUser): Promise<UserProfile> {
+    const existing = inflight.get(firebaseUser.uid);
+    if (existing) return existing;
+
+    const task = (async () => {
+      try {
+        const token = await firebaseUser.getIdToken();
+        const res = await fetch("/api/me", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ referral: this.takeReferral() }),
+        });
+        const json = (await res.json()) as
+          | { ok: true; data: { profile: UserProfile } }
+          | { ok: false; error: { message: string } };
+        if (!json.ok) throw new AppError("PROFILE_FAILED", json.error.message, res.status);
+        return json.data.profile;
+      } catch (error) {
+        if (error instanceof AppError && error.status === 403) throw error;
+        return {
+          ...demoUser,
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || "",
+          displayName: firebaseUser.displayName || "Player",
+          photoURL: firebaseUser.photoURL || undefined,
+          role: "user" as const,
+          wallet: { ...demoUser.wallet, balance: 0, pendingBalance: 0, lifetimeEarnings: 0 },
+          gamification: {
+            xp: 0,
+            level: 1,
+            streakDays: 0,
+            longestStreak: 0,
+            badges: [],
+          },
+        } satisfies UserProfile;
+      } finally {
+        window.setTimeout(() => inflight.delete(firebaseUser.uid), 1500);
+      }
+    })();
+
+    inflight.set(firebaseUser.uid, task);
+    return task;
+  },
+
+  async signInWithGoogle(): Promise<ApiResult<UserProfile>> {
     try {
       if (this.isDemo()) {
-        const role: UserRole = email.includes("admin")
-          ? "admin"
-          : email.includes("advertiser") || email.includes("brand")
-            ? "advertiser"
-            : "user";
-        const profile = {
-          ...demoProfileFor(role),
-          email,
-          displayName: email.split("@")[0] || "Demo User",
-        };
+        const profile = structuredClone(demoUser);
         this.setDemoSession(profile);
-        await activityService.log({
-          actorId: profile.uid,
-          action: "auth.login",
-          entityType: "user",
-          entityId: profile.uid,
-          metadata: { mode: "demo" },
-        });
         return ok(profile);
       }
 
       const auth = getClientAuth();
-      if (!auth) throw new AppError("AUTH_UNAVAILABLE", "Auth is not configured", 503);
-      const credential = await signInWithEmailAndPassword(auth, email, password);
-      // Profile hydration happens via userService in real mode.
-      const profile: UserProfile = {
-        ...demoUser,
-        uid: credential.user.uid,
-        email: credential.user.email || email,
-        displayName: credential.user.displayName || email.split("@")[0] || "User",
-      };
-      return ok(profile);
-    } catch (error) {
-      return fromUnknown(error);
-    }
-  },
+      if (!auth) throw new AppError("AUTH_UNAVAILABLE", "Sign-in is not available right now", 503);
 
-  async register(input: {
-    email: string;
-    password: string;
-    displayName: string;
-    role?: UserRole;
-    referralCode?: string;
-  }): Promise<ApiResult<UserProfile>> {
-    try {
-      const role = input.role || "user";
-      if (this.isDemo()) {
-        const profile: UserProfile = {
-          ...demoProfileFor(role),
-          email: input.email,
-          displayName: input.displayName,
-          referralCode: generateReferralCode(input.displayName),
-          referredBy: input.referralCode,
-          role,
-        };
-        this.setDemoSession(profile);
-        await activityService.log({
-          actorId: profile.uid,
-          action: "auth.register",
-          entityType: "user",
-          entityId: profile.uid,
-          metadata: { mode: "demo", role },
-        });
-        return ok(profile);
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+
+      try {
+        const credential = await signInWithPopup(auth, provider);
+        return ok(await this.loadProfile(credential.user));
+      } catch (error) {
+        const code = (error as { code?: string }).code;
+        if (
+          code === "auth/popup-blocked" ||
+          code === "auth/operation-not-supported-in-this-environment"
+        ) {
+          await signInWithRedirect(auth, provider);
+          return fromUnknown(new AppError("REDIRECTING", "Redirecting to Google…", 0));
+        }
+        if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+          return fromUnknown(new AppError("CANCELLED", "Sign-in cancelled", 0));
+        }
+        if (code === "auth/unauthorized-domain") {
+          throw new AppError(
+            "UNAUTHORIZED_DOMAIN",
+            "This domain is not allowed for Google sign-in yet.",
+            403,
+          );
+        }
+        if (code === "auth/operation-not-allowed") {
+          throw new AppError(
+            "PROVIDER_DISABLED",
+            "Google sign-in is not switched on yet.",
+            503,
+          );
+        }
+        throw error;
       }
-
-      const auth = getClientAuth();
-      if (!auth) throw new AppError("AUTH_UNAVAILABLE", "Auth is not configured", 503);
-      const credential = await createUserWithEmailAndPassword(
-        auth,
-        input.email,
-        input.password,
-      );
-      await updateProfile(credential.user, { displayName: input.displayName });
-      const profile: UserProfile = {
-        ...demoUser,
-        uid: credential.user.uid,
-        email: input.email,
-        displayName: input.displayName,
-        role,
-        referralCode: generateReferralCode(input.displayName),
-        referredBy: input.referralCode,
-      };
-      return ok(profile);
-    } catch (error) {
-      return fromUnknown(error);
-    }
-  },
-
-  async forgotPassword(email: string): Promise<ApiResult<{ sent: boolean }>> {
-    try {
-      if (this.isDemo()) return ok({ sent: true });
-      const auth = getClientAuth();
-      if (!auth) throw new AppError("AUTH_UNAVAILABLE", "Auth is not configured", 503);
-      await sendPasswordResetEmail(auth, email);
-      return ok({ sent: true });
     } catch (error) {
       return fromUnknown(error);
     }
@@ -152,10 +151,7 @@ export const authService = {
 
   async logout(): Promise<ApiResult<{ success: true }>> {
     try {
-      if (this.isDemo()) {
-        this.setDemoSession(null);
-        return ok({ success: true });
-      }
+      this.setDemoSession(null);
       const auth = getClientAuth();
       if (auth) await signOut(auth);
       return ok({ success: true });

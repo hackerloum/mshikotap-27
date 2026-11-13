@@ -51,45 +51,47 @@ export default function AdvertiserAnalyticsPage() {
 
   return (
     <DashboardShell role="advertiser" title="Analytics">
-      <div className="space-y-6 animate-rise">
+      <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Completions" value={formatNumber(totals.completions)} />
-          <StatCard label="Credits spent" value={formatNumber(totals.spent)} />
-          <StatCard label="Budget" value={formatNumber(totals.budget)} />
-          <StatCard label="Avg CPA" value={formatNumber(totals.cpa)} />
+          <StatCard label="Completions" value={formatNumber(totals.completions)} tone="mint" />
+          <StatCard label="Credits spent" value={formatNumber(totals.spent)} tone="coin" />
+          <StatCard label="Budget" value={formatNumber(totals.budget)} tone="sky" />
+          <StatCard label="Avg CPA" value={formatNumber(totals.cpa)} tone="flame" />
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Campaign performance</CardTitle>
+            <CardTitle>How campaigns are doing</CardTitle>
           </CardHeader>
           <CardContent className="h-80">
             {chartData.length === 0 ? (
-              <p className="text-sm text-slate-400">No campaign data yet.</p>
+              <p className="text-sm text-slate-400">No data yet.</p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
-                  <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+                  <CartesianGrid stroke="#2a3070" vertical={false} />
                   <XAxis
                     dataKey="name"
-                    tick={{ fill: "#94a3b8", fontSize: 11 }}
+                    tick={{ fill: "#8d93c4", fontSize: 11 }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fill: "#94a3b8", fontSize: 11 }}
+                    tick={{ fill: "#8d93c4", fontSize: 11 }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip
                     contentStyle={{
-                      background: "#0b1524",
-                      border: "1px solid rgba(255,255,255,0.1)",
-                      borderRadius: 12,
+                      background: "#1c2150",
+                      border: "2px solid #3b4290",
+                      borderRadius: 14,
+                      color: "#fff",
                     }}
+                    cursor={{ fill: "#2a3070", opacity: 0.4 }}
                   />
-                  <Bar dataKey="completions" fill="#2dd4bf" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="spent" fill="#22d3ee" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="completions" fill="#ffc21a" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="spent" fill="#34d17d" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}

@@ -5,7 +5,7 @@ import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input, Label, Textarea } from "@/components/ui/input";
+import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { challengesService } from "@/services/challenges.service";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import type { Challenge, ChallengeType } from "@/types";
@@ -61,10 +61,10 @@ export default function AdminChallengesPage() {
 
   return (
     <DashboardShell role="admin" title="Challenges">
-      <div className="space-y-6 animate-rise">
+      <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Announce challenge</CardTitle>
+            <CardTitle>New challenge</CardTitle>
           </CardHeader>
           <CardContent>
             <form className="grid gap-4 md:grid-cols-2" onSubmit={onCreate}>
@@ -79,18 +79,17 @@ export default function AdminChallengesPage() {
               </div>
               <div>
                 <Label htmlFor="ch-type">Type</Label>
-                <select
+                <Select
                   id="ch-type"
-                  className="flex h-11 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none"
                   value={type}
                   onChange={(e) => setType(e.target.value as ChallengeType)}
                 >
                   {types.map((t) => (
-                    <option key={t} value={t} className="bg-slate-900">
+                    <option key={t} value={t} className="bg-ink-900">
                       {t.replaceAll("_", " ")}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="pool">Reward pool (USD)</Label>
@@ -123,8 +122,10 @@ export default function AdminChallengesPage() {
                   required
                 />
               </div>
-              <div>
-                <Button type="submit">Publish challenge</Button>
+              <div className="md:col-span-2">
+                <Button type="submit" className="w-full sm:w-auto">
+                  Publish challenge
+                </Button>
               </div>
             </form>
           </CardContent>
@@ -134,7 +135,7 @@ export default function AdminChallengesPage() {
           {challenges.map((ch) => (
             <Card key={ch.id}>
               <CardHeader className="flex flex-row items-start justify-between gap-3">
-                <div>
+                <div className="min-w-0">
                   <CardTitle>{ch.title}</CardTitle>
                   <p className="mt-1 text-sm text-slate-400">{ch.description}</p>
                 </div>
@@ -142,7 +143,7 @@ export default function AdminChallengesPage() {
               </CardHeader>
               <CardContent className="flex flex-wrap gap-2">
                 <Badge tone="brand">{ch.type.replaceAll("_", " ")}</Badge>
-                <Badge>Pool {formatCurrency(ch.rewardPool)}</Badge>
+                <Badge tone="success">Pool {formatCurrency(ch.rewardPool)}</Badge>
                 <Badge tone="info">
                   {formatNumber(ch.participants)} participants
                 </Badge>

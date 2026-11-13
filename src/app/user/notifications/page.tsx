@@ -2,16 +2,33 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  Bell,
+  CheckCheck,
+  Mail,
+  MessageCircle,
+  MessageSquare,
+  Sparkles,
+} from "lucide-react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { notificationsService } from "@/services/notifications.service";
 import { useAuthStore } from "@/store/auth-store";
-import { relativeTime } from "@/lib/utils";
-import type { AppNotification } from "@/types";
+import { cn, relativeTime } from "@/lib/utils";
+import type { AppNotification, NotificationChannel } from "@/types";
 import { toast } from "sonner";
+
+const channelStyle: Record<
+  NotificationChannel,
+  { icon: React.ComponentType<{ className?: string }>; chip: string }
+> = {
+  in_app: { icon: Sparkles, chip: "bg-coin/20 text-coin" },
+  push: { icon: Bell, chip: "bg-flame/20 text-flame" },
+  email: { icon: Mail, chip: "bg-sky/20 text-sky" },
+  sms: { icon: MessageSquare, chip: "bg-mint/20 text-mint" },
+  whatsapp: { icon: MessageCircle, chip: "bg-mint/20 text-mint" },
+};
 
 export default function UserNotificationsPage() {
   const user = useAuthStore((s) => s.user);
@@ -39,59 +56,95 @@ export default function UserNotificationsPage() {
     void load();
   }
 
+  const unread = items.filter((n) => !n.read).length;
+
   return (
-    <DashboardShell role="user" title="Notifications">
-      <div className="space-y-6 animate-rise">
-        <div className="flex justify-end">
-          <Button variant="secondary" size="sm" onClick={() => void markAll()}>
-            Mark all read
+    <DashboardShell role="user" title="Alerts">
+      <div className="space-y-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-display text-2xl text-white">
+            {unread > 0 ? `${unread} new` : "All caught up"}
+          </p>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="min-h-11"
+            disabled={unread === 0}
+            onClick={() => void markAll()}
+          >
+            <CheckCheck className="h-4 w-4" />
+            Read all
           </Button>
         </div>
 
         {items.length === 0 ? (
           <EmptyState
             title="All quiet"
-            description="You’ll see payouts, approvals, and challenge updates here."
+            description="Payouts, approvals, and race updates land here."
           />
         ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Inbox</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {items.map((n) => (
-                <div
+          <ul className="space-y-3">
+            {items.map((n) => {
+              const style = channelStyle[n.channel] ?? channelStyle.in_app;
+              const Icon = style.icon;
+              return (
+                <li
                   key={n.id}
-                  className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-3 py-3"
+                  className={cn(
+                    "relative flex gap-3 rounded-3xl border-2 p-4",
+                    n.read
+                      ? "border-ink-700 bg-ink-900"
+                      : "border-coin-deep bg-ink-900 shadow-[0_4px_0_0_var(--color-coin-deep)]",
+                  )}
                 >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-medium text-white">{n.title}</p>
-                      {!n.read ? <Badge tone="brand">New</Badge> : null}
-                      <Badge>{n.channel}</Badge>
-                    </div>
-                    <p className="mt-1 text-sm text-slate-400">{n.body}</p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {relativeTime(n.createdAt)}
-                      {n.href ? (
-                        <>
-                          {" · "}
-                          <Link href={n.href} className="text-teal-300 hover:underline">
-                            Open
-                          </Link>
-                        </>
-                      ) : null}
-                    </p>
+                  <div
+                    className={cn(
+                      "grid h-12 w-12 shrink-0 place-items-center rounded-2xl",
+                      style.chip,
+                    )}
+                  >
+                    <Icon className="h-6 w-6" />
                   </div>
-                  {!n.read ? (
-                    <Button size="sm" variant="outline" onClick={() => void markOne(n.id)}>
-                      Mark read
-                    </Button>
-                  ) : null}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start gap-2">
+                      <p className="min-w-0 flex-1 font-display text-lg leading-tight text-white">
+                        {n.title}
+                      </p>
+                      {!n.read ? (
+                        <span
+                          aria-label="Unread"
+                          className="mt-1.5 h-3 w-3 shrink-0 rounded-full bg-coin"
+                        />
+                      ) : null}
+                    </div>
+                    <p className="mt-1 break-words text-sm text-slate-300">
+                      {n.body}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                      <span>{relativeTime(n.createdAt)}</span>
+                      {n.href ? (
+                        <Link
+                          href={n.href}
+                          className="inline-flex min-h-11 items-center text-sky hover:underline"
+                        >
+                          Open
+                        </Link>
+                      ) : null}
+                      {!n.read ? (
+                        <button
+                          type="button"
+                          onClick={() => void markOne(n.id)}
+                          className="inline-flex min-h-11 items-center text-coin hover:underline"
+                        >
+                          Mark read
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </div>
     </DashboardShell>

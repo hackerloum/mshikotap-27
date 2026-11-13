@@ -1,26 +1,32 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Banknote, Building2, Bitcoin, CreditCard, Smartphone } from "lucide-react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Coin } from "@/components/ui/coin";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input, Label } from "@/components/ui/input";
+import { ProgressBar } from "@/components/ui/progress";
 import { StatCard } from "@/components/ui/stat";
 import { siteConfig } from "@/config/site";
 import { walletService } from "@/services/wallet.service";
 import { useAuthStore } from "@/store/auth-store";
-import { formatCurrency, relativeTime } from "@/lib/utils";
+import { cn, formatCurrency, relativeTime } from "@/lib/utils";
 import type { Withdrawal, WithdrawalMethod } from "@/types";
 import { toast } from "sonner";
-import { Wallet } from "lucide-react";
 
-const methods: WithdrawalMethod[] = [
-  "mobile_money",
-  "bank_transfer",
-  "paypal",
-  "crypto",
+const methods: Array<{
+  id: WithdrawalMethod;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}> = [
+  { id: "mobile_money", label: "Mobile money", icon: Smartphone },
+  { id: "bank_transfer", label: "Bank", icon: Building2 },
+  { id: "paypal", label: "PayPal", icon: CreditCard },
+  { id: "crypto", label: "Crypto", icon: Bitcoin },
 ];
 
 const statusTone = {
@@ -68,66 +74,146 @@ export default function UserWithdrawPage() {
       toast.error(res.error.message);
       return;
     }
-    toast.success("Withdrawal requested");
+    toast.success("Cash out requested");
     void load();
   }
 
+  const balance = user?.wallet.balance ?? 0;
+  const pending = user?.wallet.pendingBalance ?? 0;
+  const canCashOut = balance >= siteConfig.minWithdrawal;
+  const remaining = Math.max(0, siteConfig.minWithdrawal - balance);
   const feePreview =
     Number(amount || 0) * (siteConfig.withdrawalFeePercent / 100);
+  const netPreview = Math.max(0, Number(amount || 0) - feePreview);
 
   return (
-    <DashboardShell role="user" title="Withdraw">
-      <div className="space-y-6 animate-rise">
+    <DashboardShell role="user" title="Wallet">
+      <div className="space-y-6">
+        <section className="dots relative overflow-hidden rounded-3xl border-2 border-coin-deep bg-coin p-5 text-ink-950 shadow-[0_6px_0_0_var(--color-coin-deep)] sm:p-7">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-extrabold uppercase tracking-wider text-ink-950/70">
+                Your stash
+              </p>
+              <p className="mt-1 truncate font-display text-5xl leading-none sm:text-6xl">
+                {formatCurrency(balance)}
+              </p>
+              {pending > 0 ? (
+                <p className="mt-2 text-sm font-extrabold text-ink-950/70">
+                  + {formatCurrency(pending)} on the way
+                </p>
+              ) : null}
+            </div>
+            <Coin size={64} className="animate-bob" />
+          </div>
+
+          <div className="mt-5 rounded-2xl bg-ink-950 p-4 text-white">
+            <div className="mb-2 flex items-center justify-between gap-2 text-xs font-extrabold uppercase tracking-wider">
+              <span className="text-slate-400">
+                {canCashOut ? "Ready to cash out" : "Next cash out"}
+              </span>
+              <span className={canCashOut ? "text-mint" : "text-coin"}>
+                {formatCurrency(Math.min(balance, siteConfig.minWithdrawal))} /{" "}
+                {formatCurrency(siteConfig.minWithdrawal)}
+              </span>
+            </div>
+            <ProgressBar
+              value={balance}
+              max={siteConfig.minWithdrawal}
+              tone={canCashOut ? "mint" : "coin"}
+              label="Progress toward minimum cash out"
+            />
+            <p className="mt-2 text-sm text-slate-300">
+              {canCashOut
+                ? "Your stash is ready. Time to cash out!"
+                : `Earn ${formatCurrency(remaining)} more to unlock your first cash out.`}
+            </p>
+          </div>
+
+          <a
+            href="#cashout"
+            className={cn(
+              buttonVariants({ variant: "mint", size: "lg" }),
+              "mt-5 w-full sm:w-auto",
+            )}
+          >
+            <Banknote className="h-5 w-5" />
+            Cash out
+          </a>
+        </section>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <StatCard
-            label="Available"
-            value={formatCurrency(user?.wallet.balance ?? 0)}
-            hint={`Min ${formatCurrency(siteConfig.minWithdrawal)}`}
-            icon={<Wallet className="h-5 w-5" />}
+            label="Lifetime earned"
+            value={formatCurrency(user?.wallet.lifetimeEarnings ?? 0)}
+            tone="mint"
+            icon={<Banknote className="h-6 w-6" />}
           />
           <StatCard
-            label="Fee"
+            label="Cash out fee"
             value={`${siteConfig.withdrawalFeePercent}%`}
-            hint={`Est. fee ${formatCurrency(feePreview)}`}
+            hint={`Min ${formatCurrency(siteConfig.minWithdrawal)}`}
+            tone="sky"
+            icon={<CreditCard className="h-6 w-6" />}
           />
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card id="cashout" className="scroll-mt-24">
             <CardHeader>
-              <CardTitle>Request withdrawal</CardTitle>
+              <CardTitle className="text-2xl">Cash out</CardTitle>
             </CardHeader>
             <CardContent>
-              <form className="space-y-4" onSubmit={onSubmit}>
+              <form className="space-y-5" onSubmit={onSubmit}>
                 <div>
                   <Label htmlFor="amount">Amount (USD)</Label>
                   <Input
                     id="amount"
                     type="number"
+                    inputMode="decimal"
                     min={siteConfig.minWithdrawal}
                     step="0.01"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     required
                   />
+                  <p className="mt-2 text-sm text-slate-400">
+                    Fee {formatCurrency(feePreview)} · You get{" "}
+                    <span className="font-extrabold text-mint">
+                      {formatCurrency(netPreview)}
+                    </span>
+                  </p>
                 </div>
+
                 <div>
-                  <Label htmlFor="method">Method</Label>
-                  <select
-                    id="method"
-                    className="flex h-11 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-teal-400/50"
-                    value={method}
-                    onChange={(e) => setMethod(e.target.value as WithdrawalMethod)}
-                  >
-                    {methods.map((m) => (
-                      <option key={m} value={m} className="bg-slate-900">
-                        {m.replaceAll("_", " ")}
-                      </option>
-                    ))}
-                  </select>
+                  <Label>Pay me via</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {methods.map((m) => {
+                      const Icon = m.icon;
+                      const active = method === m.id;
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => setMethod(m.id)}
+                          className={cn(
+                            "flex min-h-12 items-center gap-2 rounded-2xl border-2 px-3 text-left text-sm font-extrabold transition active:translate-y-px",
+                            active
+                              ? "border-coin bg-coin/15 text-coin"
+                              : "border-ink-700 bg-ink-950 text-slate-300 hover:border-ink-600",
+                          )}
+                        >
+                          <Icon className="h-5 w-5 shrink-0" />
+                          <span className="truncate">{m.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
+
                 <div>
-                  <Label htmlFor="destination">Destination</Label>
+                  <Label htmlFor="destination">Where to send it</Label>
                   <Input
                     id="destination"
                     placeholder="Phone, account, or wallet"
@@ -136,8 +222,15 @@ export default function UserWithdrawPage() {
                     required
                   />
                 </div>
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Submitting…" : "Request payout"}
+
+                <Button
+                  type="submit"
+                  variant="mint"
+                  size="lg"
+                  className="w-full"
+                  disabled={loading}
+                >
+                  {loading ? "Sending…" : "Cash out now"}
                 </Button>
               </form>
             </CardContent>
@@ -145,27 +238,35 @@ export default function UserWithdrawPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>History</CardTitle>
+              <CardTitle className="text-2xl">Payout history</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {history.length === 0 ? (
-                <EmptyState title="No withdrawals yet" />
+                <EmptyState
+                  title="No cash outs yet"
+                  description="Your first payout will show up here."
+                />
               ) : (
                 history.map((w) => (
                   <div
                     key={w.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/5 bg-white/[0.02] px-3 py-3"
+                    className="rounded-2xl border-2 border-ink-700 bg-ink-800 p-3.5"
                   >
-                    <div>
-                      <p className="text-sm font-medium text-white">
-                        {formatCurrency(w.amount)} → {formatCurrency(w.netAmount)}
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-display text-xl text-white">
+                        {formatCurrency(w.netAmount)}
+                        <span className="ml-2 text-sm text-slate-400">
+                          of {formatCurrency(w.amount)}
+                        </span>
                       </p>
-                      <p className="text-xs text-slate-500">
-                        {w.method.replaceAll("_", " ")} · {w.destination} ·{" "}
-                        {relativeTime(w.createdAt)}
-                      </p>
+                      <Badge tone={statusTone[w.status]}>
+                        {w.status.replaceAll("_", " ")}
+                      </Badge>
                     </div>
-                    <Badge tone={statusTone[w.status]}>{w.status}</Badge>
+                    <p className="mt-1 break-words text-xs font-semibold text-slate-400">
+                      {w.method.replaceAll("_", " ")} · {w.destination} ·{" "}
+                      {relativeTime(w.createdAt)}
+                    </p>
                   </div>
                 ))
               )}

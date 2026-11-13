@@ -12,7 +12,7 @@ Team slug (from connected account): `hackerloum-gmailcoms-projects`
 ## 2. Create Firebase project resources
 
 1. [Firebase Console](https://console.firebase.google.com/) → create or open your project
-2. Enable **Authentication** (Email/Password; Phone optional)
+2. Enable **Authentication → Sign-in method → Google** (this is the only sign-in method the app uses) and pick a support email. Then create a **Firestore Database** (production mode) and publish `firestore/firestore.rules`.
 3. Create **Cloud Firestore** (production mode) and deploy rules from `firestore/`
 4. Enable **Storage** and deploy `firestore/storage.rules`
 5. Add a **Web app** and copy the config object

@@ -40,13 +40,14 @@ export default function AdminAnalyticsPage() {
 
   return (
     <DashboardShell role="admin" title="Analytics">
-      <div className="space-y-6 animate-rise">
+      <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard label="14d revenue" value={formatCurrency(revenue)} />
-          <StatCard label="Task actions" value={formatNumber(taskVolume)} />
+          <StatCard label="14-day revenue" value={formatCurrency(revenue)} tone="mint" />
+          <StatCard label="Task actions" value={formatNumber(taskVolume)} tone="coin" />
           <StatCard
             label="Campaign credits spent"
             value={formatNumber(campaignSpend)}
+            tone="sky"
           />
         </div>
 
@@ -57,38 +58,34 @@ export default function AdminAnalyticsPage() {
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={activityData}>
-                <defs>
-                  <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#2dd4bf" stopOpacity={0.45} />
-                    <stop offset="100%" stopColor="#2dd4bf" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+                <CartesianGrid stroke="#2a3070" vertical={false} />
                 <XAxis
                   dataKey="date"
-                  tick={{ fill: "#94a3b8", fontSize: 11 }}
+                  tick={{ fill: "#8d93c4", fontSize: 11 }}
                   tickFormatter={(v) => String(v).slice(5)}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fill: "#94a3b8", fontSize: 11 }}
+                  tick={{ fill: "#8d93c4", fontSize: 11 }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip
                   contentStyle={{
-                    background: "#0b1524",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: 12,
+                    background: "#1c2150",
+                    border: "2px solid #3b4290",
+                    borderRadius: 14,
+                    color: "#fff",
                   }}
                 />
                 <Area
                   type="monotone"
                   dataKey="revenue"
-                  stroke="#2dd4bf"
-                  fill="url(#rev)"
-                  strokeWidth={2}
+                  stroke="#ffc21a"
+                  fill="#ffc21a"
+                  fillOpacity={0.18}
+                  strokeWidth={3}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -102,28 +99,29 @@ export default function AdminAnalyticsPage() {
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={categoryData}>
-                <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+                <CartesianGrid stroke="#2a3070" vertical={false} />
                 <XAxis
                   dataKey="category"
-                  tick={{ fill: "#94a3b8", fontSize: 11 }}
+                  tick={{ fill: "#8d93c4", fontSize: 11 }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fill: "#94a3b8", fontSize: 11 }}
+                  tick={{ fill: "#8d93c4", fontSize: 11 }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip
                   contentStyle={{
-                    background: "#0b1524",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: 12,
+                    background: "#1c2150",
+                    border: "2px solid #3b4290",
+                    borderRadius: 14,
+                    color: "#fff",
                   }}
                 />
                 <Bar
                   dataKey="completions"
-                  fill="#22d3ee"
+                  fill="#34d17d"
                   radius={[8, 8, 0, 0]}
                 />
               </BarChart>

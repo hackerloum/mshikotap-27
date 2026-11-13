@@ -5,7 +5,7 @@ Modern digital earning platform — tasks, referrals, challenges, advertiser cam
 ## Stack
 
 - **Next.js 15** (App Router) + TypeScript
-- **Firebase** Auth / Firestore / Storage (demo mode when unset)
+- **Firebase** Google sign-in / Firestore / Storage (demo mode when unset)
 - **Zustand** state · **Tailwind CSS 4** · **Recharts**
 - **Vercel**-ready API routes
 
@@ -75,3 +75,11 @@ Security rules live in `firestore/`.
 **Phase 1 (this PR):** scalable architecture, dashboards, demo services, API layer, rules templates.
 
 **Next:** live Firebase session cookies, FCM push, payment providers for credits, multi-level referral payouts, AI screenshot verification via `aiService`.
+
+## Auth and game profile
+
+- Sign-in is **Google only**. Sign-up and log-in are the same one-tap flow, and everyone lands on `/user`.
+- On first sign-in the browser calls `POST /api/me` with the Firebase ID token. The server (Admin SDK) creates the profile in `users/{uid}` with zero balance, so clients can never grant themselves coins.
+- `POST /api/daily-claim` runs the daily bonus in a Firestore transaction (20h cooldown, streak bonus up to 7 days).
+- Set `ADMIN_EMAILS` (comma separated) in Vercel to promote specific Google accounts to the admin role.
+- Firebase Console checklist: enable the Google provider, add `www.mshikotap.co.tz`, `mshikotap.co.tz` and your `*.vercel.app` domain under Authorized domains, create the Firestore database, publish the rules in `firestore/`.

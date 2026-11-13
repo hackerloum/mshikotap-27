@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Input, Label, Textarea } from "@/components/ui/input";
+import { ProgressBar } from "@/components/ui/progress";
+import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { campaignsService } from "@/services/campaigns.service";
 import { useAuthStore } from "@/store/auth-store";
 import { formatNumber } from "@/lib/utils";
@@ -91,10 +92,10 @@ export default function AdvertiserCampaignsPage() {
 
   return (
     <DashboardShell role="advertiser" title="Campaigns">
-      <div className="space-y-6 animate-rise">
+      <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Create campaign</CardTitle>
+            <CardTitle>New campaign</CardTitle>
           </CardHeader>
           <CardContent>
             <form className="grid gap-4 md:grid-cols-2" onSubmit={onCreate}>
@@ -109,18 +110,17 @@ export default function AdvertiserCampaignsPage() {
               </div>
               <div>
                 <Label htmlFor="type">Type</Label>
-                <select
+                <Select
                   id="type"
-                  className="flex h-11 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none"
                   value={type}
                   onChange={(e) => setType(e.target.value as CampaignType)}
                 >
                   {campaignTypes.map((t) => (
-                    <option key={t} value={t} className="bg-slate-900">
+                    <option key={t} value={t} className="bg-ink-900">
                       {t.replaceAll("_", " ")}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="url">Target URL</Label>
@@ -162,9 +162,9 @@ export default function AdvertiserCampaignsPage() {
                   required
                 />
               </div>
-              <div>
-                <Button type="submit" disabled={saving}>
-                  {saving ? "Creating…" : "Launch campaign"}
+              <div className="md:col-span-2">
+                <Button type="submit" disabled={saving} className="w-full sm:w-auto">
+                  {saving ? "Creating…" : "Launch it"}
                 </Button>
               </div>
             </form>
@@ -172,14 +172,14 @@ export default function AdvertiserCampaignsPage() {
         </Card>
 
         {campaigns.length === 0 ? (
-          <EmptyState title="No campaigns yet" description="Create your first campaign above." />
+          <EmptyState title="No campaigns yet" description="Make your first one above." />
         ) : (
           <div className="grid gap-4">
             {campaigns.map((c) => (
               <Card key={c.id}>
                 <CardHeader className="flex flex-row items-start justify-between gap-3">
-                  <div>
-                    <CardTitle>{c.title}</CardTitle>
+                  <div className="min-w-0">
+                    <CardTitle className="truncate">{c.title}</CardTitle>
                     <p className="mt-1 text-sm text-slate-400">
                       {c.type.replaceAll("_", " ")} · CPA {c.costPerAction} ·{" "}
                       {formatNumber(c.completions)} completions
@@ -187,20 +187,29 @@ export default function AdvertiserCampaignsPage() {
                   </div>
                   <Badge tone={statusTone[c.status]}>{c.status}</Badge>
                 </CardHeader>
-                <CardContent className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-sm text-slate-400">
-                    Spent {formatNumber(c.spentCredits)} /{" "}
-                    {formatNumber(c.budgetCredits)} credits
-                  </p>
-                  {(c.status === "active" || c.status === "paused") && (
-                    <Button
-                      size="sm"
-                      variant={c.status === "active" ? "secondary" : "default"}
-                      onClick={() => void toggleStatus(c)}
-                    >
-                      {c.status === "active" ? "Pause" : "Resume"}
-                    </Button>
-                  )}
+                <CardContent className="space-y-3">
+                  <ProgressBar
+                    value={c.spentCredits}
+                    max={Math.max(1, c.budgetCredits)}
+                    tone="coin"
+                    label={`${c.title} budget used`}
+                  />
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm text-slate-400">
+                      Spent {formatNumber(c.spentCredits)} /{" "}
+                      {formatNumber(c.budgetCredits)} credits
+                    </p>
+                    {(c.status === "active" || c.status === "paused") && (
+                      <Button
+                        className="min-h-11 w-full sm:w-auto"
+                        size="sm"
+                        variant={c.status === "active" ? "secondary" : "mint"}
+                        onClick={() => void toggleStatus(c)}
+                      >
+                        {c.status === "active" ? "Pause" : "Resume"}
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             ))}

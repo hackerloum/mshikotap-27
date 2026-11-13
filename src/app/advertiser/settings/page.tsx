@@ -15,10 +15,14 @@ export default function AdvertiserSettingsPage() {
 
   return (
     <DashboardShell role="advertiser" title="Settings">
-      <div className="space-y-6 animate-rise">
+      <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Account</CardTitle>
+            <p className="mt-1 text-sm text-slate-400">
+              You sign in with Google, so these details come from your Google
+              account.
+            </p>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -44,7 +48,7 @@ export default function AdvertiserSettingsPage() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle>Plan</CardTitle>
             <Badge tone="brand">{user?.subscription ?? "free"}</Badge>
           </CardHeader>

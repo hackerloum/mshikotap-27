@@ -5,20 +5,23 @@ import { Toaster } from "sonner";
 import { useAuthStore } from "@/store/auth-store";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
-  const hydrate = useAuthStore((s) => s.hydrate);
+  const init = useAuthStore((s) => s.init);
 
   useEffect(() => {
-    hydrate();
-  }, [hydrate]);
+    init();
+  }, [init]);
 
   return (
     <>
       {children}
       <Toaster
         theme="dark"
-        position="top-right"
+        position="top-center"
         toastOptions={{
-          className: "border border-white/10 bg-[#0b1524] text-slate-100",
+          classNames: {
+            toast:
+              "!rounded-2xl !border-2 !border-ink-600 !bg-ink-800 !font-sans !font-bold !text-white",
+          },
         }}
       />
     </>

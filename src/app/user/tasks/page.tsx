@@ -1,27 +1,51 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import {
+  Brain,
+  Camera,
+  Clock,
+  Gift,
+  Keyboard,
+  PlayCircle,
+  Search,
+  Share2,
+  ThumbsUp,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Coin } from "@/components/ui/coin";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { tasksService } from "@/services/tasks.service";
 import { useAuthStore } from "@/store/auth-store";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import type { Task, TaskCategory } from "@/types";
-import { toast } from "sonner";
 
-const categories: Array<TaskCategory | "all"> = [
-  "all",
-  "social",
-  "youtube",
-  "survey",
-  "video",
-  "daily",
-  "typing",
+const categories: Array<{ id: TaskCategory | "all"; label: string }> = [
+  { id: "all", label: "All" },
+  { id: "social", label: "Social" },
+  { id: "youtube", label: "YouTube" },
+  { id: "video", label: "Watch" },
+  { id: "survey", label: "Surveys" },
+  { id: "daily", label: "Daily" },
+  { id: "typing", label: "Typing" },
 ];
+
+const look: Record<string, { icon: LucideIcon; tone: string }> = {
+  social: { icon: ThumbsUp, tone: "bg-coral" },
+  youtube: { icon: PlayCircle, tone: "bg-coral" },
+  video: { icon: PlayCircle, tone: "bg-sky" },
+  survey: { icon: Brain, tone: "bg-mint" },
+  quiz: { icon: Brain, tone: "bg-mint" },
+  daily: { icon: Gift, tone: "bg-coin" },
+  typing: { icon: Keyboard, tone: "bg-flame" },
+  referral: { icon: Share2, tone: "bg-coral" },
+  screenshot: { icon: Camera, tone: "bg-sky" },
+};
 
 export default function UserTasksPage() {
   const user = useAuthStore((s) => s.user);
@@ -57,117 +81,167 @@ export default function UserTasksPage() {
       toast.error(res.error.message);
       return;
     }
-    toast.success("Submission sent for review");
+    toast.success("Quest sent! We'll review it soon.");
     setSelected(null);
     setProofUrl("");
     setNotes("");
   }
 
   return (
-    <DashboardShell role="user" title="Tasks">
-      <div className="space-y-6 animate-rise">
-        <Card>
-          <CardContent className="flex flex-col gap-3 pt-5 md:flex-row md:items-end">
-            <div className="flex-1">
-              <Label htmlFor="task-search">Search</Label>
-              <Input
-                id="task-search"
-                placeholder="Search tasks…"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((cat) => (
-                <Button
-                  key={cat}
-                  size="sm"
-                  variant={category === cat ? "default" : "secondary"}
-                  onClick={() => setCategory(cat)}
-                >
-                  {cat}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+    <DashboardShell role="user" title="Quests">
+      <div className="space-y-5">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+          <Input
+            aria-label="Search quests"
+            placeholder="Search quests"
+            className="pl-12"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+
+        <div className="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setCategory(cat.id)}
+              className={cn(
+                "h-10 shrink-0 rounded-full border-2 px-4 font-display text-base transition active:scale-95",
+                category === cat.id
+                  ? "border-ink-950 bg-coin text-ink-950"
+                  : "border-ink-700 bg-ink-900 text-slate-300 hover:border-ink-600",
+              )}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
 
         {tasks.length === 0 ? (
           <EmptyState
-            title="No tasks found"
-            description="Try another category or clear your search."
+            title="No quests here"
+            description="Try another category or clear your search. New quests land every day."
           />
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {tasks.map((task) => (
-              <Card key={task.id}>
-                <CardHeader className="flex flex-row items-start justify-between gap-3">
-                  <div>
-                    <CardTitle>{task.title}</CardTitle>
-                    <p className="mt-1 text-sm text-slate-400">{task.description}</p>
+            {tasks.map((task) => {
+              const l = look[task.category] ?? { icon: Gift, tone: "bg-coin" };
+              const Icon = l.icon;
+              return (
+                <article
+                  key={task.id}
+                  className="flex flex-col rounded-3xl border-2 border-ink-700 bg-ink-900 p-4 shadow-[0_5px_0_0_var(--color-ink-700)]"
+                >
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={cn(
+                        "grid h-14 w-14 shrink-0 place-items-center rounded-2xl border-2 border-ink-950 text-ink-950",
+                        l.tone,
+                      )}
+                    >
+                      <Icon className="h-7 w-7" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-display text-xl leading-tight text-white">{task.title}</h3>
+                      <p className="mt-0.5 text-sm font-semibold text-slate-400">{task.description}</p>
+                    </div>
                   </div>
-                  <Badge tone="brand">{formatCurrency(task.reward)}</Badge>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex flex-wrap gap-2 text-xs text-slate-400">
-                    <Badge>{task.category}</Badge>
-                    <Badge tone="info">+{task.xpReward} XP</Badge>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-extrabold">
+                    <span className="rounded-full bg-sky/20 px-2.5 py-1 text-sky">+{task.xpReward} XP</span>
                     {task.requiresScreenshot ? (
-                      <Badge tone="warning">Proof required</Badge>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-flame/20 px-2.5 py-1 text-flame">
+                        <Camera className="h-3.5 w-3.5" /> Needs proof
+                      </span>
+                    ) : null}
+                    {task.timeLimitMinutes ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-ink-700 px-2.5 py-1 text-slate-300">
+                        <Clock className="h-3.5 w-3.5" /> {task.timeLimitMinutes} min
+                      </span>
                     ) : null}
                   </div>
-                  <p className="text-sm text-slate-300">{task.instructions}</p>
-                  <Button onClick={() => setSelected(task)}>Submit task</Button>
-                </CardContent>
-              </Card>
-            ))}
+
+                  <div className="mt-4 flex items-center justify-between gap-3 border-t-2 border-dashed border-ink-700 pt-4">
+                    <span className="flex items-center gap-1.5 font-display text-2xl text-coin">
+                      <Coin size={26} />
+                      {formatCurrency(task.reward)}
+                    </span>
+                    <Button size="sm" className="h-11 px-5" onClick={() => setSelected(task)}>
+                      Start quest
+                    </Button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
 
         {selected ? (
-          <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm">
-            <Card className="w-full max-w-lg border-teal-400/20">
-              <CardHeader>
-                <CardTitle>Submit · {selected.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form className="space-y-4" onSubmit={handleSubmit}>
-                  <div>
-                    <Label htmlFor="proof">
-                      Proof URL {selected.requiresScreenshot ? "(required)" : "(optional)"}
-                    </Label>
-                    <Input
-                      id="proof"
-                      placeholder="https://…"
-                      value={proofUrl}
-                      onChange={(e) => setProofUrl(e.target.value)}
-                      required={selected.requiresScreenshot}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="notes">Notes</Label>
-                    <Textarea
-                      id="notes"
-                      placeholder="Anything the reviewer should know…"
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button type="submit" disabled={submitting}>
-                      {submitting ? "Submitting…" : "Send submission"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => setSelected(null)}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center sm:p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Submit ${selected.title}`}
+          >
+            <div className="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl border-2 border-ink-600 bg-ink-900 p-5 sm:rounded-3xl">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-extrabold uppercase tracking-wider text-coin">Quest</p>
+                  <h2 className="font-display text-2xl leading-tight text-white">{selected.title}</h2>
+                </div>
+                <button
+                  onClick={() => setSelected(null)}
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-ink-800 text-white"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="mt-4 rounded-2xl bg-ink-800 p-4">
+                <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">How to do it</p>
+                <p className="mt-1 text-sm font-semibold text-slate-200">{selected.instructions}</p>
+                {selected.targetUrl ? (
+                  <a
+                    href={selected.targetUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 inline-flex h-10 items-center rounded-xl bg-sky px-4 font-display text-ink-950"
+                  >
+                    Open link
+                  </a>
+                ) : null}
+              </div>
+
+              <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
+                <div>
+                  <Label htmlFor="proof">
+                    Proof link {selected.requiresScreenshot ? "(required)" : "(optional)"}
+                  </Label>
+                  <Input
+                    id="proof"
+                    placeholder="https://..."
+                    inputMode="url"
+                    value={proofUrl}
+                    onChange={(e) => setProofUrl(e.target.value)}
+                    required={selected.requiresScreenshot}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Anything we should know?"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                  />
+                </div>
+                <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+                  {submitting ? "Sending…" : `Claim ${formatCurrency(selected.reward)}`}
+                </Button>
+              </form>
+            </div>
           </div>
         ) : null}
       </div>

@@ -4,12 +4,12 @@ import { useState } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Coin } from "@/components/ui/coin";
 import { StatCard } from "@/components/ui/stat";
 import { useAuthStore } from "@/store/auth-store";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { toast } from "sonner";
-import { Wallet } from "lucide-react";
+import { Check, Wallet } from "lucide-react";
 
 const packages = [
   { id: "starter", credits: 100, price: 19, label: "Starter" },
@@ -35,45 +35,54 @@ export default function AdvertiserCreditsPage() {
 
   return (
     <DashboardShell role="advertiser" title="Credits">
-      <div className="space-y-6 animate-rise">
+      <div className="space-y-6">
         <StatCard
           label="Credit balance"
           value={formatNumber(user?.advertiserCredits ?? 0)}
-          hint="Used for campaign actions"
+          hint="Spent as people finish your tasks"
           icon={<Wallet className="h-5 w-5" />}
+          tone="coin"
         />
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {packages.map((pkg) => (
-            <Card
-              key={pkg.id}
-              className={
-                selected === pkg.id
-                  ? "border-teal-400/40 ring-1 ring-teal-400/30"
-                  : "cursor-pointer"
-              }
-              onClick={() => setSelected(pkg.id)}
-            >
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>{pkg.label}</CardTitle>
-                  {pkg.popular ? <Badge tone="brand">Popular</Badge> : null}
+          {packages.map((pkg) => {
+            const isSelected = selected === pkg.id;
+            return (
+              <button
+                key={pkg.id}
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() => setSelected(pkg.id)}
+                className={`rounded-3xl border-2 p-5 text-left transition active:translate-y-[3px] ${
+                  isSelected
+                    ? "border-coin bg-ink-800 shadow-[0_5px_0_0_var(--color-coin-deep)]"
+                    : "border-ink-700 bg-ink-900 shadow-[0_5px_0_0_var(--color-ink-700)] hover:border-ink-600"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="font-display text-xl text-white">{pkg.label}</h3>
+                  {pkg.popular ? (
+                    <Badge tone="brand">Popular</Badge>
+                  ) : isSelected ? (
+                    <Check className="h-5 w-5 text-coin" />
+                  ) : null}
                 </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-semibold text-white">
+                <p className="mt-3 flex items-center gap-2 font-display text-3xl text-white">
+                  <Coin size={28} />
                   {formatNumber(pkg.credits)}
                 </p>
-                <p className="mt-1 text-sm text-slate-400">credits</p>
-                <p className="mt-4 text-lg text-teal-200">
+                <p className="text-sm text-slate-400">credits</p>
+                <p className="mt-4 font-display text-xl text-mint">
                   {formatCurrency(pkg.price)}
                 </p>
-              </CardContent>
-            </Card>
-          ))}
+              </button>
+            );
+          })}
         </div>
 
-        <Button onClick={purchase}>Purchase selected (demo)</Button>
+        <Button size="lg" className="w-full sm:w-auto" onClick={purchase}>
+          Buy selected pack (demo)
+        </Button>
       </div>
     </DashboardShell>
   );

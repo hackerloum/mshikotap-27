@@ -60,10 +60,10 @@ export default function AdminTasksPage() {
 
   return (
     <DashboardShell role="admin" title="Task review">
-      <div className="space-y-6 animate-rise">
+      <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Rejection reason (default)</CardTitle>
+            <CardTitle>Default rejection reason</CardTitle>
           </CardHeader>
           <CardContent>
             <Input value={reason} onChange={(e) => setReason(e.target.value)} />
@@ -73,16 +73,16 @@ export default function AdminTasksPage() {
         {pending.length === 0 ? (
           <EmptyState
             title="No pending submissions"
-            description="Approved and rejected items stay in history below."
+            description="Reviewed items stay in the history below."
           />
         ) : (
           <div className="grid gap-4">
             {pending.map((s) => (
               <Card key={s.id}>
                 <CardHeader className="flex flex-row items-start justify-between gap-3">
-                  <div>
-                    <CardTitle>{taskTitle(s.taskId)}</CardTitle>
-                    <p className="mt-1 text-sm text-slate-400">
+                  <div className="min-w-0">
+                    <CardTitle className="truncate">{taskTitle(s.taskId)}</CardTitle>
+                    <p className="mt-1 break-words text-sm text-slate-400">
                       {s.id} · user {s.userId} · {relativeTime(s.submittedAt)}
                     </p>
                   </div>
@@ -90,17 +90,23 @@ export default function AdminTasksPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {s.proofUrl ? (
-                    <p className="truncate text-sm text-teal-300">{s.proofUrl}</p>
+                    <p className="truncate text-sm font-bold text-sky">{s.proofUrl}</p>
                   ) : (
                     <p className="text-sm text-slate-500">No proof URL</p>
                   )}
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={() => void review(s.id, "approved")}>
+                  <div className="grid grid-cols-2 gap-2 sm:flex">
+                    <Button
+                      size="sm"
+                      variant="mint"
+                      className="min-h-11"
+                      onClick={() => void review(s.id, "approved")}
+                    >
                       Approve
                     </Button>
                     <Button
                       size="sm"
                       variant="danger"
+                      className="min-h-11"
                       onClick={() => void review(s.id, "rejected")}
                     >
                       Reject
@@ -114,15 +120,15 @@ export default function AdminTasksPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>All submissions</CardTitle>
+            <CardTitle>History</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {subs.map((s) => (
               <div
                 key={s.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/5 px-3 py-2"
+                className="flex items-center justify-between gap-2 rounded-2xl border-2 border-ink-700 bg-ink-800 px-3 py-2.5"
               >
-                <span className="text-sm text-slate-300">
+                <span className="min-w-0 truncate text-sm font-bold text-slate-200">
                   {taskTitle(s.taskId)} · {s.id}
                 </span>
                 <Badge tone={statusTone[s.status]}>{s.status}</Badge>

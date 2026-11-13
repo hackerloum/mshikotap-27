@@ -81,10 +81,10 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <DashboardShell role="admin" title="Users">
-      <div className="space-y-6 animate-rise">
+    <DashboardShell role="admin" title="Players">
+      <div className="space-y-6">
         <Input
-          placeholder="Search users…"
+          placeholder="Search by name or email…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -93,49 +93,89 @@ export default function AdminUsersPage() {
           <CardHeader>
             <CardTitle>Directory</CardTitle>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-sm">
-              <thead className="text-xs uppercase tracking-wider text-slate-500">
-                <tr>
-                  <th className="pb-3 font-medium">User</th>
-                  <th className="pb-3 font-medium">Role</th>
-                  <th className="pb-3 font-medium">Plan</th>
-                  <th className="pb-3 font-medium">Status</th>
-                  <th className="pb-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {filtered.map((r) => (
-                  <tr key={r.uid}>
-                    <td className="py-3">
-                      <p className="font-medium text-white">{r.displayName}</p>
-                      <p className="text-xs text-slate-500">{r.email}</p>
-                    </td>
-                    <td className="py-3">
-                      <Badge>{r.role}</Badge>
-                    </td>
-                    <td className="py-3">
-                      <Badge tone="info">{r.subscription}</Badge>
-                    </td>
-                    <td className="py-3">
-                      <Badge tone={r.isBanned ? "danger" : "success"}>
-                        {r.isBanned ? "banned" : "active"}
-                      </Badge>
-                    </td>
-                    <td className="py-3">
-                      <Button
-                        size="sm"
-                        variant={r.isBanned ? "default" : "danger"}
-                        onClick={() => toggleBan(r.uid)}
-                        disabled={r.role === "admin"}
-                      >
-                        {r.isBanned ? "Unban" : "Ban"}
-                      </Button>
-                    </td>
+          <CardContent>
+            {filtered.length === 0 ? (
+              <p className="py-4 text-center text-sm text-slate-400">
+                Nobody matches that search.
+              </p>
+            ) : null}
+
+            <div className="space-y-3 md:hidden">
+              {filtered.map((r) => (
+                <div
+                  key={r.uid}
+                  className="space-y-3 rounded-2xl border-2 border-ink-700 bg-ink-800 p-3"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-display text-lg text-white">
+                      {r.displayName}
+                    </p>
+                    <p className="truncate text-xs text-slate-400">{r.email}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge>{r.role}</Badge>
+                    <Badge tone="info">{r.subscription}</Badge>
+                    <Badge tone={r.isBanned ? "danger" : "success"}>
+                      {r.isBanned ? "banned" : "active"}
+                    </Badge>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="min-h-11 w-full"
+                    variant={r.isBanned ? "mint" : "danger"}
+                    onClick={() => toggleBan(r.uid)}
+                    disabled={r.role === "admin"}
+                  >
+                    {r.isBanned ? "Unban" : "Ban"}
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full min-w-[640px] text-left text-sm">
+                <thead className="text-xs uppercase tracking-wider text-slate-400">
+                  <tr className="border-b-2 border-ink-700">
+                    <th className="pb-3 font-extrabold">Player</th>
+                    <th className="pb-3 font-extrabold">Role</th>
+                    <th className="pb-3 font-extrabold">Plan</th>
+                    <th className="pb-3 font-extrabold">Status</th>
+                    <th className="pb-3 font-extrabold">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y-2 divide-ink-800">
+                  {filtered.map((r) => (
+                    <tr key={r.uid}>
+                      <td className="py-3">
+                        <p className="font-bold text-white">{r.displayName}</p>
+                        <p className="text-xs text-slate-400">{r.email}</p>
+                      </td>
+                      <td className="py-3">
+                        <Badge>{r.role}</Badge>
+                      </td>
+                      <td className="py-3">
+                        <Badge tone="info">{r.subscription}</Badge>
+                      </td>
+                      <td className="py-3">
+                        <Badge tone={r.isBanned ? "danger" : "success"}>
+                          {r.isBanned ? "banned" : "active"}
+                        </Badge>
+                      </td>
+                      <td className="py-3">
+                        <Button
+                          size="sm"
+                          variant={r.isBanned ? "mint" : "danger"}
+                          onClick={() => toggleBan(r.uid)}
+                          disabled={r.role === "admin"}
+                        >
+                          {r.isBanned ? "Unban" : "Ban"}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       </div>

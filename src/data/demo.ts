@@ -31,7 +31,7 @@ export const demoUser: UserProfile = {
     updatedAt: iso(0),
   },
   gamification: {
-    xp: 2450,
+    xp: 2200,
     level: 8,
     streakDays: 12,
     longestStreak: 21,

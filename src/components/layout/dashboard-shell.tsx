@@ -1,16 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
   ChartNoAxesCombined,
   Flag,
-  LayoutDashboard,
+  Home,
   LogOut,
-  Menu,
+  MoreHorizontal,
   Settings,
   Store,
+  Swords,
   Target,
   Trophy,
   Users,
@@ -18,43 +20,53 @@ import {
   X,
 } from "lucide-react";
 import { Brand } from "@/components/layout/brand";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Coin, Flame } from "@/components/ui/coin";
+import { cn, formatCurrency } from "@/lib/utils";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { useAuthStore } from "@/store/auth-store";
-import { useUiStore } from "@/store/ui-store";
 import type { UserRole } from "@/types";
 
-type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }> };
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
 
 const navByRole: Record<UserRole, NavItem[]> = {
   user: [
-    { href: "/user", label: "Overview", icon: LayoutDashboard },
-    { href: "/user/tasks", label: "Tasks", icon: Target },
-    { href: "/user/withdraw", label: "Withdraw", icon: Wallet },
-    { href: "/user/referrals", label: "Referrals", icon: Users },
-    { href: "/user/challenges", label: "Challenges", icon: Trophy },
-    { href: "/user/marketplace", label: "Marketplace", icon: Store },
-    { href: "/user/notifications", label: "Notifications", icon: Bell },
-    { href: "/user/settings", label: "Settings", icon: Settings },
+    { href: "/user", label: "Home", icon: Home },
+    { href: "/user/tasks", label: "Quests", icon: Target },
+    { href: "/user/challenges", label: "Races", icon: Swords },
+    { href: "/user/withdraw", label: "Wallet", icon: Wallet },
+    { href: "/user/referrals", label: "Squad", icon: Users },
+    { href: "/user/marketplace", label: "Market", icon: Store },
+    { href: "/leaderboards", label: "Ranks", icon: Trophy },
+    { href: "/user/notifications", label: "Alerts", icon: Bell },
+    { href: "/user/settings", label: "Profile", icon: Settings },
   ],
   advertiser: [
-    { href: "/advertiser", label: "Overview", icon: LayoutDashboard },
+    { href: "/advertiser", label: "Home", icon: Home },
     { href: "/advertiser/campaigns", label: "Campaigns", icon: Flag },
     { href: "/advertiser/credits", label: "Credits", icon: Wallet },
-    { href: "/advertiser/analytics", label: "Analytics", icon: ChartNoAxesCombined },
+    { href: "/advertiser/analytics", label: "Stats", icon: ChartNoAxesCombined },
     { href: "/advertiser/settings", label: "Settings", icon: Settings },
   ],
   admin: [
-    { href: "/admin", label: "Overview", icon: LayoutDashboard },
-    { href: "/admin/users", label: "Users", icon: Users },
-    { href: "/admin/tasks", label: "Task review", icon: Target },
-    { href: "/admin/withdrawals", label: "Withdrawals", icon: Wallet },
-    { href: "/admin/challenges", label: "Challenges", icon: Trophy },
-    { href: "/admin/analytics", label: "Analytics", icon: ChartNoAxesCombined },
+    { href: "/admin", label: "Home", icon: Home },
+    { href: "/admin/users", label: "Players", icon: Users },
+    { href: "/admin/tasks", label: "Reviews", icon: Target },
+    { href: "/admin/withdrawals", label: "Payouts", icon: Wallet },
+    { href: "/admin/challenges", label: "Races", icon: Trophy },
+    { href: "/admin/analytics", label: "Stats", icon: ChartNoAxesCombined },
     { href: "/admin/settings", label: "Settings", icon: Settings },
   ],
 };
+
+const BOTTOM_COUNT = 4;
+
+function isActive(pathname: string, href: string, root: string) {
+  return pathname === href || (href !== root && pathname.startsWith(href));
+}
 
 export function DashboardShell({
   role,
@@ -69,115 +81,230 @@ export function DashboardShell({
   const router = useRouter();
   const { user, ready } = useAuthGuard([role]);
   const logout = useAuthStore((s) => s.logout);
-  const { sidebarOpen, setSidebarOpen, toggleSidebar } = useUiStore();
+  const [moreOpen, setMoreOpen] = useState(false);
   const items = navByRole[role];
+  const root = items[0].href;
+  const bottom = items.slice(0, BOTTOM_COUNT);
+  const overflow = items.slice(BOTTOM_COUNT);
 
   if (!ready || !user) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[#070d18] text-slate-300">
-        Loading dashboard…
+      <div className="grid min-h-dvh place-items-center bg-ink-950">
+        <div className="text-center">
+          <Coin size={56} className="mx-auto animate-bob" />
+          <p className="mt-3 font-display text-xl text-slate-300">Loading your game…</p>
+        </div>
       </div>
     );
   }
 
+  const signOut = async () => {
+    await logout();
+    router.push("/");
+  };
+
+  const initial = (user.displayName || "P").charAt(0).toUpperCase();
+
   return (
-    <div className="min-h-screen bg-[#070d18] text-slate-100">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(45,212,191,0.12),_transparent_45%),radial-gradient(ellipse_at_bottom_right,_rgba(14,165,233,0.1),_transparent_40%)]" />
-      <div className="relative mx-auto flex min-h-screen max-w-[1400px]">
-        <aside
-          className={cn(
-            "fixed inset-y-0 left-0 z-50 w-72 border-r border-white/10 bg-[#0a1322]/95 p-4 backdrop-blur-xl transition md:static md:translate-x-0",
-            sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
-          )}
-        >
-          <div className="mb-8 flex items-center justify-between">
-            <Brand href={items[0].href} size="sm" />
-            <button
-              className="rounded-lg p-2 text-slate-400 hover:bg-white/5 md:hidden"
-              onClick={() => setSidebarOpen(false)}
-              aria-label="Close menu"
-            >
-              <X className="h-5 w-5" />
-            </button>
+    <div className="min-h-dvh bg-ink-950 text-slate-100">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r-2 border-ink-700 bg-ink-900 p-4 lg:flex">
+        <Brand href={root} size="sm" className="mb-6 px-1" />
+        <nav className="flex-1 space-y-1.5 overflow-y-auto">
+          {items.map((item) => {
+            const active = isActive(pathname, item.href, root);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-2xl px-3.5 py-3 font-display text-lg transition",
+                  active
+                    ? "bg-coin text-ink-950 shadow-[0_3px_0_0_var(--color-coin-deep)]"
+                    : "text-slate-300 hover:bg-ink-800 hover:text-white",
+                )}
+              >
+                <Icon className="h-5 w-5" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="mt-4 flex items-center gap-3 rounded-2xl border-2 border-ink-700 bg-ink-800 p-3">
+          <Avatar url={user.photoURL} initial={initial} />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-extrabold text-white">{user.displayName}</p>
+            <p className="truncate text-xs text-slate-400">{user.email}</p>
           </div>
-          <nav className="space-y-1">
-            {items.map((item) => {
-              const active =
-                pathname === item.href ||
-                (item.href !== `/${role === "user" ? "user" : role}` &&
-                  pathname.startsWith(item.href));
-              const Icon = item.icon;
-              return (
+          <button
+            onClick={signOut}
+            className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 hover:bg-ink-700 hover:text-white"
+            aria-label="Sign out"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </div>
+      </aside>
+
+      <div className="lg:pl-64">
+        <header className="sticky top-0 z-20 border-b-2 border-ink-700 bg-ink-950">
+          <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-3 px-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="lg:hidden">
+                <Avatar url={user.photoURL} initial={initial} />
+              </span>
+              <h1 className="truncate font-display text-2xl text-white">{title}</h1>
+            </div>
+            {role === "user" ? (
+              <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                <Chip className="hidden sm:inline-flex">
+                  <span className="rounded-md bg-sky px-1.5 text-xs text-ink-950">
+                    LV {user.gamification.level}
+                  </span>
+                </Chip>
+                <Chip>
+                  <Flame size={18} />
+                  <span>{user.gamification.streakDays}</span>
+                </Chip>
+                <Chip className="text-coin">
+                  <Coin size={18} />
+                  <span>{formatCurrency(user.wallet.balance)}</span>
+                </Chip>
+              </div>
+            ) : (
+              <span className="rounded-full bg-ink-800 px-3 py-1 text-xs font-extrabold uppercase text-slate-300">
+                {role}
+              </span>
+            )}
+          </div>
+        </header>
+
+        <main className="mx-auto max-w-5xl px-4 pb-28 pt-5 lg:pb-10">{children}</main>
+      </div>
+
+      <nav
+        className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t-2 border-ink-700 bg-ink-900 lg:hidden"
+        aria-label="Primary"
+      >
+        <ul className="mx-auto grid max-w-lg grid-cols-5">
+          {bottom.map((item) => {
+            const active = isActive(pathname, item.href, root);
+            const Icon = item.icon;
+            return (
+              <li key={item.href}>
                 <Link
-                  key={item.href}
                   href={item.href}
-                  onClick={() => setSidebarOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition",
-                    active
-                      ? "bg-teal-400/15 text-teal-200"
-                      : "text-slate-400 hover:bg-white/5 hover:text-white",
+                    "flex flex-col items-center gap-0.5 py-2 text-[11px] font-extrabold",
+                    active ? "text-coin" : "text-slate-400",
                   )}
                 >
-                  <Icon className="h-4 w-4" />
+                  <span
+                    className={cn(
+                      "grid h-8 w-12 place-items-center rounded-xl transition",
+                      active && "bg-coin/15",
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </span>
                   {item.label}
                 </Link>
-              );
-            })}
-          </nav>
-          <div className="absolute bottom-4 left-4 right-4">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-              <p className="text-sm font-medium text-white">{user.displayName}</p>
-              <p className="text-xs text-slate-400">{user.email}</p>
-              <Button
-                variant="ghost"
-                className="mt-2 w-full justify-start px-2"
-                onClick={async () => {
-                  await logout();
-                  router.push("/login");
-                }}
-              >
-                <LogOut className="h-4 w-4" />
-                Sign out
-              </Button>
-            </div>
-          </div>
-        </aside>
+              </li>
+            );
+          })}
+          <li>
+            <button
+              onClick={() => setMoreOpen(true)}
+              className="flex w-full flex-col items-center gap-0.5 py-2 text-[11px] font-extrabold text-slate-400"
+            >
+              <span className="grid h-8 w-12 place-items-center">
+                <MoreHorizontal className="h-5 w-5" />
+              </span>
+              More
+            </button>
+          </li>
+        </ul>
+      </nav>
 
-        {sidebarOpen ? (
+      {moreOpen ? (
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
           <button
-            className="fixed inset-0 z-40 bg-black/50 md:hidden"
-            onClick={() => setSidebarOpen(false)}
-            aria-label="Close overlay"
+            className="absolute inset-0 bg-black/70"
+            onClick={() => setMoreOpen(false)}
+            aria-label="Close menu"
           />
-        ) : null}
-
-        <main className="relative flex-1 px-4 py-4 md:px-8 md:py-6">
-          <div className="mb-6 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
+          <div className="pb-safe absolute inset-x-0 bottom-0 rounded-t-3xl border-t-2 border-ink-600 bg-ink-900 p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="font-display text-2xl text-white">More</p>
               <button
-                className="rounded-xl border border-white/10 p-2 text-slate-300 md:hidden"
-                onClick={toggleSidebar}
-                aria-label="Open menu"
+                onClick={() => setMoreOpen(false)}
+                className="grid h-10 w-10 place-items-center rounded-xl bg-ink-800 text-white"
+                aria-label="Close"
               >
-                <Menu className="h-5 w-5" />
+                <X className="h-5 w-5" />
               </button>
-              <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
-                  {role} dashboard
-                </p>
-                <h1 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-white">
-                  {title}
-                </h1>
-              </div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">
-              Demo mode · scalable Firebase-ready
+            <div className="grid grid-cols-3 gap-3">
+              {overflow.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMoreOpen(false)}
+                    className="flex flex-col items-center gap-2 rounded-2xl border-2 border-ink-700 bg-ink-800 px-2 py-4 text-sm font-extrabold text-white active:translate-y-0.5"
+                  >
+                    <Icon className="h-6 w-6 text-coin" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+              <button
+                onClick={signOut}
+                className="flex flex-col items-center gap-2 rounded-2xl border-2 border-coral/40 bg-coral/10 px-2 py-4 text-sm font-extrabold text-coral"
+              >
+                <LogOut className="h-6 w-6" />
+                Sign out
+              </button>
             </div>
           </div>
-          {children}
-        </main>
-      </div>
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+function Chip({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex h-9 items-center gap-1.5 rounded-full border-2 border-ink-700 bg-ink-800 px-2.5 font-display text-sm text-white",
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function Avatar({ url, initial }: { url?: string; initial: string }) {
+  return url ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={url}
+      alt=""
+      referrerPolicy="no-referrer"
+      className="h-10 w-10 shrink-0 rounded-full border-2 border-coin object-cover"
+    />
+  ) : (
+    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-ink-950 bg-sky font-display text-lg text-ink-950">
+      {initial}
+    </span>
   );
 }

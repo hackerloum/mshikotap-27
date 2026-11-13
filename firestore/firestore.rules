@@ -23,8 +23,12 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isSelf(userId) || isAdmin();
-      allow create: if isSelf(userId);
-      allow update: if isSelf(userId) || isAdmin();
+      // Profiles are created and rewarded by server routes (Admin SDK).
+      // Players may only edit cosmetic fields on their own profile.
+      allow create: if false;
+      allow update: if (isSelf(userId) &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['displayName', 'phone', 'photoURL', 'updatedAt'])) || isAdmin();
       allow delete: if isAdmin();
     }
 
@@ -35,13 +39,15 @@ service cloud.firestore {
 
     match /taskSubmissions/{submissionId} {
       allow read: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'submitted';
       allow update: if isAdmin();
     }
 
     match /withdrawals/{withdrawalId} {
       allow read: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending';
       allow update: if isAdmin();
     }
 
@@ -52,13 +58,15 @@ service cloud.firestore {
     }
 
     match /notifications/{notificationId} {
-      allow read, update: if signedIn() && resource.data.userId == request.auth.uid;
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow update: if signedIn() && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
       allow create: if isAdmin();
     }
 
     match /activityLogs/{logId} {
       allow read: if isAdmin();
-      allow create: if signedIn();
+      allow create: if signedIn() && request.resource.data.actorId == request.auth.uid;
     }
 
     match /challenges/{challengeId} {

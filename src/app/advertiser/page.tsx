@@ -7,6 +7,8 @@ import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ProgressBar } from "@/components/ui/progress";
 import { StatCard } from "@/components/ui/stat";
 import { campaignsService } from "@/services/campaigns.service";
 import { useAuthStore } from "@/store/auth-store";
@@ -38,57 +40,83 @@ export default function AdvertiserOverviewPage() {
 
   return (
     <DashboardShell role="advertiser" title="Overview">
-      <div className="space-y-6 animate-rise">
+      <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label="Credits"
             value={formatNumber(user?.advertiserCredits ?? 0)}
-            hint="Available campaign budget"
+            hint="Available to spend"
             icon={<Wallet className="h-5 w-5" />}
+            tone="coin"
           />
           <StatCard
             label="Active campaigns"
             value={formatNumber(active)}
             hint={`${campaigns.length} total`}
             icon={<Flag className="h-5 w-5" />}
+            tone="mint"
           />
-          <StatCard label="Credits spent" value={formatNumber(spent)} />
-          <StatCard label="Completions" value={formatNumber(completions)} />
+          <StatCard label="Credits spent" value={formatNumber(spent)} tone="flame" />
+          <StatCard label="Completions" value={formatNumber(completions)} tone="sky" />
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="grid gap-3 sm:flex sm:flex-wrap">
           <Link href="/advertiser/campaigns">
-            <Button>Manage campaigns</Button>
+            <Button className="w-full sm:w-auto">Manage campaigns</Button>
           </Link>
           <Link href="/advertiser/credits">
-            <Button variant="secondary">Buy credits</Button>
+            <Button variant="secondary" className="w-full sm:w-auto">
+              Buy credits
+            </Button>
           </Link>
           <Link href="/advertiser/analytics">
-            <Button variant="outline">View analytics</Button>
+            <Button variant="outline" className="w-full sm:w-auto">
+              View stats
+            </Button>
           </Link>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Campaign summary</CardTitle>
+            <CardTitle>Your campaigns</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {campaigns.map((c) => (
-              <div
-                key={c.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/5 bg-white/[0.02] px-3 py-3"
-              >
-                <div>
-                  <p className="text-sm font-medium text-white">{c.title}</p>
-                  <p className="text-xs text-slate-500">
-                    {c.type.replaceAll("_", " ")} · {formatNumber(c.completions)}{" "}
-                    actions · {formatNumber(c.spentCredits)}/
-                    {formatNumber(c.budgetCredits)} credits
+            {campaigns.length === 0 ? (
+              <EmptyState
+                title="No campaigns yet"
+                description="Start one from the campaigns page."
+              />
+            ) : (
+              campaigns.map((c) => (
+                <div
+                  key={c.id}
+                  className="space-y-2 rounded-2xl border-2 border-ink-700 bg-ink-800 p-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate font-display text-lg text-white">
+                        {c.title}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {c.type.replaceAll("_", " ")} · {formatNumber(c.completions)}{" "}
+                        actions
+                      </p>
+                    </div>
+                    <Badge tone={statusTone[c.status]}>{c.status}</Badge>
+                  </div>
+                  <ProgressBar
+                    value={c.spentCredits}
+                    max={Math.max(1, c.budgetCredits)}
+                    tone="coin"
+                    label={`${c.title} budget used`}
+                  />
+                  <p className="text-xs text-slate-400">
+                    {formatNumber(c.spentCredits)} / {formatNumber(c.budgetCredits)}{" "}
+                    credits
                   </p>
                 </div>
-                <Badge tone={statusTone[c.status]}>{c.status}</Badge>
-              </div>
-            ))}
+              ))
+            )}
           </CardContent>
         </Card>
       </div>

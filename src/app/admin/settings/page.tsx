@@ -9,9 +9,9 @@ import { siteConfig } from "@/config/site";
 export default function AdminSettingsPage() {
   return (
     <DashboardShell role="admin" title="Platform settings">
-      <div className="space-y-6 animate-rise">
+      <div className="space-y-6">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle>General</CardTitle>
             <Badge tone={siteConfig.demoMode ? "warning" : "success"}>
               {siteConfig.demoMode ? "demo mode" : "live"}
@@ -55,7 +55,7 @@ export default function AdminSettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Integrations (placeholders)</CardTitle>
+            <CardTitle>Integrations</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
             {[
@@ -68,9 +68,9 @@ export default function AdminSettingsPage() {
             ].map((item) => (
               <div
                 key={item}
-                className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-3 py-3 text-sm text-slate-400"
+                className="rounded-2xl border-2 border-dashed border-ink-600 px-3 py-3 text-sm font-semibold text-slate-400"
               >
-                {item} · coming later
+                {item} · coming soon
               </div>
             ))}
           </CardContent>

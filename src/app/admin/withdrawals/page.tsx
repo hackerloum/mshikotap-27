@@ -52,15 +52,15 @@ export default function AdminWithdrawalsPage() {
 
   return (
     <DashboardShell role="admin" title="Withdrawals">
-      <div className="space-y-6 animate-rise">
+      <div className="space-y-6">
         {actionable.length === 0 ? (
-          <EmptyState title="No pending withdrawals" />
+          <EmptyState title="No pending withdrawals" description="New payout requests show up here." />
         ) : (
           <div className="grid gap-4">
             {actionable.map((w) => (
               <Card key={w.id}>
                 <CardHeader className="flex flex-row items-start justify-between gap-3">
-                  <div>
+                  <div className="min-w-0">
                     <CardTitle>
                       {formatCurrency(w.amount)} → {formatCurrency(w.netAmount)}
                     </CardTitle>
@@ -69,22 +69,29 @@ export default function AdminWithdrawalsPage() {
                       {formatCurrency(w.fee)} · {relativeTime(w.createdAt)}
                     </p>
                   </div>
-                  <Badge tone={statusTone[w.status]}>{w.status}</Badge>
+                  <Badge tone={statusTone[w.status]}>{w.status.replaceAll("_", " ")}</Badge>
                 </CardHeader>
-                <CardContent className="flex flex-wrap gap-2">
-                  <Button size="sm" onClick={() => void update(w.id, "approved")}>
+                <CardContent className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                  <Button
+                    size="sm"
+                    variant="mint"
+                    className="min-h-11"
+                    onClick={() => void update(w.id, "approved")}
+                  >
                     Approve
                   </Button>
                   <Button
                     size="sm"
                     variant="secondary"
+                    className="min-h-11"
                     onClick={() => void update(w.id, "completed")}
                   >
-                    Mark completed
+                    Mark paid
                   </Button>
                   <Button
                     size="sm"
                     variant="danger"
+                    className="col-span-2 min-h-11 sm:col-span-1"
                     onClick={() => void update(w.id, "rejected")}
                   >
                     Reject
@@ -97,18 +104,18 @@ export default function AdminWithdrawalsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Full history</CardTitle>
+            <CardTitle>History</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {items.map((w) => (
               <div
                 key={w.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/5 px-3 py-2"
+                className="flex items-center justify-between gap-2 rounded-2xl border-2 border-ink-700 bg-ink-800 px-3 py-2.5"
               >
-                <span className="text-sm text-slate-300">
+                <span className="min-w-0 truncate text-sm font-bold text-slate-200">
                   {w.id} · {formatCurrency(w.amount)} · {w.destination}
                 </span>
-                <Badge tone={statusTone[w.status]}>{w.status}</Badge>
+                <Badge tone={statusTone[w.status]}>{w.status.replaceAll("_", " ")}</Badge>
               </div>
             ))}
           </CardContent>

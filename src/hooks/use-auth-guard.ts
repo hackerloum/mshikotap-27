@@ -8,11 +8,8 @@ import type { UserRole } from "@/types";
 
 export function useAuthGuard(allowed?: UserRole[]) {
   const router = useRouter();
-  const { user, hydrated, hydrate } = useAuthStore();
-
-  useEffect(() => {
-    hydrate();
-  }, [hydrate]);
+  const user = useAuthStore((s) => s.user);
+  const hydrated = useAuthStore((s) => s.hydrated);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -20,7 +17,7 @@ export function useAuthGuard(allowed?: UserRole[]) {
       router.replace("/login");
       return;
     }
-    if (allowed && !allowed.includes(user.role)) {
+    if (allowed && user.role !== "admin" && !allowed.includes(user.role)) {
       router.replace(roleHome[user.role]);
     }
   }, [allowed, hydrated, router, user]);

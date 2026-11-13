@@ -40,52 +40,56 @@ export default function AdminOverviewPage() {
 
   return (
     <DashboardShell role="admin" title="Overview">
-      <div className="space-y-6 animate-rise">
+      <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label="Platform users"
             value={formatNumber(12840)}
             hint="Demo KPI"
             icon={<Users className="h-5 w-5" />}
+            tone="sky"
           />
           <StatCard
-            label="14d activity $"
+            label="14-day volume"
             value={formatCurrency(revenue)}
             hint="Task + fee volume"
             icon={<Wallet className="h-5 w-5" />}
+            tone="mint"
           />
           <StatCard
             label="Pending reviews"
             value={formatNumber(pendingSubs.length)}
             icon={<Target className="h-5 w-5" />}
+            tone="flame"
           />
           <StatCard
             label="Pending payouts"
             value={formatNumber(pendingWd.length)}
             icon={<Flag className="h-5 w-5" />}
+            tone="coin"
           />
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row items-center justify-between gap-3">
               <CardTitle>Pending task reviews</CardTitle>
               <Link href="/admin/tasks">
-                <Button size="sm" variant="secondary">
+                <Button size="sm" variant="secondary" className="min-h-11">
                   Open queue
                 </Button>
               </Link>
             </CardHeader>
             <CardContent className="space-y-2">
               {pendingSubs.length === 0 ? (
-                <p className="text-sm text-slate-400">Queue clear.</p>
+                <p className="text-sm text-slate-400">Nothing to review.</p>
               ) : (
                 pendingSubs.slice(0, 5).map((s) => (
                   <div
                     key={s.id}
-                    className="flex items-center justify-between rounded-xl border border-white/5 px-3 py-2"
+                    className="flex items-center justify-between gap-2 rounded-2xl border-2 border-ink-700 bg-ink-800 px-3 py-2.5"
                   >
-                    <span className="text-sm text-white">{s.id}</span>
+                    <span className="min-w-0 truncate text-sm font-bold text-white">{s.id}</span>
                     <Badge tone="warning">{s.status}</Badge>
                   </div>
                 ))
@@ -94,10 +98,10 @@ export default function AdminOverviewPage() {
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row items-center justify-between gap-3">
               <CardTitle>Pending withdrawals</CardTitle>
               <Link href="/admin/withdrawals">
-                <Button size="sm" variant="secondary">
+                <Button size="sm" variant="secondary" className="min-h-11">
                   Open queue
                 </Button>
               </Link>
@@ -109,12 +113,12 @@ export default function AdminOverviewPage() {
                 pendingWd.slice(0, 5).map((w) => (
                   <div
                     key={w.id}
-                    className="flex items-center justify-between rounded-xl border border-white/5 px-3 py-2"
+                    className="flex items-center justify-between gap-2 rounded-2xl border-2 border-ink-700 bg-ink-800 px-3 py-2.5"
                   >
-                    <span className="text-sm text-white">
+                    <span className="min-w-0 truncate text-sm font-bold text-white">
                       {formatCurrency(w.amount)} · {w.destination}
                     </span>
-                    <Badge tone="info">{w.status}</Badge>
+                    <Badge tone="warning">{w.status.replaceAll("_", " ")}</Badge>
                   </div>
                 ))
               )}
@@ -124,12 +128,12 @@ export default function AdminOverviewPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Demo accounts</CardTitle>
+            <CardTitle>Demo logins</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-2 text-sm text-slate-300">
-            <Badge>{demoUser.email}</Badge>
-            <Badge tone="info">{demoAdvertiser.email}</Badge>
-            <Badge tone="brand">admin@mshikotap.com</Badge>
+          <CardContent className="flex flex-wrap gap-2">
+            <Badge className="normal-case">{demoUser.email}</Badge>
+            <Badge tone="info" className="normal-case">{demoAdvertiser.email}</Badge>
+            <Badge tone="brand" className="normal-case">admin@mshikotap.com</Badge>
           </CardContent>
         </Card>
       </div>
