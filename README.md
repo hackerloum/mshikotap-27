@@ -48,12 +48,17 @@ src/
   data/          # demo fixtures
 ```
 
-## Firebase
+## Vercel + Firebase hosting
 
-1. Create a Firebase project
-2. Copy web config into `.env.local` (see `.env.example`)
-3. Set `NEXT_PUBLIC_DEMO_MODE=false`
-4. Deploy rules: `firebase deploy --only firestore:rules,storage`
+Full guide: [`docs/vercel-firebase-setup.md`](docs/vercel-firebase-setup.md)
+
+1. Import this repo in [Vercel](https://vercel.com/new) (Next.js)
+2. Add env vars from `.env.example` (Firebase web config + Admin service account)
+3. Set `NEXT_PUBLIC_DEMO_MODE=false` for Production/Preview
+4. Deploy and add your `*.vercel.app` domain in Firebase Auth → Authorized domains
+5. Deploy rules: `npx -y firebase-tools@latest deploy --only firestore:rules,storage`
+
+Verify with `/api/health` (`firebaseConfigured` + `firebaseAdminConfigured` should be `true`).
 
 Security rules live in `firestore/`.
 
@@ -63,6 +68,7 @@ Security rules live in `firestore/`.
 - `npm run build` — production build
 - `npm run start` — start production server
 - `npm run lint` — ESLint
+- `npm run env:check` — print which Firebase env keys are missing (no secrets shown)
 
 ## Phase roadmap
 
