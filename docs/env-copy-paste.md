@@ -38,6 +38,10 @@ Targets: **Production**, **Preview**, **Development** (unless noted).
 | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | from Firebase `projectId` | All | No |
 | `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | from Firebase `storageBucket` | All | No |
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | from Firebase `messagingSenderId` | All | No |
+| `SNIPPE_API_KEY` | Snippe dashboard API key (starts `snp_`) | Production | Yes |
+| `SNIPPE_WEBHOOK_SECRET` | Snippe dashboard, Settings, Webhook Secret (starts `whsec_`) | Production | Yes |
+| `AI_GATEWAY_API_KEY` | Vercel, AI Gateway, API Keys | Production | Yes |
+| `CRON_SECRET` | any long random string | Production | Yes |
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | from Firebase `appId` | All | No |
 | `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | optional `measurementId` | All | No |
 | `NEXT_PUBLIC_FIREBASE_VAPID_KEY` | optional FCM key | All | No |
@@ -84,3 +88,8 @@ FIREBASE_ADMIN_PROJECT_ID
 FIREBASE_ADMIN_CLIENT_EMAIL
 FIREBASE_ADMIN_PRIVATE_KEY
 ```
+
+
+## Snippe webhook
+
+In the Snippe dashboard add the webhook URL `https://www.mshikotap.co.tz/api/webhooks/snippe` for the events `payment.completed`, `payment.failed`, `payment.voided` and `payment.expired`. Set `NEXT_PUBLIC_APP_URL` to `https://www.mshikotap.co.tz` so Snippe returns players to the right place.

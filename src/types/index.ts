@@ -42,6 +42,7 @@ export type WithdrawalStatus =
   | "cancelled";
 
 export type CampaignType =
+  | TaskCategory
   | "instagram_follow"
   | "tiktok_follow"
   | "youtube_subscribe"
@@ -94,12 +95,35 @@ export interface UserProfile {
   wallet: Wallet;
   gamification: GamificationProfile;
   advertiserCredits?: number;
+  premiumUntil?: string;
   isBanned: boolean;
   banReason?: string;
   deviceIds: string[];
   createdAt: string;
   updatedAt: string;
 }
+
+export type QuestionKind = "choice" | "multi" | "text" | "rating";
+
+export interface QuestQuestion {
+  id: string;
+  text: string;
+  kind: QuestionKind;
+  options?: string[];
+  correct?: number[];
+}
+
+export interface QuestSpec {
+  platform?: string;
+  action?: string;
+  appName?: string;
+  watchSeconds?: number;
+  questions?: QuestQuestion[];
+  passMark?: number;
+  phrase?: string;
+}
+
+export type QuestAnswers = Record<string, string | number | string[]>;
 
 export interface Task {
   id: string;
@@ -118,6 +142,8 @@ export interface Task {
   completions: number;
   advertiserId?: string;
   campaignId?: string;
+  createdBy?: "admin" | "ai";
+  spec?: QuestSpec;
   targetUrl?: string;
   createdAt: string;
   expiresAt?: string;
@@ -134,6 +160,9 @@ export interface TaskSubmission {
   status: Extract<TaskStatus, "submitted" | "approved" | "rejected">;
   proofUrl?: string;
   notes?: string;
+  answers?: QuestAnswers;
+  score?: number;
+  autoChecked?: boolean;
   reviewedBy?: string;
   rejectionReason?: string;
   submittedAt: string;
@@ -194,9 +223,12 @@ export interface Campaign {
   budgetCredits: number;
   spentCredits: number;
   costPerAction: number;
+  playerReward?: number;
   targetUrl?: string;
   instructions: string;
   completions: number;
+  refundedCredits?: number;
+  statusReason?: string;
   createdAt: string;
 }
 
@@ -268,3 +300,19 @@ export interface ApiFailure {
 }
 
 export type ApiResult<T> = ApiSuccess<T> | ApiFailure;
+
+export type PaymentKind = "topup" | "premium";
+export type PaymentStatus = "pending" | "completed" | "failed" | "expired" | "voided" | "mismatch";
+
+export interface PaymentRecord {
+  id: string;
+  uid: string;
+  email?: string;
+  kind: PaymentKind;
+  amount: number;
+  days?: number;
+  status: PaymentStatus;
+  checkoutUrl?: string;
+  createdAt: string;
+  completedAt?: string;
+}

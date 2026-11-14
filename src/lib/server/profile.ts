@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import type { DecodedIdToken } from "firebase-admin/auth";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { isAdminEmail } from "@/lib/server/admins";
+import { isPremium } from "@/lib/server/money";
 import type { UserProfile } from "@/types";
 
 const USERS = "users";
@@ -89,6 +90,10 @@ export async function ensureProfile(
     } else if (!shouldBeAdmin && stored.role === "admin") {
       stored.role = "user";
       await ref.update({ role: "user" });
+    }
+    if (stored.subscription === "premium" && !isPremium(stored)) {
+      stored.subscription = "free";
+      await ref.update({ subscription: "free" });
     }
     if (!stored.photoURL && decoded.picture) {
       stored.photoURL = decoded.picture;

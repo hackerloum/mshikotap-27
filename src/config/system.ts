@@ -17,11 +17,36 @@ export type SystemSettings = {
   holdRiskScore: number;
   autoBanRiskScore: number;
 
+  premiumPrice: number;
+  premiumDays: number;
+  premiumMultiplier: number;
+  playerSharePercent: number;
+  minTopUp: number;
+  maxTopUp: number;
+  minCostPerAction: number;
+  aiMaxAutoApproveReward: number;
+  aiMinOpenQuests: number;
+  aiDailyQuestBudget: number;
+
   signupsOpen: boolean;
   questsOpen: boolean;
   withdrawalsOpen: boolean;
+  requirePremiumToCashOut: boolean;
+  campaignsNeedApproval: boolean;
+  aiAutopilot: boolean;
   announcement: string;
 };
+
+export const booleanKeys = [
+  "signupsOpen",
+  "questsOpen",
+  "withdrawalsOpen",
+  "requirePremiumToCashOut",
+  "campaignsNeedApproval",
+  "aiAutopilot",
+] as const;
+
+export type BooleanKey = (typeof booleanKeys)[number];
 
 export const defaultSettings: SystemSettings = {
   minWithdrawal: 5000,
@@ -42,16 +67,30 @@ export const defaultSettings: SystemSettings = {
   holdRiskScore: 60,
   autoBanRiskScore: 120,
 
+  premiumPrice: 10000,
+  premiumDays: 30,
+  premiumMultiplier: 2,
+  playerSharePercent: 60,
+  minTopUp: 5000,
+  maxTopUp: 2_000_000,
+  minCostPerAction: 500,
+  aiMaxAutoApproveReward: 2000,
+  aiMinOpenQuests: 5,
+  aiDailyQuestBudget: 20000,
+
   signupsOpen: true,
   questsOpen: true,
   withdrawalsOpen: true,
+  requirePremiumToCashOut: false,
+  campaignsNeedApproval: true,
+  aiAutopilot: false,
   announcement: "",
 };
 
 type NumberRule = { min: number; max: number; integer?: boolean };
 
 export const numberRules: Record<
-  Exclude<keyof SystemSettings, "signupsOpen" | "questsOpen" | "withdrawalsOpen" | "announcement">,
+  Exclude<keyof SystemSettings, BooleanKey | "announcement">,
   NumberRule
 > = {
   minWithdrawal: { min: 1000, max: 5_000_000, integer: true },
@@ -69,6 +108,16 @@ export const numberRules: Record<
   minApprovedForWithdrawal: { min: 0, max: 500, integer: true },
   holdRiskScore: { min: 10, max: 1000, integer: true },
   autoBanRiskScore: { min: 20, max: 2000, integer: true },
+  premiumPrice: { min: 1000, max: 1_000_000, integer: true },
+  premiumDays: { min: 1, max: 365, integer: true },
+  premiumMultiplier: { min: 1, max: 5 },
+  playerSharePercent: { min: 10, max: 95 },
+  minTopUp: { min: 1000, max: 1_000_000, integer: true },
+  maxTopUp: { min: 10_000, max: 20_000_000, integer: true },
+  minCostPerAction: { min: 500, max: 100_000, integer: true },
+  aiMaxAutoApproveReward: { min: 0, max: 100_000, integer: true },
+  aiMinOpenQuests: { min: 0, max: 100, integer: true },
+  aiDailyQuestBudget: { min: 0, max: 5_000_000, integer: true },
 };
 
 export type PublicConfig = Pick<
@@ -81,6 +130,14 @@ export type PublicConfig = Pick<
   | "signupsOpen"
   | "questsOpen"
   | "withdrawalsOpen"
+  | "requirePremiumToCashOut"
+  | "premiumPrice"
+  | "premiumDays"
+  | "premiumMultiplier"
+  | "playerSharePercent"
+  | "minTopUp"
+  | "maxTopUp"
+  | "minCostPerAction"
   | "announcement"
 >;
 
@@ -94,6 +151,14 @@ export function toPublicConfig(s: SystemSettings): PublicConfig {
     signupsOpen: s.signupsOpen,
     questsOpen: s.questsOpen,
     withdrawalsOpen: s.withdrawalsOpen,
+    requirePremiumToCashOut: s.requirePremiumToCashOut,
+    premiumPrice: s.premiumPrice,
+    premiumDays: s.premiumDays,
+    premiumMultiplier: s.premiumMultiplier,
+    playerSharePercent: s.playerSharePercent,
+    minTopUp: s.minTopUp,
+    maxTopUp: s.maxTopUp,
+    minCostPerAction: s.minCostPerAction,
     announcement: s.announcement,
   };
 }

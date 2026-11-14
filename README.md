@@ -102,3 +102,26 @@ Sign in with the owner Google account.
 - **Quests**: publish quests with a minimum time and an end time, edit reward or player cap, close or reopen.
 - **Campaigns**: pause, resume or stop any advertiser campaign.
 - **Races**, **Stats**, **Audit log** (every admin action with who and when) and **Settings** (all numbers, switches and the announcement banner).
+
+## Payments, advertisers and Premium
+
+- Money comes in through Snippe (all mobile networks). Set `SNIPPE_API_KEY` and `SNIPPE_WEBHOOK_SECRET`, then add this webhook URL in the Snippe dashboard: `https://www.mshikotap.co.tz/api/webhooks/snippe`.
+- Advertisers top up their balance, then post quests. The full price is held when the quest is posted. Money that is not used is returned when the quest stops or is rejected.
+- Premium costs TSh 10,000 for 30 days (editable in Admin, Settings). Premium players get bigger daily bonuses and limits.
+- Every payment is confirmed twice: by the signed webhook and by a status check. Fulfilment is idempotent, so a payment is never credited twice.
+
+## Quest categories
+
+Each category shows its own fields (`src/config/quests.ts` is the single source of truth, used by the admin form, the advertiser form, the AI manager and the server checks):
+
+- Social media: network, action, profile or post link. Link must match the network.
+- YouTube / Watch a video: link and watch time.
+- Survey: your own questions (pick one, pick many, short answer, rating). Checked and paid automatically. Advertisers can see the answers.
+- Quiz: questions with one right answer and a pass mark. Three tries. Paid automatically.
+- Typing: players type a text exactly. Paste is blocked.
+- Install an app: store link and app name.
+- Other task: you write the steps, players send a screenshot.
+
+## AI manager
+
+Admin, AI Manager. Chat with the AI in plain words, or turn on autopilot for a daily run (cron at 05:00 UTC, `vercel.json`). It approves or rejects advertiser quests, checks proof screenshots with vision, and keeps quests stocked within a daily budget. It cannot move money, pay out, suspend players or change switches. Everything it does is in the audit log as "AI Manager". Needs `AI_GATEWAY_API_KEY` and `CRON_SECRET`.

@@ -8,11 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Textarea } from "@/components/ui/input";
-import { defaultSettings, type SystemSettings } from "@/config/system";
+import { booleanKeys, defaultSettings, type BooleanKey, type SystemSettings } from "@/config/system";
 import { siteConfig } from "@/config/site";
 import { adminService } from "@/services/admin.service";
 
-type NumKey = Exclude<keyof SystemSettings, "signupsOpen" | "questsOpen" | "withdrawalsOpen" | "announcement">;
+type NumKey = Exclude<keyof SystemSettings, BooleanKey | "announcement">;
 
 type Field = { key: NumKey; label: string; hint: string; step?: string };
 
@@ -49,6 +49,34 @@ const groups: Array<{ title: string; description: string; fields: Field[] }> = [
     ],
   },
   {
+    title: "Premium",
+    description: "What players pay for Premium and what it gives them.",
+    fields: [
+      { key: "premiumPrice", label: "Premium price (TSh)", hint: "Charged once per period through Snippe." },
+      { key: "premiumDays", label: "Premium length (days)", hint: "Renewing adds this many days." },
+      { key: "premiumMultiplier", label: "Premium boost (x)", hint: "Multiplies the daily bonus and daily limits.", step: "0.5" },
+    ],
+  },
+  {
+    title: "Advertisers",
+    description: "How advertiser money turns into your income.",
+    fields: [
+      { key: "playerSharePercent", label: "Player share (%)", hint: "Of what the advertiser pays per person. You keep the rest.", step: "1" },
+      { key: "minCostPerAction", label: "Min price per person (TSh)", hint: "Advertisers cannot go below this." },
+      { key: "minTopUp", label: "Min top-up (TSh)", hint: "Smallest amount an advertiser can add." },
+      { key: "maxTopUp", label: "Max top-up (TSh)", hint: "Largest single payment." },
+    ],
+  },
+  {
+    title: "AI manager",
+    description: "Limits for what the AI may do on its own.",
+    fields: [
+      { key: "aiMaxAutoApproveReward", label: "AI auto-approve limit (TSh)", hint: "AI only approves low-risk proofs up to this reward. 0 means never." },
+      { key: "aiMinOpenQuests", label: "Keep this many quests open", hint: "Autopilot posts new quests when fewer are open." },
+      { key: "aiDailyQuestBudget", label: "AI quest budget per day (TSh)", hint: "Most reward money the AI may commit to new quests each day. 0 stops it posting quests." },
+    ],
+  },
+  {
     title: "Risk scoring",
     description: "Every cheating signal adds risk points. Good approvals slowly remove them.",
     fields: [
@@ -61,14 +89,16 @@ const groups: Array<{ title: string; description: string; fields: Field[] }> = [
 export default function AdminSettingsPage() {
   const [saved, setSaved] = useState<SystemSettings | null>(null);
   const [draft, setDraft] = useState<Record<string, string>>({});
-  const [flags, setFlags] = useState({ signupsOpen: true, questsOpen: true, withdrawalsOpen: true });
+  const [flags, setFlags] = useState<Record<BooleanKey, boolean>>(
+    () => Object.fromEntries(booleanKeys.map((k) => [k, defaultSettings[k]])) as Record<BooleanKey, boolean>,
+  );
   const [announcement, setAnnouncement] = useState("");
   const [busy, setBusy] = useState(false);
 
   function hydrate(s: SystemSettings) {
     setSaved(s);
     setDraft(Object.fromEntries(groups.flatMap((g) => g.fields).map((f) => [f.key, String(s[f.key])])));
-    setFlags({ signupsOpen: s.signupsOpen, questsOpen: s.questsOpen, withdrawalsOpen: s.withdrawalsOpen });
+    setFlags(Object.fromEntries(booleanKeys.map((k) => [k, s[k]])) as Record<BooleanKey, boolean>);
     setAnnouncement(s.announcement);
   }
 
@@ -86,7 +116,7 @@ export default function AdminSettingsPage() {
       const value = Number(draft[f.key]);
       if (draft[f.key] !== "" && value !== saved[f.key]) out[f.key] = value;
     }
-    (Object.keys(flags) as Array<keyof typeof flags>).forEach((k) => {
+    booleanKeys.forEach((k) => {
       if (flags[k] !== saved[k]) out[k] = flags[k];
     });
     if (announcement.trim() !== saved.announcement) out.announcement = announcement;
@@ -122,10 +152,13 @@ export default function AdminSettingsPage() {
           <CardHeader>
             <CardTitle>Switches</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-3">
+          <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <Toggle label="New sign-ups" hint="Off blocks new accounts. Existing players keep playing." checked={flags.signupsOpen} onChange={(v) => setFlags({ ...flags, signupsOpen: v })} />
             <Toggle label="Quests" hint="Off pauses starting and sending quests." checked={flags.questsOpen} onChange={(v) => setFlags({ ...flags, questsOpen: v })} />
             <Toggle label="Cash outs" hint="Off pauses new payout requests." checked={flags.withdrawalsOpen} onChange={(v) => setFlags({ ...flags, withdrawalsOpen: v })} />
+            <Toggle label="Premium to cash out" hint="On: only Premium players can cash out." checked={flags.requirePremiumToCashOut} onChange={(v) => setFlags({ ...flags, requirePremiumToCashOut: v })} />
+            <Toggle label="Approve advertiser quests" hint="On: new advertiser quests wait for approval." checked={flags.campaignsNeedApproval} onChange={(v) => setFlags({ ...flags, campaignsNeedApproval: v })} />
+            <Toggle label="AI autopilot" hint="On: the AI reviews proofs and keeps quests stocked every day." checked={flags.aiAutopilot} onChange={(v) => setFlags({ ...flags, aiAutopilot: v })} />
           </CardContent>
         </Card>
 

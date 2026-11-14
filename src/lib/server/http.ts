@@ -37,6 +37,9 @@ export const col = {
   security: "userSecurity",
   flags: "fraudFlags",
   audit: "auditLogs",
+  payments: "payments",
+  money: "moneyLedger",
+  aiRuns: "aiRuns",
 } as const;
 
 export function db() {

@@ -1,3 +1,7 @@
+import { gradeAuto, stripAnswerKey } from "@/config/quests";
+import { riskLevel } from "@/config/system";
+import { premiumFactor } from "@/lib/server/money";
+import { reviewSubmission } from "@/lib/server/review";
 import { FieldValue } from "firebase-admin/firestore";
 import { col, dayKey, db, httpUrl, HttpError, optStr, readJson, requireSession, respond, rows, str } from "@/lib/server/http";
 import {
@@ -39,7 +43,8 @@ export async function GET(request: Request) {
         (t) =>
           !q || t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q),
       )
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map(stripAnswerKey);
   });
 }
 
@@ -47,7 +52,7 @@ export async function POST(request: Request) {
   return respond(async () => {
     const { uid, profile } = await requireSession(request);
     const settings = await getSettings();
-    const body = await readJson<{ taskId?: string; proofUrl?: string; notes?: string }>(request);
+    const body = await readJson<{ taskId?: string; proofUrl?: string; notes?: string; answers?: unknown; typed?: unknown }>(request);
     const taskId = str(body.taskId, "taskId", 120);
     const proofUrl = httpUrl(body.proofUrl, "Proof link");
     if (proofUrl && !proofUrl.startsWith("https://")) {
@@ -78,7 +83,8 @@ export async function POST(request: Request) {
       const task = { ...(taskSnap.data() as Task), id: taskId };
       assertAvailable(task, settings);
       if (subSnap.exists) throw new HttpError(409, "DUPLICATE", "You already sent this quest");
-      if (task.requiresScreenshot && !proofUrl) {
+      const auto = task.category === "survey" || task.category === "quiz" || task.category === "typing";
+      if (!auto && task.requiresScreenshot && !proofUrl) {
         throw new HttpError(400, "PROOF_REQUIRED", "Add a proof link for this quest");
       }
       if (!sessionSnap.exists) {
@@ -119,15 +125,47 @@ export async function POST(request: Request) {
       if (limit.lastAt && now.getTime() - new Date(limit.lastAt).getTime() < settings.minSecondsBetweenSubmissions * 1000) {
         return blocked(new HttpError(429, "SLOW_DOWN", "Slow down a little between quests."));
       }
-      if ((limit.submissions ?? 0) >= settings.maxSubmissionsPerDay) {
+      const factor = premiumFactor(profile, settings.premiumMultiplier);
+      const maxPerDay = Math.round(settings.maxSubmissionsPerDay * factor);
+      if ((limit.submissions ?? 0) >= maxPerDay) {
         return blocked(
           new HttpError(429, "DAILY_LIMIT", "You hit today's quest limit. Come back tomorrow."),
           2,
-          { kind: "rate_limited", severity: "low", detail: `Reached ${settings.maxSubmissionsPerDay} submissions in a day` },
+          { kind: "rate_limited", severity: "low", detail: `Reached ${maxPerDay} submissions in a day` },
         );
       }
-      if ((limit.reward ?? 0) + task.reward > settings.maxDailyQuestReward) {
+      if ((limit.reward ?? 0) + task.reward > Math.round(settings.maxDailyQuestReward * factor)) {
         return blocked(new HttpError(429, "DAILY_CAP", "You reached today's earning cap. Come back tomorrow."));
+      }
+
+      let graded: { answers?: Record<string, string | number | string[]>; score?: number } = {};
+      if (auto) {
+        const result = gradeAuto(task.category, task.spec, body);
+        if (!result.ok) {
+          if (!result.countsAsAttempt) return { blocked: new HttpError(422, "ANSWERS_INVALID", result.message) };
+          const attempts = ((sessionSnap.data() as { attempts?: number }).attempts ?? 0) + 1;
+          if (attempts < 3) {
+            tx.update(sessionRef, { attempts });
+            return { blocked: new HttpError(422, "QUIZ_FAILED", `${result.message} ${3 - attempts} ${3 - attempts === 1 ? "try" : "tries"} left.`) };
+          }
+          tx.create(subRef, {
+            taskId,
+            taskTitle: task.title,
+            reward: task.reward,
+            xpReward: 0,
+            userId: uid,
+            userName: profile.displayName,
+            status: "rejected",
+            submittedAt: stamp,
+            reviewedAt: stamp,
+            reviewedBy: "auto-check",
+            rejectionReason: "Did not pass the quiz in 3 tries",
+            autoChecked: true,
+          });
+          tx.delete(sessionRef);
+          return { blocked: new HttpError(409, "QUIZ_FAILED_FINAL", "You did not pass in 3 tries. This quest is now closed for you.") };
+        }
+        graded = result;
       }
 
       if (proofUrl && task.targetUrl) {
@@ -174,6 +212,9 @@ export async function POST(request: Request) {
         ...(fp.deviceHash ? { deviceHash: fp.deviceHash } : {}),
         ...(proofUrl ? { proofUrl } : {}),
         ...(notes ? { notes } : {}),
+        ...(graded.answers ? { answers: graded.answers } : {}),
+        ...(graded.score !== undefined ? { score: graded.score } : {}),
+        ...(auto ? { autoChecked: true } : {}),
       };
       tx.create(subRef, submission);
       tx.update(userRef, { "wallet.pendingBalance": FieldValue.increment(task.reward) });
@@ -192,10 +233,25 @@ export async function POST(request: Request) {
       tx.delete(sessionRef);
       tx.set(securityRef(firestore, uid), { submittedCount: FieldValue.increment(1), updatedAt: stamp }, { merge: true });
 
-      return { submission: { id: subRef.id, ...submission } };
+      return { submission: { id: subRef.id, ...submission }, auto, trusted: sec.trusted, riskScore: sec.riskScore };
     });
 
     if ("blocked" in outcome) throw outcome.blocked;
-    return publicSubmission(outcome.submission as TaskSubmission & Record<string, unknown>);
+    const result = outcome.submission as TaskSubmission & Record<string, unknown>;
+    if (outcome.auto && (outcome.trusted || riskLevel(outcome.riskScore, settings.holdRiskScore) === "low")) {
+      try {
+        await reviewSubmission({
+          id: result.id,
+          decision: "approved",
+          fraud: false,
+          reviewerId: "auto-check",
+          reviewerName: "Auto-check",
+        });
+        result.status = "approved";
+      } catch {
+        result.status = "submitted";
+      }
+    }
+    return publicSubmission(result);
   }, 201);
 }

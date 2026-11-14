@@ -1,6 +1,7 @@
 import "server-only";
 import type { SystemSettings } from "@/config/system";
 import type { SecurityDoc } from "@/lib/server/security";
+import { isPremium } from "@/lib/server/money";
 import type { UserProfile, Withdrawal } from "@/types";
 
 export type EligibilityCheck = { key: string; label: string; ok: boolean; detail: string };
@@ -24,6 +25,18 @@ export function evaluateEligibility(
       ok: settings.withdrawalsOpen,
       detail: settings.withdrawalsOpen ? "Open" : "Paused for a moment. Check back soon.",
     },
+    ...(settings.requirePremiumToCashOut
+      ? [
+          {
+            key: "premium",
+            label: "Premium member",
+            ok: isPremium(profile),
+            detail: isPremium(profile)
+              ? "Active"
+              : `Premium is TSh ${settings.premiumPrice.toLocaleString("en-US")} for ${settings.premiumDays} days`,
+          },
+        ]
+      : []),
     {
       key: "balance",
       label: `Reach TSh ${settings.minWithdrawal.toLocaleString("en-US")}`,

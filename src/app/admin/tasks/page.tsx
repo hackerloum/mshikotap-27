@@ -7,25 +7,21 @@ import { Loading, PillTabs } from "@/components/admin/parts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input, Label, Select, Textarea } from "@/components/ui/input";
+import { Input, Label } from "@/components/ui/input";
 import { adminService } from "@/services/admin.service";
 import { formatCurrency, relativeTime } from "@/lib/utils";
-import type { Task, TaskCategory } from "@/types";
-
-const categoryList: TaskCategory[] = ["social", "youtube", "video", "survey", "daily", "typing", "quiz", "app_install", "screenshot"];
+import { QuestFormFields, draftToPayload, emptyDraft } from "@/components/quests/quest-form-fields";
+import { categoryLabel, creatableCategories } from "@/config/quests";
+import type { Task } from "@/types";
 
 const emptyForm = {
   title: "",
   description: "",
-  instructions: "",
-  category: "social" as TaskCategory,
   reward: "500",
   xpReward: "10",
-  targetUrl: "",
   maxCompletions: "",
   minSeconds: "",
   expiresInHours: "",
-  requiresScreenshot: true,
 };
 
 type Filter = "open" | "closed" | "all";
@@ -34,6 +30,7 @@ export default function AdminQuestsPage() {
   const [quests, setQuests] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
+  const [draft, setDraft] = useState(() => emptyDraft("social"));
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState<Filter>("open");
   const [editing, setEditing] = useState<string | null>(null);
@@ -54,17 +51,14 @@ export default function AdminQuestsPage() {
     e.preventDefault();
     setSaving(true);
     const res = await adminService.createTask({
+      ...draftToPayload(draft),
       title: form.title,
-      description: form.description,
-      instructions: form.instructions,
-      category: form.category,
+      description: form.description || undefined,
       reward: Number(form.reward),
       xpReward: Number(form.xpReward) || undefined,
-      targetUrl: form.targetUrl || undefined,
       maxCompletions: form.maxCompletions ? Number(form.maxCompletions) : undefined,
       minSeconds: form.minSeconds !== "" ? Number(form.minSeconds) : undefined,
       expiresInHours: form.expiresInHours ? Number(form.expiresInHours) : undefined,
-      requiresScreenshot: form.requiresScreenshot,
     });
     setSaving(false);
     if (!res.ok) {
@@ -72,7 +66,8 @@ export default function AdminQuestsPage() {
       return;
     }
     toast.success("Quest is live");
-    setForm({ ...emptyForm, category: form.category, reward: form.reward, xpReward: form.xpReward });
+    setForm({ ...emptyForm, reward: form.reward, xpReward: form.xpReward });
+    setDraft(emptyDraft(draft.category));
     void load();
   }
 
@@ -121,27 +116,10 @@ export default function AdminQuestsPage() {
                 <Input id="q-title" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
               </div>
               <div className="md:col-span-2 xl:col-span-4">
-                <Label htmlFor="q-desc">Short description</Label>
-                <Input id="q-desc" required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                <Label htmlFor="q-desc">Short description (optional)</Label>
+                <Input id="q-desc" maxLength={160} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
-              <div className="md:col-span-2 xl:col-span-4">
-                <Label htmlFor="q-ins">How to do it</Label>
-                <Textarea id="q-ins" required value={form.instructions} onChange={(e) => setForm({ ...form, instructions: e.target.value })} />
-              </div>
-              <div>
-                <Label htmlFor="q-cat">Category</Label>
-                <Select id="q-cat" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as TaskCategory })}>
-                  {categoryList.map((c) => (
-                    <option key={c} value={c}>
-                      {c.replace("_", " ")}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div className="md:col-span-1 xl:col-span-3">
-                <Label htmlFor="q-link">Quest link (optional)</Label>
-                <Input id="q-link" inputMode="url" placeholder="https://..." value={form.targetUrl} onChange={(e) => setForm({ ...form, targetUrl: e.target.value })} />
-              </div>
+              <QuestFormFields draft={draft} onChange={setDraft} categories={creatableCategories} idPrefix="admin-q" />
               <div>
                 <Label htmlFor="q-reward">Reward (TSh)</Label>
                 <Input id="q-reward" type="number" min={1} required value={form.reward} onChange={(e) => setForm({ ...form, reward: e.target.value })} />
@@ -163,10 +141,6 @@ export default function AdminQuestsPage() {
                 <Input id="q-min" type="number" min={0} max={3600} placeholder="Default" value={form.minSeconds} onChange={(e) => setForm({ ...form, minSeconds: e.target.value })} />
                 <p className="mt-1 text-xs font-semibold text-slate-500">Players cannot send proof before this. Stops instant claims.</p>
               </div>
-              <label className="flex items-center gap-3 self-end rounded-2xl border-2 border-ink-700 bg-ink-950 px-4 py-3 text-sm font-extrabold text-slate-200 md:col-span-2 xl:col-span-3">
-                <input type="checkbox" className="h-5 w-5 accent-[#ffc21a]" checked={form.requiresScreenshot} onChange={(e) => setForm({ ...form, requiresScreenshot: e.target.checked })} />
-                Players must send a proof link
-              </label>
               <Button type="submit" size="lg" className="md:col-span-2 xl:col-span-4" disabled={saving}>
                 {saving ? "Publishing…" : "Publish quest"}
               </Button>
@@ -200,7 +174,7 @@ export default function AdminQuestsPage() {
                       <div className="min-w-0">
                         <p className="truncate font-display text-xl text-white">{q.title}</p>
                         <p className="text-xs font-semibold text-slate-400">
-                          {q.category.replace("_", " ")} · created {relativeTime(q.createdAt)}
+                          {categoryLabel(q.category)} · created {relativeTime(q.createdAt)}
                           {q.campaignId ? " · from a campaign" : ""}
                         </p>
                       </div>

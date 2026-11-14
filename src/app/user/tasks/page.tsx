@@ -6,6 +6,7 @@ import {
   Brain,
   Camera,
   Clock,
+  Download,
   Gift,
   Keyboard,
   PlayCircle,
@@ -25,7 +26,7 @@ import { tasksService, type QuestSession } from "@/services/tasks.service";
 import { useConfigStore } from "@/store/config-store";
 import { useAuthStore } from "@/store/auth-store";
 import { cn, formatCurrency } from "@/lib/utils";
-import type { Task, TaskCategory } from "@/types";
+import type { QuestAnswers, Task, TaskCategory } from "@/types";
 
 const categories: Array<{ id: TaskCategory | "all"; label: string }> = [
   { id: "all", label: "All" },
@@ -34,6 +35,8 @@ const categories: Array<{ id: TaskCategory | "all"; label: string }> = [
   { id: "video", label: "Watch" },
   { id: "survey", label: "Surveys" },
   { id: "daily", label: "Daily" },
+  { id: "quiz", label: "Quizzes" },
+  { id: "app_install", label: "Apps" },
   { id: "typing", label: "Typing" },
 ];
 
@@ -47,6 +50,7 @@ const look: Record<string, { icon: LucideIcon; tone: string }> = {
   typing: { icon: Keyboard, tone: "bg-flame" },
   referral: { icon: Share2, tone: "bg-coral" },
   screenshot: { icon: Camera, tone: "bg-sky" },
+  app_install: { icon: Download, tone: "bg-sky" },
 };
 
 export default function UserTasksPage() {
@@ -139,6 +143,15 @@ export default function UserTasksPage() {
                       <span className="inline-flex items-center gap-1 rounded-full bg-flame/20 px-2.5 py-1 text-flame">
                         <Camera className="h-3.5 w-3.5" /> Needs proof
                       </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-mint/20 px-2.5 py-1 text-mint">
+                        Paid instantly
+                      </span>
+                    )}
+                    {task.spec?.questions ? (
+                      <span className="rounded-full bg-ink-700 px-2.5 py-1 text-slate-300">
+                        {task.spec.questions.length} questions
+                      </span>
                     ) : null}
                     {task.timeLimitMinutes ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-ink-700 px-2.5 py-1 text-slate-300">
@@ -194,6 +207,9 @@ function QuestSheet({
   const [submitting, setSubmitting] = useState(false);
   const [proofUrl, setProofUrl] = useState("");
   const [notes, setNotes] = useState("");
+  const [answers, setAnswers] = useState<QuestAnswers>({});
+  const [typed, setTyped] = useState("");
+  const auto = task.category === "survey" || task.category === "quiz" || task.category === "typing";
 
   useEffect(() => {
     if (!session) return;
@@ -232,16 +248,24 @@ function QuestSheet({
     setSubmitting(true);
     const res = await tasksService.submit({
       taskId: task.id,
-      proofUrl: proofUrl || undefined,
-      notes: notes || undefined,
+      ...(auto
+        ? task.category === "typing"
+          ? { typed }
+          : { answers }
+        : { proofUrl: proofUrl || undefined, notes: notes || undefined }),
     });
     setSubmitting(false);
     if (!res.ok) {
       toast.error(res.error.message);
-      if (res.error.code === "SESSION_EXPIRED") setSession(null);
+      if (res.error.code === "SESSION_EXPIRED" || res.error.code === "QUIZ_FAILED_FINAL") setSession(null);
+      if (res.error.code === "QUIZ_FAILED_FINAL") onSent();
       return;
     }
-    toast.success("Quest sent! We'll review it soon.");
+    toast.success(
+      res.data.status === "approved"
+        ? `Correct! ${formatCurrency(task.reward)} added to your wallet.`
+        : "Quest sent! We'll review it soon.",
+    );
     onSent();
   }
 
@@ -271,7 +295,7 @@ function QuestSheet({
 
         <div className="mt-4 rounded-2xl bg-ink-800 p-4">
           <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">How to do it</p>
-          <p className="mt-1 text-sm font-semibold text-slate-200">{task.instructions}</p>
+          <p className="mt-1 whitespace-pre-line text-sm font-semibold text-slate-200">{task.instructions}</p>
         </div>
 
         <p className="mt-3 flex items-start gap-2 rounded-2xl border-2 border-mint/30 bg-mint/10 p-3 text-xs font-bold text-mint">
@@ -292,7 +316,7 @@ function QuestSheet({
               )}
               aria-live="polite"
             >
-              {ready ? "Ready. Send your proof." : `Finish the steps. Proof unlocks in ${waitSeconds}s`}
+              {ready ? (auto ? "Ready. Send your answers." : "Ready. Send your proof.") : `${auto ? "Take your time" : "Finish the steps"}. Sending unlocks in ${waitSeconds}s`}
               {timeLeft !== null ? (
                 <p className="mt-0.5 font-sans text-xs font-bold text-slate-300">
                   Time left: {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
@@ -309,37 +333,126 @@ function QuestSheet({
                 Open link again
               </a>
             ) : null}
-            <div>
-              <Label htmlFor="proof">
-                Proof link {task.requiresScreenshot ? "(required)" : "(optional)"}
-              </Label>
-              <Input
-                id="proof"
-                placeholder="https://..."
-                inputMode="url"
-                value={proofUrl}
-                onChange={(e) => setProofUrl(e.target.value)}
-                required={task.requiresScreenshot}
-              />
-              <p className="mt-1.5 text-xs font-semibold text-slate-500">
-                Link to your screenshot or post. Each proof can only be used once.
-              </p>
-            </div>
-            <div>
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                placeholder="Anything we should know?"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </div>
+            {task.category === "typing" ? (
+              <div>
+                <Label htmlFor="typed">Type this text</Label>
+                <p className="mb-2 select-none rounded-2xl bg-ink-800 p-3 text-sm font-bold text-white">{task.spec?.phrase}</p>
+                <Textarea
+                  id="typed"
+                  value={typed}
+                  onChange={(e) => setTyped(e.target.value)}
+                  onPaste={(e) => e.preventDefault()}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  required
+                />
+                <p className="mt-1.5 text-xs font-semibold text-slate-500">Pasting is turned off. Type it yourself.</p>
+              </div>
+            ) : auto ? (
+              <QuestionList task={task} answers={answers} onChange={setAnswers} />
+            ) : (
+              <>
+                <div>
+                  <Label htmlFor="proof">Proof link {task.requiresScreenshot ? "(required)" : "(optional)"}</Label>
+                  <Input
+                    id="proof"
+                    placeholder="https://..."
+                    inputMode="url"
+                    value={proofUrl}
+                    onChange={(e) => setProofUrl(e.target.value)}
+                    required={task.requiresScreenshot}
+                  />
+                  <p className="mt-1.5 text-xs font-semibold text-slate-500">
+                    Link to your screenshot or post. Each proof can only be used once.
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea id="notes" placeholder="Anything we should know?" value={notes} onChange={(e) => setNotes(e.target.value)} />
+                </div>
+              </>
+            )}
             <Button type="submit" size="lg" className="w-full" disabled={submitting || !ready}>
               {submitting ? "Sending…" : ready ? `Claim ${formatCurrency(task.reward)}` : `Wait ${waitSeconds}s`}
             </Button>
           </form>
         )}
       </div>
+    </div>
+  );
+}
+
+function QuestionList({
+  task,
+  answers,
+  onChange,
+}: {
+  task: Task;
+  answers: QuestAnswers;
+  onChange: (next: QuestAnswers) => void;
+}) {
+  const set = (id: string, value: string | number | string[]) => onChange({ ...answers, [id]: value });
+  return (
+    <div className="space-y-4">
+      {(task.spec?.questions ?? []).map((q, i) => (
+        <fieldset key={q.id} className="space-y-2 rounded-2xl bg-ink-800 p-3">
+          <legend className="px-1 font-display text-base text-white">
+            {i + 1}. {q.text}
+          </legend>
+          {q.kind === "text" ? (
+            <Input aria-label={q.text} maxLength={500} value={String(answers[q.id] ?? "")} onChange={(e) => set(q.id, e.target.value)} required />
+          ) : null}
+          {q.kind === "rating" ? (
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  aria-label={`${n} out of 5`}
+                  aria-pressed={answers[q.id] === n}
+                  onClick={() => set(q.id, n)}
+                  className={cn(
+                    "h-11 flex-1 rounded-xl border-2 font-display text-lg",
+                    answers[q.id] === n ? "border-ink-950 bg-coin text-ink-950" : "border-ink-600 bg-ink-900 text-slate-300",
+                  )}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {q.kind === "choice" || q.kind === "multi"
+            ? q.options?.map((opt) => {
+                const multi = q.kind === "multi";
+                const current = answers[q.id];
+                const checked = multi ? Array.isArray(current) && current.includes(opt) : current === opt;
+                return (
+                  <label
+                    key={opt}
+                    className={cn(
+                      "flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border-2 px-3 text-sm font-bold",
+                      checked ? "border-coin bg-coin/10 text-white" : "border-ink-600 bg-ink-900 text-slate-300",
+                    )}
+                  >
+                    <input
+                      type={multi ? "checkbox" : "radio"}
+                      name={q.id}
+                      className="h-5 w-5 accent-[#ffc21a]"
+                      checked={checked}
+                      onChange={() => {
+                        if (!multi) return set(q.id, opt);
+                        const list = Array.isArray(current) ? current : [];
+                        set(q.id, checked ? list.filter((o) => o !== opt) : [...list, opt]);
+                      }}
+                    />
+                    {opt}
+                  </label>
+                );
+              })
+            : null}
+        </fieldset>
+      ))}
     </div>
   );
 }

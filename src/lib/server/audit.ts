@@ -6,7 +6,7 @@ export type AuditEntry = {
   actorId: string;
   actorName: string;
   action: string;
-  entityType: "submission" | "withdrawal" | "user" | "task" | "campaign" | "settings" | "fraud" | "challenge";
+  entityType: "submission" | "withdrawal" | "user" | "task" | "campaign" | "settings" | "fraud" | "challenge" | "payment" | "ai";
   entityId?: string;
   summary: string;
 };

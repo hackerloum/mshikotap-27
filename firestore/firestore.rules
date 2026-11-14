@@ -83,5 +83,8 @@ service cloud.firestore {
     match /proofIndex/{docId} { allow read, write: if false; }
     match /auditLogs/{docId} { allow read, write: if false; }
     match /settings/{docId} { allow read, write: if false; }
+    match /payments/{docId} { allow read, write: if false; }
+    match /moneyLedger/{docId} { allow read, write: if false; }
+    match /aiRuns/{docId} { allow read, write: if false; }
   }
 }

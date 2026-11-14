@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     const since = dayKey(days[0]);
 
     const settings = await getSettings();
-    const [users, pendingReviews, pendingPayouts, earnings, tasks, campaigns, money, openFlags, banned, waiting] = await Promise.all([
+    const [users, pendingReviews, pendingPayouts, earnings, tasks, campaigns, money, openFlags, banned, waiting, draftCampaigns] = await Promise.all([
       firestore.collection(col.users).count().get(),
       firestore.collection(col.submissions).where("status", "==", "submitted").count().get(),
       firestore.collection(col.withdrawals).where("status", "in", ["pending", "under_review"]).count().get(),
@@ -35,6 +35,7 @@ export async function GET(request: Request) {
       firestore.collection(col.flags).where("status", "==", "open").count().get(),
       firestore.collection(col.users).where("isBanned", "==", true).count().get(),
       firestore.collection(col.withdrawals).where("status", "in", ["pending", "under_review", "approved", "processing"]).get(),
+      firestore.collection(col.campaigns).where("status", "==", "draft").count().get(),
     ]);
 
     const perDay = new Map<string, number>();
@@ -56,6 +57,7 @@ export async function GET(request: Request) {
       pendingPayouts: pendingPayouts.data().count,
       series,
       categories: [...byCategory.entries()].map(([category, completions]) => ({ category, completions })),
+      campaignsWaiting: draftCampaigns.data().count,
       fraudOpen: openFlags.data().count,
       bannedUsers: banned.data().count,
       walletLiability: Number(money.data().balance ?? 0),
@@ -65,6 +67,7 @@ export async function GET(request: Request) {
         signupsOpen: settings.signupsOpen,
         questsOpen: settings.questsOpen,
         withdrawalsOpen: settings.withdrawalsOpen,
+        aiAutopilot: settings.aiAutopilot,
       },
       campaignSpend: rows<Campaign>(campaigns).reduce((sum, c) => sum + (c.spentCredits ?? 0), 0),
     };

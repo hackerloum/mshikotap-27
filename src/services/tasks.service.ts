@@ -1,5 +1,5 @@
 import { api } from "@/lib/api-client";
-import type { ApiResult, Task, TaskCategory, TaskSubmission } from "@/types";
+import type { ApiResult, QuestAnswers, Task, TaskCategory, TaskSubmission } from "@/types";
 
 export interface QuestSession {
   taskId: string;
@@ -26,7 +26,7 @@ export const tasksService = {
     return api<QuestSession>("/api/tasks/start", { method: "POST", body: { taskId } });
   },
 
-  submit(input: { taskId: string; proofUrl?: string; notes?: string }): Promise<ApiResult<TaskSubmission>> {
+  submit(input: { taskId: string; proofUrl?: string; notes?: string; answers?: QuestAnswers; typed?: string }): Promise<ApiResult<TaskSubmission>> {
     return api<TaskSubmission>("/api/tasks", { method: "POST", body: input });
   },
 };

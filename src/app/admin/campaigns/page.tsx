@@ -10,16 +10,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ProgressBar } from "@/components/ui/progress";
 import { adminService, type AdminCampaign } from "@/services/admin.service";
+import { useConfigStore } from "@/store/config-store";
 import { formatCurrency, relativeTime } from "@/lib/utils";
 
-type Tab = "active" | "paused" | "completed" | "all";
+type Tab = "draft" | "active" | "paused" | "completed" | "all";
 
-const tone = { active: "success", paused: "warning", completed: "default", draft: "default", rejected: "danger" } as const;
+const tone = { active: "success", paused: "warning", completed: "default", draft: "info", rejected: "danger" } as const;
+const label = { active: "running", paused: "paused", completed: "stopped", draft: "waiting", rejected: "not approved" } as const;
 
 export default function AdminCampaignsPage() {
   const [items, setItems] = useState<AdminCampaign[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<Tab>("active");
+  const share = useConfigStore((c) => c.config.playerSharePercent);
+  const [tab, setTab] = useState<Tab>("draft");
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -33,15 +36,21 @@ export default function AdminCampaignsPage() {
     void load();
   }, [load]);
 
-  async function set(c: AdminCampaign, status: "active" | "paused" | "completed") {
+  async function set(c: AdminCampaign, status: "active" | "paused" | "completed" | "rejected") {
+    let reason: string | undefined;
+    if (status === "rejected") {
+      const answer = window.prompt("Why is this not approved? The advertiser sees this and their money is returned.");
+      if (!answer || answer.trim().length < 3) return;
+      reason = answer.trim();
+    }
     setBusy(true);
-    const res = await adminService.setCampaign(c.id, status);
+    const res = await adminService.setCampaign(c.id, status, reason);
     setBusy(false);
     if (!res.ok) {
       toast.error(res.error.message);
       return;
     }
-    toast.success(`Campaign ${status}`);
+    toast.success(status === "active" ? "Approved and live" : `Campaign ${status}`);
     void load();
   }
 
@@ -54,6 +63,7 @@ export default function AdminCampaignsPage() {
           value={tab}
           onChange={setTab}
           options={[
+            { id: "draft", label: "To approve", count: items.filter((c) => c.status === "draft").length },
             { id: "active", label: "Running", count: items.filter((c) => c.status === "active").length },
             { id: "paused", label: "Paused", count: items.filter((c) => c.status === "paused").length },
             { id: "completed", label: "Stopped" },
@@ -77,7 +87,7 @@ export default function AdminCampaignsPage() {
                         {c.advertiserName} · {c.type.replaceAll("_", " ")} · {relativeTime(c.createdAt)}
                       </p>
                     </div>
-                    <Badge tone={tone[c.status]}>{c.status === "completed" ? "stopped" : c.status}</Badge>
+                    <Badge tone={tone[c.status]}>{label[c.status]}</Badge>
                   </div>
                   <div>
                     <div className="mb-1.5 flex justify-between text-xs font-extrabold text-slate-300">
@@ -89,25 +99,45 @@ export default function AdminCampaignsPage() {
                     <ProgressBar value={c.spentCredits} max={Math.max(1, c.budgetCredits)} tone="sky" label="Budget used" />
                   </div>
                   <p className="text-xs font-semibold text-slate-400">
-                    {formatCurrency(c.costPerAction)} per action · player gets {formatCurrency(Math.floor(c.costPerAction * 0.7))}
+                    {formatCurrency(c.costPerAction)} per action · player gets {formatCurrency(c.playerReward ?? Math.floor((c.costPerAction * share) / 100))}
                   </p>
+                  {c.statusReason ? <p className="text-xs font-semibold text-slate-400">Note: {c.statusReason}</p> : null}
+                  {c.instructions ? <p className="line-clamp-3 text-xs font-semibold text-slate-300">{c.instructions}</p> : null}
+                  {c.targetUrl ? (
+                    <a href={c.targetUrl} target="_blank" rel="noreferrer" className="block truncate text-xs font-bold text-sky hover:underline">
+                      {c.targetUrl}
+                    </a>
+                  ) : null}
                   <div className="grid grid-cols-2 gap-2">
-                    {c.status === "active" ? (
-                      <Button size="sm" variant="secondary" className="min-h-11" disabled={busy} onClick={() => void set(c, "paused")}>
-                        Pause
-                      </Button>
-                    ) : c.status === "paused" ? (
-                      <Button size="sm" variant="mint" className="min-h-11" disabled={busy} onClick={() => void set(c, "active")}>
-                        Resume
-                      </Button>
+                    {c.status === "draft" ? (
+                      <>
+                        <Button size="sm" variant="mint" className="min-h-11" disabled={busy} onClick={() => void set(c, "active")}>
+                          Approve
+                        </Button>
+                        <Button size="sm" variant="danger" className="min-h-11" disabled={busy} onClick={() => void set(c, "rejected")}>
+                          Reject
+                        </Button>
+                      </>
                     ) : (
-                      <span />
+                      <>
+                        {c.status === "active" ? (
+                          <Button size="sm" variant="secondary" className="min-h-11" disabled={busy} onClick={() => void set(c, "paused")}>
+                            Pause
+                          </Button>
+                        ) : c.status === "paused" ? (
+                          <Button size="sm" variant="mint" className="min-h-11" disabled={busy} onClick={() => void set(c, "active")}>
+                            Resume
+                          </Button>
+                        ) : (
+                          <span />
+                        )}
+                        {c.status === "active" || c.status === "paused" ? (
+                          <Button size="sm" variant="danger" className="min-h-11" disabled={busy} onClick={() => void set(c, "completed")}>
+                            Stop
+                          </Button>
+                        ) : null}
+                      </>
                     )}
-                    {c.status !== "completed" ? (
-                      <Button size="sm" variant="danger" className="min-h-11" disabled={busy} onClick={() => void set(c, "completed")}>
-                        Stop
-                      </Button>
-                    ) : null}
                   </div>
                 </CardContent>
               </Card>

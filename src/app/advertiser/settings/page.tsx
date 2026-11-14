@@ -1,17 +1,30 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { paymentsService } from "@/services/payments.service";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
-import { subscriptionTiers } from "@/config/subscriptions";
 import { useAuthStore } from "@/store/auth-store";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { formatNumber } from "@/lib/utils";
 
 export default function AdvertiserSettingsPage() {
   const user = useAuthStore((s) => s.user);
 
-  const plan = subscriptionTiers.find((t) => t.id === user?.subscription);
+  const router = useRouter();
+  const refresh = useAuthStore((s) => s.refreshProfile);
+
+  async function switchToPlayer() {
+    const res = await paymentsService.setRole("user");
+    if (!res.ok) {
+      toast.error(res.error.message);
+      return;
+    }
+    await refresh();
+    router.push("/user");
+  }
 
   return (
     <DashboardShell role="advertiser" title="Settings">
@@ -48,19 +61,16 @@ export default function AdvertiserSettingsPage() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-3">
-            <CardTitle>Plan</CardTitle>
-            <Badge tone="brand">{user?.subscription ?? "free"}</Badge>
+          <CardHeader>
+            <CardTitle>Earn as a player too</CardTitle>
+            <p className="mt-1 text-sm text-slate-400">
+              Switch to the player side to finish quests and cash out. Your advertiser balance and quests stay safe.
+            </p>
           </CardHeader>
           <CardContent>
-            {plan ? (
-              <p className="text-sm text-slate-300">
-                {plan.name} · {formatCurrency(plan.priceMonthly)}/mo · includes{" "}
-                {formatCurrency(plan.starterCredits)} starter credits
-              </p>
-            ) : (
-              <p className="text-sm text-slate-400">No paid plan</p>
-            )}
+            <Button variant="secondary" onClick={() => void switchToPlayer()}>
+              Switch to player view
+            </Button>
           </CardContent>
         </Card>
       </div>

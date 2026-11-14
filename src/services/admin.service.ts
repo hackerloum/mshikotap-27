@@ -1,13 +1,14 @@
 import { api } from "@/lib/api-client";
+import type { QuestPayload } from "@/services/campaigns.service";
 import type { FlagKind, RiskLevel, SystemSettings } from "@/config/system";
 import type {
   ApiResult,
   Campaign,
   CampaignStatus,
   EarningsPoint,
+  PaymentRecord,
   SubscriptionPlan,
   Task,
-  TaskCategory,
   TaskSubmission,
   UserProfile,
   UserRole,
@@ -86,7 +87,8 @@ export interface AdminStats {
   walletLiability: number;
   pendingRewards: number;
   payoutQueueAmount: number;
-  switches: { signupsOpen: boolean; questsOpen: boolean; withdrawalsOpen: boolean };
+  switches: { signupsOpen: boolean; questsOpen: boolean; withdrawalsOpen: boolean; aiAutopilot: boolean };
+  campaignsWaiting: number;
 }
 
 export interface SharedAccount {
@@ -131,6 +133,32 @@ export type UserPatch = {
 
 export type AdminCampaign = Campaign & { advertiserName: string };
 
+export type AiRun = {
+  id: string;
+  trigger: "cron" | "manual";
+  startedAt: string;
+  finishedAt: string;
+  report: string;
+  actions: { tool: string; summary: string }[];
+  error?: string;
+};
+export type AiStatus = { configured: boolean; enabled: boolean; runs: AiRun[] };
+
+export type PaymentsOverview = {
+  summary: {
+    moneyIn: number;
+    moneyIn30d: number;
+    topups: number;
+    premium: number;
+    premiumSales: number;
+    advertiserBalances: number;
+    campaignMargin: number;
+    pending: number;
+    mismatches: number;
+  };
+  items: PaymentRecord[];
+};
+
 export const adminService = {
   stats: () => api<AdminStats>("/api/admin/stats"),
 
@@ -163,19 +191,22 @@ export const adminService = {
     api<SystemSettings>("/api/admin/settings", { method: "PATCH", body: patch }),
 
   campaigns: () => api<AdminCampaign[]>("/api/admin/campaigns"),
-  setCampaign: (id: string, status: Extract<CampaignStatus, "active" | "paused" | "completed">) =>
-    api<Campaign>(`/api/campaigns/${id}`, { method: "PATCH", body: { status } }),
+  setCampaign: (id: string, status: Extract<CampaignStatus, "active" | "paused" | "completed" | "rejected">, reason?: string) =>
+    api<Campaign>(`/api/campaigns/${id}`, { method: "PATCH", body: { status, reason } }),
+
+  payments: () => api<PaymentsOverview>("/api/admin/payments"),
+
+  aiStatus: () => api<AiStatus>("/api/admin/ai/autopilot"),
+  aiRun: () => api<AiRun>("/api/admin/ai/autopilot", { method: "POST" }),
+  aiChat: (messages: { role: "user" | "assistant"; content: string }[]) =>
+    api<{ text: string; actions: { tool: string; summary: string }[] }>("/api/admin/ai/chat", { method: "POST", body: { messages } }),
 
   tasks: () => api<Task[]>("/api/admin/tasks"),
-  createTask: (input: {
+  createTask: (input: QuestPayload & {
     title: string;
-    description: string;
-    instructions: string;
-    category: TaskCategory;
+    description?: string;
     reward: number;
     xpReward?: number;
-    requiresScreenshot?: boolean;
-    targetUrl?: string;
     maxCompletions?: number;
     minSeconds?: number;
     expiresInHours?: number;
