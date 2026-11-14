@@ -8,8 +8,20 @@ import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
 
+function clean(value: string | undefined) {
+  if (!value) return undefined;
+  let out = value.trim();
+  if (
+    (out.startsWith('"') && out.endsWith('"')) ||
+    (out.startsWith("'") && out.endsWith("'"))
+  ) {
+    out = out.slice(1, -1).trim();
+  }
+  return out || undefined;
+}
+
 function readPrivateKey() {
-  const raw = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
+  const raw = clean(process.env.FIREBASE_ADMIN_PRIVATE_KEY);
   if (!raw) return undefined;
   return raw.replace(/\\n/g, "\n");
 }
@@ -36,11 +48,12 @@ export function getAdminApp() {
 
   app = initializeApp({
     credential: cert({
-      projectId: process.env.FIREBASE_ADMIN_PROJECT_ID!,
-      clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL!,
+      projectId: clean(process.env.FIREBASE_ADMIN_PROJECT_ID)!,
+      clientEmail: clean(process.env.FIREBASE_ADMIN_CLIENT_EMAIL)!,
       privateKey: readPrivateKey()!,
     }),
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    projectId: clean(process.env.FIREBASE_ADMIN_PROJECT_ID),
+    storageBucket: clean(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET),
   });
 
   return app;

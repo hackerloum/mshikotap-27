@@ -7,7 +7,7 @@ import { getSettings } from "@/lib/server/settings";
 
 export const runtime = "nodejs";
 
-export async function POST(request: Request) {
+async function handle(request: Request) {
   const decoded = await verifyRequest(request);
   if (!decoded) {
     return NextResponse.json(
@@ -60,4 +60,16 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ ok: true, data: { profile, persisted } });
+}
+
+export async function POST(request: Request) {
+  try {
+    return await handle(request);
+  } catch (error) {
+    console.error("[me] failed", error);
+    return NextResponse.json(
+      { ok: false, error: { code: "INTERNAL_ERROR", message: "Something went wrong. Try again." } },
+      { status: 500 },
+    );
+  }
 }

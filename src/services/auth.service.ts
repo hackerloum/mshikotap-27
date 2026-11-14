@@ -42,9 +42,18 @@ export const authService = {
           },
           body: JSON.stringify({ referral: this.takeReferral() }),
         });
-        const json = (await res.json()) as
+        let json:
           | { ok: true; data: { profile: UserProfile } }
           | { ok: false; error: { message: string } };
+        try {
+          json = await res.json();
+        } catch {
+          throw new AppError(
+            "PROFILE_FAILED",
+            "We could not load your player right now. Please try again in a moment.",
+            res.status || 502,
+          );
+        }
         if (!json.ok) throw new AppError("PROFILE_FAILED", json.error.message, res.status);
         return json.data.profile;
       } finally {
