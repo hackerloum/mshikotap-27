@@ -12,8 +12,10 @@ export type AuditEntry = {
 };
 
 function payload(entry: AuditEntry) {
+  const { entityId, ...rest } = entry;
   return {
-    ...entry,
+    ...rest,
+    ...(entityId ? { entityId } : {}),
     summary: entry.summary.slice(0, 300),
     createdAt: new Date().toISOString(),
   };

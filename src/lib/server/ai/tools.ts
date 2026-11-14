@@ -60,6 +60,7 @@ export function buildTools(mode: Mode, log: ActionLog[]) {
     });
 
   let reviewsDone = 0;
+  const verdicts = new Map<string, { valid: boolean | null; confidence: string }>();
 
   const tools = {
     get_overview: tool({
@@ -163,11 +164,13 @@ export function buildTools(mode: Mode, log: ActionLog[]) {
           });
           const match = /\{[\s\S]*\}/.exec(result.text);
           const parsed = match ? (JSON.parse(match[0]) as { valid?: boolean | null; confidence?: string; reason?: string }) : null;
-          return {
+          const verdict = {
             valid: parsed?.valid === true ? true : parsed?.valid === false ? false : null,
             confidence: parsed?.confidence === "high" ? "high" : "low",
             reason: (parsed?.reason ?? "No reason given").slice(0, 200),
           };
+          verdicts.set(submissionId, verdict);
+          return verdict;
         } catch {
           return { valid: null, confidence: "low", reason: "Could not open the proof link as an image" };
         }
@@ -181,9 +184,8 @@ export function buildTools(mode: Mode, log: ActionLog[]) {
         submissionId: z.string(),
         decision: z.enum(["approved", "rejected"]),
         reason: z.string().max(280).optional(),
-        inspected: z.boolean().default(false).describe("True if you used inspect_proof on this submission first"),
       }),
-      execute: async ({ submissionId, decision, reason, inspected }) => {
+      execute: async ({ submissionId, decision, reason }) => {
         if (reviewsDone >= (autopilot ? MAX_AUTO_REVIEWS : 60)) {
           return { refused: "Review limit for this run reached. Leave the rest for later." };
         }
@@ -202,10 +204,15 @@ export function buildTools(mode: Mode, log: ActionLog[]) {
           if ((sub.reward ?? 0) > settings.aiMaxAutoApproveReward) {
             return { refused: `Reward is above the AI approval limit of TSh ${settings.aiMaxAutoApproveReward}. A human must approve it.` };
           }
-          if (autopilot && !inspected) return { refused: "Look at the proof with inspect_proof before approving." };
+          if (autopilot && verdicts.get(submissionId)?.valid !== true) {
+            return { refused: "inspect_proof must confirm the proof is valid before you approve. Leave it for the owner." };
+          }
         } else {
           if (!reason || reason.trim().length < 5) return { refused: "A rejection needs a clear reason." };
-          if (autopilot && !inspected) return { refused: "Look at the proof with inspect_proof before rejecting." };
+          const verdict = verdicts.get(submissionId);
+          if (autopilot && !(verdict?.valid === false && verdict.confidence === "high")) {
+            return { refused: "Only reject when inspect_proof clearly shows the proof is wrong. Otherwise leave it for the owner." };
+          }
         }
 
         try {
