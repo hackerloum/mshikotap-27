@@ -110,7 +110,7 @@ export default function AdminPayoutsPage() {
         </div>
 
         {tab === "waiting" && waiting.length > 0 ? (
-          <p className="rounded-2xl border-2 border-coin/30 bg-coin/10 px-4 py-3 text-sm font-extrabold text-coin">
+          <p className="tabular rounded-lg border border-coin/30 bg-coin/10 px-4 py-3 text-sm font-semibold text-coin">
             {waiting.length} payout{waiting.length > 1 ? "s" : ""} waiting · send {formatCurrency(queueTotal)} in total (after fees)
           </p>
         ) : null}
@@ -120,7 +120,7 @@ export default function AdminPayoutsPage() {
         ) : list.length === 0 ? (
           <EmptyState title="No payouts here" description="New cash out requests show up as players send them." />
         ) : (
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-3 xl:grid-cols-2">
             {list.map((w) => {
               const active = open.includes(w.status);
               const warn = w.status === "under_review" || w.player?.risk === "high" || w.player?.isBanned;
@@ -128,11 +128,11 @@ export default function AdminPayoutsPage() {
                 <Card key={w.id} className={warn && active ? "border-flame/60" : undefined}>
                   <CardHeader className="flex flex-row items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <CardTitle>
+                      <CardTitle className="tabular">
                         {formatCurrency(w.netAmount)}{" "}
-                        <span className="text-sm text-slate-400">of {formatCurrency(w.amount)} · fee {formatCurrency(w.fee)}</span>
+                        <span className="text-sm font-normal text-slate-400">of {formatCurrency(w.amount)} · fee {formatCurrency(w.fee)}</span>
                       </CardTitle>
-                      <p className="mt-0.5 text-xs font-semibold text-slate-400">
+                      <p className="tabular mt-0.5 text-xs text-slate-400">
                         {w.method.replaceAll("_", " ")} · {relativeTime(w.createdAt)}
                         {w.processedAt ? ` · updated ${dateTime(w.processedAt)}` : ""}
                       </p>
@@ -141,33 +141,32 @@ export default function AdminPayoutsPage() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <PlayerChip player={w.player} />
-                    <div className="flex items-center justify-between gap-2 rounded-2xl bg-ink-800 px-3 py-2.5">
-                      <span className="min-w-0 truncate font-display text-lg text-white">{w.destination}</span>
+                    <div className="flex items-center justify-between gap-2 rounded-lg border border-ink-700/80 bg-ink-800 px-3 py-2">
+                      <span className="tabular min-w-0 truncate font-display text-base text-white">{w.destination}</span>
                       <button
                         onClick={() => void copy(w.destination)}
-                        className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-ink-700 text-slate-200 hover:bg-ink-600"
+                        className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-ink-700 text-slate-200 transition-colors hover:bg-ink-600"
                         aria-label="Copy payout destination"
                       >
-                        <Copy className="h-4 w-4" />
+                        <Copy className="h-4 w-4" aria-hidden="true" />
                       </button>
                     </div>
-                    {w.notes ? <p className="text-sm font-bold text-flame">{w.notes}</p> : null}
+                    {w.notes ? <p className="text-sm font-semibold text-flame">{w.notes}</p> : null}
 
                     {active ? (
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                        <Button size="sm" variant="secondary" className="min-h-11" disabled={busy || w.status === "under_review"} onClick={() => void update(w, "under_review", "Held for review")}>
+                        <Button size="sm" variant="secondary" disabled={busy || w.status === "under_review"} onClick={() => void update(w, "under_review", "Held for review")}>
                           Hold
                         </Button>
-                        <Button size="sm" variant="sky" className="min-h-11" disabled={busy || w.status === "approved"} onClick={() => void update(w, "approved")}>
+                        <Button size="sm" variant="sky" disabled={busy || w.status === "approved"} onClick={() => void update(w, "approved")}>
                           Approve
                         </Button>
-                        <Button size="sm" variant="mint" className="min-h-11" disabled={busy} onClick={() => void update(w, "completed")}>
+                        <Button size="sm" variant="mint" disabled={busy} onClick={() => void update(w, "completed")}>
                           Mark paid
                         </Button>
                         <Button
                           size="sm"
                           variant="danger"
-                          className="min-h-11"
                           disabled={busy}
                           onClick={() => {
                             setRejecting(w);
@@ -188,11 +187,11 @@ export default function AdminPayoutsPage() {
 
       {rejecting ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label="Reject payout">
-          <div className="w-full max-w-lg space-y-4 rounded-t-3xl border-2 border-ink-600 bg-ink-900 p-5 sm:rounded-3xl">
+          <div className="w-full max-w-lg space-y-4 rounded-t-xl border border-ink-700/80 bg-ink-900 p-5 shadow-xl shadow-black/40 sm:rounded-xl">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-wider text-coral">Reject payout</p>
-              <h2 className="font-display text-2xl text-white">{formatCurrency(rejecting.amount)} back to the wallet</h2>
-              <p className="text-sm font-semibold text-slate-400">The full amount is refunded to {rejecting.player?.name ?? "the player"}.</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-coral">Reject payout</p>
+              <h2 className="tabular font-display text-xl text-white">{formatCurrency(rejecting.amount)} back to the wallet</h2>
+              <p className="text-sm text-slate-400">The full amount is refunded to {rejecting.player?.name ?? "the player"}.</p>
             </div>
             <div>
               <Label htmlFor="why">Reason the player will see</Label>
@@ -205,12 +204,11 @@ export default function AdminPayoutsPage() {
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="secondary" className="min-h-12" onClick={() => setRejecting(null)}>
+              <Button variant="secondary" onClick={() => setRejecting(null)}>
                 Cancel
               </Button>
               <Button
                 variant="danger"
-                className="min-h-12"
                 disabled={busy}
                 onClick={async () => {
                   if (await update(rejecting, "rejected", reason)) setRejecting(null);

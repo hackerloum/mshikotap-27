@@ -43,10 +43,13 @@ export default function UserMarketplacePage() {
           <div>
             <Label htmlFor="mkt-search">Find a gig</Label>
             <div className="relative">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+              <Search
+                className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                aria-hidden="true"
+              />
               <Input
                 id="mkt-search"
-                className="pl-12"
+                className="pl-10"
                 placeholder="Design, typing, coding…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -61,10 +64,10 @@ export default function UserMarketplacePage() {
                 aria-pressed={category === cat}
                 onClick={() => setCategory(cat)}
                 className={cn(
-                  "min-h-11 shrink-0 whitespace-nowrap rounded-2xl border-2 px-4 text-sm font-extrabold capitalize transition active:translate-y-px",
+                  "h-9 shrink-0 whitespace-nowrap rounded-lg border px-4 text-sm font-semibold capitalize transition-colors",
                   category === cat
-                    ? "border-coin-deep bg-coin text-ink-950 shadow-[0_3px_0_0_var(--color-coin-deep)]"
-                    : "border-ink-700 bg-ink-900 text-slate-300 hover:border-ink-600",
+                    ? "border-coin bg-coin/10 text-coin"
+                    : "border-ink-700/80 bg-ink-900 text-slate-300 hover:border-ink-600 hover:text-white",
                 )}
               >
                 {cat.replaceAll("_", " ")}
@@ -84,19 +87,19 @@ export default function UserMarketplacePage() {
               <Card key={item.id} className="flex flex-col p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-start gap-3">
-                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-sky/20 text-sky">
-                      <ShoppingBag className="h-6 w-6" />
+                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-sky/10 text-sky">
+                      <ShoppingBag className="h-5 w-5" aria-hidden="true" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-display text-xl leading-tight text-white">
+                      <h3 className="font-display text-lg leading-tight text-white">
                         {item.title}
                       </h3>
-                      <p className="mt-0.5 truncate text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                      <p className="mt-0.5 truncate text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                         by {item.sellerName}
                       </p>
                     </div>
                   </div>
-                  <span className="shrink-0 rounded-2xl bg-coin px-3 py-1.5 font-display text-lg text-ink-950 shadow-[0_3px_0_0_var(--color-coin-deep)]">
+                  <span className="tabular shrink-0 font-display text-lg text-coin">
                     {formatCurrency(item.price)}
                   </span>
                 </div>
@@ -105,15 +108,15 @@ export default function UserMarketplacePage() {
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Badge>{item.category.replaceAll("_", " ")}</Badge>
-                  <Badge tone="info">
-                    <StarIcon className="h-3 w-3" />
+                  <Badge tone="info" className="tabular">
+                    <StarIcon className="h-3 w-3" aria-hidden="true" />
                     {item.rating}
                   </Badge>
-                  <Badge tone="success">
+                  <Badge tone="success" className="tabular">
                     {formatNumber(item.orders)} orders
                   </Badge>
-                  <Badge tone="warning">
-                    <Clock className="h-3 w-3" />
+                  <Badge tone="warning" className="tabular">
+                    <Clock className="h-3 w-3" aria-hidden="true" />
                     {item.deliveryDays}d
                   </Badge>
                 </div>
@@ -123,7 +126,7 @@ export default function UserMarketplacePage() {
                     {item.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="rounded-lg bg-ink-800 px-2 py-0.5 text-xs font-bold text-slate-400"
+                        className="rounded-md bg-ink-800 px-2 py-0.5 text-xs font-medium text-slate-400"
                       >
                         #{tag}
                       </span>

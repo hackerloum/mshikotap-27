@@ -18,7 +18,7 @@ export function RiskBadge({ risk, score, trusted }: { risk: RiskLevel; score?: n
   if (trusted) return <Badge tone="info">trusted</Badge>;
   return (
     <Badge tone={riskTone[risk]}>
-      {risk} risk{typeof score === "number" ? ` · ${score}` : ""}
+      {risk} risk{typeof score === "number" ? <span className="tabular"> · {score}</span> : null}
     </Badge>
   );
 }
@@ -30,18 +30,18 @@ export function accountAge(hours: number) {
 }
 
 export function PlayerChip({ player, fallback }: { player: PlayerContext | null; fallback?: string }) {
-  if (!player) return <span className="text-sm font-bold text-slate-400">{fallback ?? "Unknown player"}</span>;
+  if (!player) return <span className="text-sm font-semibold text-slate-400">{fallback ?? "Unknown player"}</span>;
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
       <Link
         href={`/admin/users/${player.uid}`}
-        className="font-display text-lg leading-tight text-white underline-offset-4 hover:text-coin hover:underline"
+        className="font-display text-base leading-tight text-white underline-offset-4 hover:text-coin hover:underline"
       >
         {player.name}
       </Link>
       <RiskBadge risk={player.risk} score={player.riskScore} trusted={player.trusted} />
       {player.isBanned ? <Badge tone="danger">suspended</Badge> : null}
-      <span className="text-xs font-semibold text-slate-400">
+      <span className="tabular text-xs font-medium text-slate-400">
         {accountAge(player.accountAgeHours)} · {player.approved} approved · {player.rejected} rejected
       </span>
     </div>
@@ -58,7 +58,7 @@ export function PillTabs<T extends string>({
   options: Array<{ id: T; label: string; count?: number }>;
 }) {
   return (
-    <div className="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0" role="tablist">
+    <div className="hide-scrollbar -mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0" role="tablist">
       {options.map((o) => (
         <button
           key={o.id}
@@ -66,14 +66,14 @@ export function PillTabs<T extends string>({
           aria-selected={value === o.id}
           onClick={() => onChange(o.id)}
           className={cn(
-            "h-10 shrink-0 rounded-full border-2 px-4 font-display text-base transition active:scale-95",
+            "h-9 shrink-0 rounded-lg border px-3.5 text-sm font-semibold transition-colors",
             value === o.id
-              ? "border-ink-950 bg-coin text-ink-950"
-              : "border-ink-700 bg-ink-900 text-slate-300 hover:border-ink-600",
+              ? "border-coin/40 bg-coin/10 text-coin"
+              : "border-ink-700/80 bg-ink-900 text-slate-300 hover:bg-ink-800 hover:text-white",
           )}
         >
           {o.label}
-          {typeof o.count === "number" ? <span className="ml-1.5 opacity-70">{o.count}</span> : null}
+          {typeof o.count === "number" ? <span className="tabular ml-1.5 opacity-70">{o.count}</span> : null}
         </button>
       ))}
     </div>
@@ -100,22 +100,22 @@ export function Toggle({
       aria-checked={checked}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className="flex w-full items-center justify-between gap-4 rounded-2xl border-2 border-ink-700 bg-ink-800 px-4 py-3 text-left transition hover:border-ink-600 disabled:opacity-50"
+      className="flex w-full items-center justify-between gap-4 rounded-lg border border-ink-700/80 bg-ink-800 px-4 py-3 text-left transition-colors hover:bg-ink-700/70 disabled:opacity-50"
     >
       <span className="min-w-0">
-        <span className="block font-display text-lg text-white">{label}</span>
-        {hint ? <span className="block text-xs font-semibold text-slate-400">{hint}</span> : null}
+        <span className="block text-sm font-semibold text-white">{label}</span>
+        {hint ? <span className="block text-xs text-slate-400">{hint}</span> : null}
       </span>
       <span
         className={cn(
-          "relative h-8 w-14 shrink-0 rounded-full border-2 transition",
-          checked ? "border-mint-deep bg-mint" : "border-ink-600 bg-ink-950",
+          "relative h-6 w-11 shrink-0 rounded-full transition-colors",
+          checked ? "bg-mint" : "bg-ink-600",
         )}
       >
         <span
           className={cn(
-            "absolute top-0.5 h-6 w-6 rounded-full bg-white transition-all",
-            checked ? "left-[26px]" : "left-0.5",
+            "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all",
+            checked ? "left-[22px]" : "left-0.5",
           )}
         />
       </span>
@@ -125,7 +125,7 @@ export function Toggle({
 
 export function ProofLink({ url }: { url?: string }) {
   const [preview, setPreview] = useState(false);
-  if (!url) return <p className="text-sm font-semibold text-slate-500">No proof link sent</p>;
+  if (!url) return <p className="text-sm text-slate-500">No proof link sent</p>;
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
@@ -133,16 +133,16 @@ export function ProofLink({ url }: { url?: string }) {
           href={url}
           target="_blank"
           rel="noreferrer noopener"
-          className="inline-flex max-w-full items-center gap-1.5 truncate rounded-xl bg-sky/15 px-3 py-1.5 text-sm font-bold text-sky hover:bg-sky/25"
+          className="inline-flex max-w-full items-center gap-1.5 truncate rounded-lg bg-sky/10 px-3 py-1.5 text-sm font-semibold text-sky hover:bg-sky/20"
         >
-          <ExternalLink className="h-4 w-4 shrink-0" />
+          <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span className="truncate">{url.replace(/^https?:\/\//, "")}</span>
         </a>
         <button
           onClick={() => setPreview((v) => !v)}
-          className="inline-flex h-8 items-center gap-1.5 rounded-xl bg-ink-800 px-3 text-xs font-extrabold text-slate-300 hover:bg-ink-700"
+          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-ink-700/80 bg-ink-800 px-3 text-xs font-semibold text-slate-300 hover:bg-ink-700"
         >
-          <ImageIcon className="h-4 w-4" />
+          <ImageIcon className="h-4 w-4" aria-hidden="true" />
           {preview ? "Hide preview" : "Preview image"}
         </button>
       </div>
@@ -152,7 +152,7 @@ export function ProofLink({ url }: { url?: string }) {
           src={url}
           alt="Submitted proof"
           referrerPolicy="no-referrer"
-          className="max-h-80 w-full rounded-2xl border-2 border-ink-700 bg-ink-950 object-contain"
+          className="max-h-80 w-full rounded-xl border border-ink-700/80 bg-ink-950 object-contain"
         />
       ) : null}
     </div>
@@ -160,7 +160,7 @@ export function ProofLink({ url }: { url?: string }) {
 }
 
 export function Loading({ label = "Loading…" }: { label?: string }) {
-  return <p className="py-6 text-center text-sm font-semibold text-slate-400">{label}</p>;
+  return <p className="py-6 text-center text-sm font-medium text-slate-400">{label}</p>;
 }
 
 export function dateTime(iso?: string) {

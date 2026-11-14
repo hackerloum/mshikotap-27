@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { CreditCard, LogOut } from "lucide-react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,21 +35,21 @@ export default function UserSettingsPage() {
               <Image
                 src={user.photoURL}
                 alt=""
-                width={72}
-                height={72}
+                width={64}
+                height={64}
                 unoptimized
-                className="h-[72px] w-[72px] shrink-0 rounded-3xl border-2 border-coin object-cover"
+                className="h-16 w-16 shrink-0 rounded-full border border-ink-600 object-cover"
               />
             ) : (
-              <div className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-3xl border-2 border-coin-deep bg-coin font-display text-4xl text-ink-950">
+              <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-sky font-display text-3xl text-ink-950">
                 {initial}
               </div>
             )}
             <div className="min-w-0">
-              <h2 className="truncate font-display text-3xl leading-tight text-white">
+              <h2 className="truncate font-display text-2xl leading-tight text-white">
                 {user?.displayName ?? "Player"}
               </h2>
-              <p className="truncate text-sm font-semibold text-slate-400">
+              <p className="truncate text-sm text-slate-400">
                 {user?.email}
               </p>
               <Badge tone="info" className="mt-2">
@@ -65,14 +65,14 @@ export default function UserSettingsPage() {
             value={String(user?.gamification.level ?? 1)}
             hint={`${formatNumber(user?.gamification.xp ?? 0)} XP`}
             tone="sky"
-            icon={<Star size={28} />}
+            icon={<Star size={22} />}
           />
           <StatCard
             label="Streak"
             value={`${user?.gamification.streakDays ?? 0} days`}
             hint={`Best ${user?.gamification.longestStreak ?? 0}`}
             tone="flame"
-            icon={<Flame size={28} />}
+            icon={<Flame size={22} />}
           />
           <StatCard
             label="Plan"
@@ -81,13 +81,14 @@ export default function UserSettingsPage() {
               plan ? `${formatCurrency(plan.priceMonthly)}/mo` : undefined
             }
             tone="coin"
+            icon={<CreditCard className="h-5 w-5" aria-hidden="true" />}
           />
         </div>
 
         {(user?.gamification.badges ?? []).length > 0 ? (
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">Your badges</CardTitle>
+              <CardTitle className="text-xl">Your badges</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
               {(user?.gamification.badges ?? []).map((b) => (
@@ -105,7 +106,7 @@ export default function UserSettingsPage() {
           className="w-full sm:w-auto"
           onClick={() => void signOut()}
         >
-          <LogOut className="h-5 w-5" />
+          <LogOut className="h-5 w-5" aria-hidden="true" />
           Sign out
         </Button>
       </div>

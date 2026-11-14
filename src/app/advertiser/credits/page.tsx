@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Coin } from "@/components/ui/coin";
 import { StatCard } from "@/components/ui/stat";
 import { useAuthStore } from "@/store/auth-store";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
 import { toast } from "sonner";
 import { Check, Wallet } from "lucide-react";
@@ -16,7 +16,7 @@ const packages = [
   { id: "starter", credits: 50000, label: "Starter" },
   { id: "growth", credits: 200000, label: "Growth", popular: true },
   { id: "scale", credits: 500000, label: "Scale" },
-  { id: "big", credits: 1000000, label: "Big push" },
+  { id: "big", credits: 1000000, label: "Enterprise" },
 ];
 
 export default function AdvertiserCreditsPage() {
@@ -39,7 +39,7 @@ export default function AdvertiserCreditsPage() {
           label="Credit balance"
           value={formatCurrency(user?.advertiserCredits ?? 0)}
           hint="Spent as people finish your tasks"
-          icon={<Wallet className="h-5 w-5" />}
+          icon={<Wallet className="h-5 w-5" aria-hidden="true" />}
           tone="coin"
         />
 
@@ -52,22 +52,24 @@ export default function AdvertiserCreditsPage() {
                 type="button"
                 aria-pressed={isSelected}
                 onClick={() => setSelected(pkg.id)}
-                className={`rounded-3xl border-2 p-5 text-left transition active:translate-y-[3px] ${
+                className={cn(
+                  "rounded-xl border p-5 text-left shadow-sm shadow-black/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coin/60",
                   isSelected
-                    ? "border-coin bg-ink-800 shadow-[0_5px_0_0_var(--color-coin-deep)]"
-                    : "border-ink-700 bg-ink-900 shadow-[0_5px_0_0_var(--color-ink-700)] hover:border-ink-600"
-                }`}
+                    ? "border-coin bg-coin/5 ring-1 ring-coin"
+                    : "border-ink-700/80 bg-ink-900 hover:border-ink-600 hover:bg-ink-800",
+                )}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="font-display text-xl text-white">{pkg.label}</h3>
-                  {pkg.popular ? (
-                    <Badge tone="brand">Popular</Badge>
-                  ) : isSelected ? (
-                    <Check className="h-5 w-5 text-coin" />
-                  ) : null}
+                  <h3 className="font-display text-lg text-white">{pkg.label}</h3>
+                  <div className="flex items-center gap-2">
+                    {pkg.popular ? <Badge tone="brand">Popular</Badge> : null}
+                    {isSelected ? (
+                      <Check className="h-5 w-5 text-coin" aria-hidden="true" />
+                    ) : null}
+                  </div>
                 </div>
-                <p className="mt-3 flex items-center gap-2 font-display text-3xl text-white">
-                  <Coin size={28} />
+                <p className="tabular mt-3 flex items-center gap-2 font-display text-2xl text-white">
+                  <Coin size={24} />
                   {formatCurrency(pkg.credits)}
                 </p>
                 <p className="text-sm text-slate-400">in campaign credits</p>

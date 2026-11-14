@@ -63,7 +63,7 @@ export default function AdminPlayerPage({ params }: { params: Promise<{ uid: str
   if (error) {
     return (
       <DashboardShell role="admin" title="Player">
-        <p className="rounded-2xl border-2 border-coral/40 bg-coral/10 p-4 text-sm font-bold text-coral">{error}</p>
+        <p className="rounded-lg border border-coral/30 bg-coral/10 p-4 text-sm font-semibold text-coral">{error}</p>
       </DashboardShell>
     );
   }
@@ -82,16 +82,16 @@ export default function AdminPlayerPage({ params }: { params: Promise<{ uid: str
   return (
     <DashboardShell role="admin" title="Player">
       <div className="space-y-6">
-        <Link href="/admin/users" className="inline-flex items-center gap-1.5 text-sm font-extrabold text-slate-400 hover:text-white">
-          <ArrowLeft className="h-4 w-4" /> All players
+        <Link href="/admin/users" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-400 transition-colors hover:text-white">
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> All players
         </Link>
 
         <Card>
           <CardContent className="space-y-3 pt-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="truncate font-display text-3xl text-white">{profile.displayName}</h2>
-                <p className="break-all text-sm font-semibold text-slate-400">{profile.email}</p>
+                <h2 className="truncate font-display text-2xl text-white">{profile.displayName}</h2>
+                <p className="break-all text-sm text-slate-400">{profile.email}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Badge>{profile.role}</Badge>
@@ -99,17 +99,17 @@ export default function AdminPlayerPage({ params }: { params: Promise<{ uid: str
                 <Badge tone={profile.isBanned ? "danger" : "success"}>{profile.isBanned ? "suspended" : "active"}</Badge>
               </div>
             </div>
-            <p className="text-xs font-semibold text-slate-500">
+            <p className="tabular text-xs text-slate-500">
               Joined {dateTime(profile.createdAt)} ({accountAge(age)}) · referral code {profile.referralCode}
               {profile.referredBy ? ` · referred by ${profile.referredBy}` : ""}
             </p>
             {profile.isBanned && profile.banReason ? (
-              <p className="rounded-2xl border-2 border-coral/40 bg-coral/10 p-3 text-sm font-bold text-coral">Suspended: {profile.banReason}</p>
+              <p className="rounded-lg border border-coral/30 bg-coral/10 p-3 text-sm font-semibold text-coral">Suspended: {profile.banReason}</p>
             ) : null}
           </CardContent>
         </Card>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Balance" value={formatCurrency(profile.wallet.balance)} hint={`${formatCurrency(profile.wallet.pendingBalance)} on hold`} tone="coin" />
           <StatCard label="Lifetime earned" value={formatCurrency(profile.wallet.lifetimeEarnings)} tone="mint" />
           <StatCard label="Quests" value={`${security.approved} / ${security.submitted}`} hint={`${security.rejected} rejected`} tone="sky" />
@@ -117,20 +117,20 @@ export default function AdminPlayerPage({ params }: { params: Promise<{ uid: str
         </div>
 
         {data.sameDevice.length > 0 || data.sameIp.length > 0 ? (
-          <Card className="border-flame/50">
+          <Card className="border-flame/40">
             <CardHeader>
               <CardTitle>Linked accounts</CardTitle>
-              <p className="mt-1 text-sm font-semibold text-slate-400">
+              <p className="mt-1 text-sm text-slate-400">
                 Same device is a strong signal. Same network can be family or a shared phone network.
               </p>
             </CardHeader>
             <CardContent className="space-y-3">
               {data.sameDevice.length > 0 ? (
                 <div>
-                  <p className="mb-1.5 text-xs font-extrabold uppercase tracking-wider text-coral">Same device</p>
+                  <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-coral">Same device</p>
                   <div className="flex flex-wrap gap-2">
                     {data.sameDevice.map((a) => (
-                      <Link key={a.uid} href={`/admin/users/${a.uid}`} className="rounded-full bg-coral/15 px-3 py-1.5 text-sm font-bold text-coral hover:bg-coral/25">
+                      <Link key={a.uid} href={`/admin/users/${a.uid}`} className="rounded-md bg-coral/10 px-2.5 py-1 text-sm font-semibold text-coral transition-colors hover:bg-coral/20">
                         {a.name}
                         {a.isBanned ? " (suspended)" : ""}
                       </Link>
@@ -140,10 +140,10 @@ export default function AdminPlayerPage({ params }: { params: Promise<{ uid: str
               ) : null}
               {data.sameIp.length > 0 ? (
                 <div>
-                  <p className="mb-1.5 text-xs font-extrabold uppercase tracking-wider text-slate-400">Same network</p>
+                  <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Same network</p>
                   <div className="flex flex-wrap gap-2">
                     {data.sameIp.map((a) => (
-                      <Link key={a.uid} href={`/admin/users/${a.uid}`} className="rounded-full bg-ink-800 px-3 py-1.5 text-sm font-bold text-slate-200 hover:bg-ink-700">
+                      <Link key={a.uid} href={`/admin/users/${a.uid}`} className="rounded-md bg-ink-800 px-2.5 py-1 text-sm font-semibold text-slate-200 transition-colors hover:bg-ink-700">
                         {a.name}
                       </Link>
                     ))}
@@ -161,12 +161,12 @@ export default function AdminPlayerPage({ params }: { params: Promise<{ uid: str
             </CardHeader>
             <CardContent className="space-y-5">
               {isAdmin ? (
-                <p className="text-sm font-bold text-slate-400">Only the owner account has admin access.</p>
+                <p className="text-sm font-semibold text-slate-400">Only the owner account has admin access.</p>
               ) : (
                 <>
                   <div className="space-y-2">
                     {profile.isBanned ? (
-                      <Button variant="mint" className="min-h-11 w-full" disabled={busy} onClick={() => void apply({ isBanned: false }, "Account reinstated")}>
+                      <Button variant="mint" className="w-full" disabled={busy} onClick={() => void apply({ isBanned: false }, "Account reinstated")}>
                         Reinstate account
                       </Button>
                     ) : (
@@ -175,7 +175,7 @@ export default function AdminPlayerPage({ params }: { params: Promise<{ uid: str
                         <Input id="ban" placeholder="Reason (the player is told)" value={banReason} onChange={(e) => setBanReason(e.target.value)} />
                         <Button
                           variant="danger"
-                          className="min-h-11 w-full"
+                          className="w-full"
                           disabled={busy || !banReason.trim()}
                           onClick={async () => {
                             if (await apply({ isBanned: true, banReason }, "Account suspended")) setBanReason("");
@@ -188,15 +188,15 @@ export default function AdminPlayerPage({ params }: { params: Promise<{ uid: str
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
-                    <Button variant="secondary" className="min-h-11" disabled={busy} onClick={() => void apply({ trusted: !security.trusted }, security.trusted ? "Trust removed" : "Marked as trusted")}>
+                    <Button variant="secondary" disabled={busy} onClick={() => void apply({ trusted: !security.trusted }, security.trusted ? "Trust removed" : "Marked as trusted")}>
                       {security.trusted ? "Remove trusted" : "Mark trusted"}
                     </Button>
-                    <Button variant="secondary" className="min-h-11" disabled={busy || security.riskScore === 0} onClick={() => void apply({ resetRisk: true }, "Risk reset to 0")}>
+                    <Button variant="secondary" disabled={busy || security.riskScore === 0} onClick={() => void apply({ resetRisk: true }, "Risk reset to 0")}>
                       Reset risk
                     </Button>
                     <Button
                       variant="secondary"
-                      className="col-span-2 min-h-11"
+                      className="col-span-2"
                       disabled={busy}
                       onClick={() =>
                         void apply(
@@ -216,7 +216,7 @@ export default function AdminPlayerPage({ params }: { params: Promise<{ uid: str
                         <Input id="credits" type="number" placeholder="Add TSh" value={credits} onChange={(e) => setCredits(e.target.value)} />
                         <Button
                           variant="sky"
-                          className="min-h-12 shrink-0"
+                          className="shrink-0"
                           disabled={busy || !Number(credits)}
                           onClick={async () => {
                             if (await apply({ grantCredits: Number(credits) }, "Credits updated")) setCredits("");
@@ -234,7 +234,7 @@ export default function AdminPlayerPage({ params }: { params: Promise<{ uid: str
                     <Input aria-label="Reason" placeholder="Reason (required, kept in the audit log)" value={adjust.reason} onChange={(e) => setAdjust({ ...adjust, reason: e.target.value })} />
                     <Button
                       variant="default"
-                      className="min-h-11 w-full"
+                      className="w-full"
                       disabled={busy || !Number(adjust.amount) || !adjust.reason.trim()}
                       onClick={async () => {
                         if (await apply({ adjustBalance: { amount: Number(adjust.amount), reason: adjust.reason } }, "Balance updated")) {
@@ -252,7 +252,7 @@ export default function AdminPlayerPage({ params }: { params: Promise<{ uid: str
                     <Textarea aria-label="Message" placeholder="Message" value={message.body} onChange={(e) => setMessage({ ...message, body: e.target.value })} />
                     <Button
                       variant="secondary"
-                      className="min-h-11 w-full"
+                      className="w-full"
                       disabled={busy || !message.title.trim() || !message.body.trim()}
                       onClick={async () => {
                         if (await apply({ message }, "Message sent")) setMessage({ title: "", body: "" });
@@ -270,35 +270,37 @@ export default function AdminPlayerPage({ params }: { params: Promise<{ uid: str
             <CardHeader>
               <CardTitle>Fraud alerts ({data.flags.length})</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent>
               {data.flags.length === 0 ? (
-                <p className="text-sm font-semibold text-slate-400">No alerts for this player.</p>
+                <p className="text-sm text-slate-400">No alerts for this player.</p>
               ) : (
-                data.flags.map((f) => (
-                  <div key={f.id} className="rounded-2xl border-2 border-ink-700 bg-ink-800 p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-extrabold text-white">{flagLabels[f.kind] ?? f.kind}</p>
-                      <Badge tone={f.status === "open" ? (f.severity === "high" ? "danger" : "warning") : "default"}>
-                        {f.status === "open" ? f.severity : f.status}
-                      </Badge>
-                    </div>
-                    <p className="mt-1 break-words text-xs font-semibold text-slate-300">{f.detail}</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-500">
-                      {relativeTime(f.createdAt)}
-                      {f.points ? ` · ${f.points > 0 ? "+" : ""}${f.points} risk` : ""}
-                    </p>
-                    {f.status === "open" ? (
-                      <div className="mt-2 grid grid-cols-2 gap-2">
-                        <Button size="sm" variant="secondary" className="min-h-10" onClick={() => void resolveFlag(f.id, "dismiss")}>
-                          False alarm
-                        </Button>
-                        <Button size="sm" variant="danger" className="min-h-10" onClick={() => void resolveFlag(f.id, "confirm")}>
-                          Confirm
-                        </Button>
+                <div className="divide-y divide-ink-700/60">
+                  {data.flags.map((f) => (
+                    <div key={f.id} className="py-3 first:pt-0 last:pb-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-semibold text-white">{flagLabels[f.kind] ?? f.kind}</p>
+                        <Badge tone={f.status === "open" ? (f.severity === "high" ? "danger" : "warning") : "default"}>
+                          {f.status === "open" ? f.severity : f.status}
+                        </Badge>
                       </div>
-                    ) : null}
-                  </div>
-                ))
+                      <p className="mt-1 break-words text-xs text-slate-300">{f.detail}</p>
+                      <p className="tabular mt-1 text-xs text-slate-500">
+                        {relativeTime(f.createdAt)}
+                        {f.points ? ` · ${f.points > 0 ? "+" : ""}${f.points} risk` : ""}
+                      </p>
+                      {f.status === "open" ? (
+                        <div className="mt-2 grid grid-cols-2 gap-2">
+                          <Button size="sm" variant="secondary" onClick={() => void resolveFlag(f.id, "dismiss")}>
+                            False alarm
+                          </Button>
+                          <Button size="sm" variant="danger" onClick={() => void resolveFlag(f.id, "confirm")}>
+                            Confirm
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -309,22 +311,24 @@ export default function AdminPlayerPage({ params }: { params: Promise<{ uid: str
             <CardHeader>
               <CardTitle>Recent quests</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent>
               {data.submissions.length === 0 ? (
-                <p className="text-sm font-semibold text-slate-400">No quests sent yet.</p>
+                <p className="text-sm text-slate-400">No quests sent yet.</p>
               ) : (
-                data.submissions.map((s) => (
-                  <div key={s.id} className="flex items-center justify-between gap-2 rounded-2xl border-2 border-ink-700 bg-ink-800 px-3 py-2.5">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-white">{s.taskTitle ?? s.taskId}</p>
-                      <p className="text-xs font-semibold text-slate-400">
-                        {formatCurrency(s.reward ?? 0)} · {relativeTime(s.submittedAt)}
-                        {typeof s.elapsedSeconds === "number" ? ` · ${s.elapsedSeconds}s` : ""}
-                      </p>
+                <div className="divide-y divide-ink-700/60">
+                  {data.submissions.map((s) => (
+                    <div key={s.id} className="flex items-center justify-between gap-2 py-2.5 first:pt-0 last:pb-0">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-white">{s.taskTitle ?? s.taskId}</p>
+                        <p className="tabular text-xs text-slate-400">
+                          {formatCurrency(s.reward ?? 0)} · {relativeTime(s.submittedAt)}
+                          {typeof s.elapsedSeconds === "number" ? ` · ${s.elapsedSeconds}s` : ""}
+                        </p>
+                      </div>
+                      <Badge tone={subTone[s.status]}>{s.status === "submitted" ? "waiting" : s.status}</Badge>
                     </div>
-                    <Badge tone={subTone[s.status]}>{s.status === "submitted" ? "waiting" : s.status}</Badge>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -333,23 +337,25 @@ export default function AdminPlayerPage({ params }: { params: Promise<{ uid: str
             <CardHeader>
               <CardTitle>Payouts</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent>
               {data.withdrawals.length === 0 ? (
-                <p className="text-sm font-semibold text-slate-400">No cash outs yet.</p>
+                <p className="text-sm text-slate-400">No cash outs yet.</p>
               ) : (
-                data.withdrawals.map((w) => (
-                  <div key={w.id} className="flex items-center justify-between gap-2 rounded-2xl border-2 border-ink-700 bg-ink-800 px-3 py-2.5">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-white">
-                        {formatCurrency(w.amount)} · {w.destination}
-                      </p>
-                      <p className="text-xs font-semibold text-slate-400">{relativeTime(w.createdAt)}</p>
+                <div className="divide-y divide-ink-700/60">
+                  {data.withdrawals.map((w) => (
+                    <div key={w.id} className="flex items-center justify-between gap-2 py-2.5 first:pt-0 last:pb-0">
+                      <div className="min-w-0">
+                        <p className="tabular truncate text-sm font-semibold text-white">
+                          {formatCurrency(w.amount)} · {w.destination}
+                        </p>
+                        <p className="tabular text-xs text-slate-400">{relativeTime(w.createdAt)}</p>
+                      </div>
+                      <Badge tone={w.status === "completed" ? "success" : w.status === "rejected" ? "danger" : "warning"}>
+                        {w.status.replaceAll("_", " ")}
+                      </Badge>
                     </div>
-                    <Badge tone={w.status === "completed" ? "success" : w.status === "rejected" ? "danger" : "warning"}>
-                      {w.status.replaceAll("_", " ")}
-                    </Badge>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -359,18 +365,20 @@ export default function AdminPlayerPage({ params }: { params: Promise<{ uid: str
           <CardHeader>
             <CardTitle>Admin history for this player</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent>
             {data.audit.length === 0 ? (
-              <p className="text-sm font-semibold text-slate-400">No admin actions yet.</p>
+              <p className="text-sm text-slate-400">No admin actions yet.</p>
             ) : (
-              data.audit.map((a) => (
-                <div key={a.id} className="rounded-2xl border-2 border-ink-700 bg-ink-800 px-3 py-2.5">
-                  <p className="break-words text-sm font-semibold text-slate-200">
-                    <span className="font-extrabold text-coin">{a.actorName}</span> · {a.summary}
-                  </p>
-                  <p className="text-xs font-semibold text-slate-500">{dateTime(a.createdAt)}</p>
-                </div>
-              ))
+              <div className="divide-y divide-ink-700/60">
+                {data.audit.map((a) => (
+                  <div key={a.id} className="py-2.5 first:pt-0 last:pb-0">
+                    <p className="break-words text-sm text-slate-200">
+                      <span className="font-semibold text-coin">{a.actorName}</span> · {a.summary}
+                    </p>
+                    <p className="tabular text-xs text-slate-500">{dateTime(a.createdAt)}</p>
+                  </div>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>

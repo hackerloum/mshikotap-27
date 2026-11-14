@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Flag, Wallet } from "lucide-react";
+import { CircleCheck, Flag, Receipt, Wallet } from "lucide-react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,18 +46,28 @@ export default function AdvertiserOverviewPage() {
             label="Credits"
             value={formatCurrency(user?.advertiserCredits ?? 0)}
             hint="Available to spend"
-            icon={<Wallet className="h-5 w-5" />}
+            icon={<Wallet className="h-5 w-5" aria-hidden="true" />}
             tone="coin"
           />
           <StatCard
             label="Active campaigns"
             value={formatNumber(active)}
             hint={`${campaigns.length} total`}
-            icon={<Flag className="h-5 w-5" />}
+            icon={<Flag className="h-5 w-5" aria-hidden="true" />}
             tone="mint"
           />
-          <StatCard label="Credits spent" value={formatCurrency(spent)} tone="flame" />
-          <StatCard label="Completions" value={formatNumber(completions)} tone="sky" />
+          <StatCard
+            label="Credits spent"
+            value={formatCurrency(spent)}
+            icon={<Receipt className="h-5 w-5" aria-hidden="true" />}
+            tone="flame"
+          />
+          <StatCard
+            label="Completions"
+            value={formatNumber(completions)}
+            icon={<CircleCheck className="h-5 w-5" aria-hidden="true" />}
+            tone="sky"
+          />
         </div>
 
         <div className="grid gap-3 sm:flex sm:flex-wrap">
@@ -78,7 +88,7 @@ export default function AdvertiserOverviewPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Your campaigns</CardTitle>
+            <CardTitle className="text-xl">Your campaigns</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {campaigns.length === 0 ? (
@@ -90,15 +100,16 @@ export default function AdvertiserOverviewPage() {
               campaigns.map((c) => (
                 <div
                   key={c.id}
-                  className="space-y-2 rounded-2xl border-2 border-ink-700 bg-ink-800 p-3"
+                  className="space-y-3 rounded-xl border border-ink-700/80 bg-ink-800 p-4"
                 >
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate font-display text-lg text-white">
+                      <p className="truncate font-display text-base text-white">
                         {c.title}
                       </p>
-                      <p className="text-xs text-slate-400">
-                        {c.type.replaceAll("_", " ")} · {formatNumber(c.completions)}{" "}
+                      <p className="mt-0.5 text-xs text-slate-400">
+                        {c.type.replaceAll("_", " ")} ·{" "}
+                        <span className="tabular">{formatNumber(c.completions)}</span>{" "}
                         actions
                       </p>
                     </div>
@@ -110,7 +121,7 @@ export default function AdvertiserOverviewPage() {
                     tone="coin"
                     label={`${c.title} budget used`}
                   />
-                  <p className="text-xs text-slate-400">
+                  <p className="tabular text-xs text-slate-400">
                     {formatCurrency(c.spentCredits)} / {formatCurrency(c.budgetCredits)}
                   </p>
                 </div>

@@ -23,7 +23,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         toastOptions={{
           classNames: {
             toast:
-              "!rounded-2xl !border-2 !border-ink-600 !bg-ink-800 !font-sans !font-bold !text-white",
+              "!rounded-lg !border !border-ink-600 !bg-ink-800 !font-sans !font-medium !text-white",
           },
         }}
       />

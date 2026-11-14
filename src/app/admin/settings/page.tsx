@@ -143,7 +143,7 @@ export default function AdminSettingsPage() {
           <Card key={g.title}>
             <CardHeader>
               <CardTitle>{g.title}</CardTitle>
-              <p className="mt-1 text-sm font-semibold text-slate-400">{g.description}</p>
+              <p className="mt-1 text-sm text-slate-400">{g.description}</p>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {g.fields.map((f) => (
@@ -157,8 +157,8 @@ export default function AdminSettingsPage() {
                     value={draft[f.key] ?? ""}
                     onChange={(e) => setDraft({ ...draft, [f.key]: e.target.value })}
                   />
-                  <p className="mt-1 text-xs font-semibold text-slate-500">
-                    {f.hint} Default {defaultSettings[f.key]}.
+                  <p className="mt-1 text-xs text-slate-500">
+                    {f.hint} Default <span className="tabular">{defaultSettings[f.key]}</span>.
                   </p>
                 </div>
               ))}
@@ -180,21 +180,21 @@ export default function AdminSettingsPage() {
               <Label>Support email</Label>
               <Input value={siteConfig.supportEmail} readOnly />
             </div>
-            <p className="text-xs font-semibold text-slate-500 sm:col-span-2">
+            <p className="text-xs text-slate-500 sm:col-span-2">
               Only the owner account can open this panel.
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="pb-safe fixed inset-x-0 bottom-[68px] z-20 border-t-2 border-ink-700 bg-ink-900 lg:bottom-0 lg:left-64">
+      <div className="pb-safe fixed inset-x-0 bottom-[68px] z-20 border-t border-ink-700/80 bg-ink-900 lg:bottom-0 lg:left-64">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
-          <p className="text-xs font-extrabold text-slate-300 sm:text-sm">{dirty ? `${Object.keys(patch).length} unsaved change${Object.keys(patch).length > 1 ? "s" : ""}` : "All changes saved"}</p>
+          <p className="tabular text-xs font-semibold text-slate-300 sm:text-sm">{dirty ? `${Object.keys(patch).length} unsaved change${Object.keys(patch).length > 1 ? "s" : ""}` : "All changes saved"}</p>
           <div className="flex gap-2">
-            <Button variant="secondary" className="min-h-11" disabled={!dirty || busy} onClick={() => hydrate(saved)}>
+            <Button variant="secondary" disabled={!dirty || busy} onClick={() => hydrate(saved)}>
               Undo
             </Button>
-            <Button variant="mint" className="min-h-11" disabled={!dirty || busy} onClick={() => void save()}>
+            <Button variant="mint" disabled={!dirty || busy} onClick={() => void save()}>
               {busy ? "Saving…" : "Save changes"}
             </Button>
           </div>

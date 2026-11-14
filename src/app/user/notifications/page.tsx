@@ -23,11 +23,11 @@ const channelStyle: Record<
   NotificationChannel,
   { icon: React.ComponentType<{ className?: string }>; chip: string }
 > = {
-  in_app: { icon: Sparkles, chip: "bg-coin/20 text-coin" },
-  push: { icon: Bell, chip: "bg-flame/20 text-flame" },
-  email: { icon: Mail, chip: "bg-sky/20 text-sky" },
-  sms: { icon: MessageSquare, chip: "bg-mint/20 text-mint" },
-  whatsapp: { icon: MessageCircle, chip: "bg-mint/20 text-mint" },
+  in_app: { icon: Sparkles, chip: "bg-coin/10 text-coin" },
+  push: { icon: Bell, chip: "bg-flame/10 text-flame" },
+  email: { icon: Mail, chip: "bg-sky/10 text-sky" },
+  sms: { icon: MessageSquare, chip: "bg-mint/10 text-mint" },
+  whatsapp: { icon: MessageCircle, chip: "bg-mint/10 text-mint" },
 };
 
 export default function UserNotificationsPage() {
@@ -62,25 +62,24 @@ export default function UserNotificationsPage() {
     <DashboardShell role="user" title="Alerts">
       <div className="space-y-5">
         <div className="flex items-center justify-between gap-3">
-          <p className="font-display text-2xl text-white">
-            {unread > 0 ? `${unread} new` : "All caught up"}
+          <p className="tabular font-display text-xl text-white">
+            {unread > 0 ? `${unread} unread` : "All caught up"}
           </p>
           <Button
             variant="secondary"
             size="sm"
-            className="min-h-11"
             disabled={unread === 0}
             onClick={() => void markAll()}
           >
-            <CheckCheck className="h-4 w-4" />
-            Read all
+            <CheckCheck className="h-4 w-4" aria-hidden="true" />
+            Mark all read
           </Button>
         </div>
 
         {items.length === 0 ? (
           <EmptyState
-            title="All quiet"
-            description="Payouts, approvals, and race updates land here."
+            title="No notifications"
+            description="Payouts, approvals, and race updates will appear here."
           />
         ) : (
           <ul className="space-y-3">
@@ -91,41 +90,42 @@ export default function UserNotificationsPage() {
                 <li
                   key={n.id}
                   className={cn(
-                    "relative flex gap-3 rounded-3xl border-2 p-4",
+                    "relative flex gap-3 rounded-xl border p-4 shadow-sm shadow-black/20",
                     n.read
-                      ? "border-ink-700 bg-ink-900"
-                      : "border-coin-deep bg-ink-900 shadow-[0_4px_0_0_var(--color-coin-deep)]",
+                      ? "border-ink-700/80 bg-ink-900"
+                      : "border-coin/40 bg-ink-900",
                   )}
                 >
                   <div
                     className={cn(
-                      "grid h-12 w-12 shrink-0 place-items-center rounded-2xl",
+                      "grid h-11 w-11 shrink-0 place-items-center rounded-lg",
                       style.chip,
                     )}
                   >
-                    <Icon className="h-6 w-6" />
+                    <Icon className="h-5 w-5" aria-hidden="true" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start gap-2">
-                      <p className="min-w-0 flex-1 font-display text-lg leading-tight text-white">
+                      <p className="min-w-0 flex-1 font-display text-base leading-tight text-white">
                         {n.title}
                       </p>
                       {!n.read ? (
                         <span
+                          role="img"
                           aria-label="Unread"
-                          className="mt-1.5 h-3 w-3 shrink-0 rounded-full bg-coin"
+                          className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-coin"
                         />
                       ) : null}
                     </div>
                     <p className="mt-1 break-words text-sm text-slate-300">
                       {n.body}
                     </p>
-                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-extrabold uppercase tracking-wider text-slate-500">
-                      <span>{relativeTime(n.createdAt)}</span>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-slate-400">
+                      <span className="tabular">{relativeTime(n.createdAt)}</span>
                       {n.href ? (
                         <Link
                           href={n.href}
-                          className="inline-flex min-h-11 items-center text-sky hover:underline"
+                          className="inline-flex min-h-9 items-center text-sky hover:underline"
                         >
                           Open
                         </Link>
@@ -134,7 +134,7 @@ export default function UserNotificationsPage() {
                         <button
                           type="button"
                           onClick={() => void markOne(n.id)}
-                          className="inline-flex min-h-11 items-center text-coin hover:underline"
+                          className="inline-flex min-h-9 items-center text-coin hover:underline"
                         >
                           Mark read
                         </button>

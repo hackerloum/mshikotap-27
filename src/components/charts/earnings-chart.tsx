@@ -21,7 +21,7 @@ export function EarningsChart({ data }: { data: EarningsPoint[] }) {
       <CardContent className="h-72">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data}>
-            <CartesianGrid stroke="#2a3070" vertical={false} />
+            <CartesianGrid stroke="#2a3070" strokeOpacity={0.6} vertical={false} />
             <XAxis
               dataKey="date"
               tick={{ fill: "#8d93c4", fontSize: 11 }}
@@ -36,10 +36,11 @@ export function EarningsChart({ data }: { data: EarningsPoint[] }) {
             />
             <Tooltip
               contentStyle={{
-                background: "#1c2150",
-                border: "2px solid #3b4290",
-                borderRadius: 14,
+                background: "#14183a",
+                border: "1px solid #2a3070",
+                borderRadius: 8,
                 color: "#fff",
+                fontSize: 12,
               }}
               labelStyle={{ color: "#8d93c4" }}
               cursor={{ stroke: "#3b4290" }}
@@ -49,8 +50,8 @@ export function EarningsChart({ data }: { data: EarningsPoint[] }) {
               dataKey="amount"
               stroke="#ffc21a"
               fill="#ffc21a"
-              fillOpacity={0.18}
-              strokeWidth={3}
+              fillOpacity={0.12}
+              strokeWidth={2}
             />
           </AreaChart>
         </ResponsiveContainer>

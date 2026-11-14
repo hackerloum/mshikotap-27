@@ -18,7 +18,7 @@ export default function AdvertiserSettingsPage() {
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Account</CardTitle>
+            <CardTitle className="text-xl">Account</CardTitle>
             <p className="mt-1 text-sm text-slate-400">
               You sign in with Google, so these details come from your Google
               account.
@@ -40,6 +40,7 @@ export default function AdvertiserSettingsPage() {
             <div>
               <Label>Credits</Label>
               <Input
+                className="tabular"
                 value={formatNumber(user?.advertiserCredits ?? 0)}
                 readOnly
               />
@@ -49,12 +50,12 @@ export default function AdvertiserSettingsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-3">
-            <CardTitle>Plan</CardTitle>
+            <CardTitle className="text-xl">Plan</CardTitle>
             <Badge tone="brand">{user?.subscription ?? "free"}</Badge>
           </CardHeader>
           <CardContent>
             {plan ? (
-              <p className="text-sm text-slate-300">
+              <p className="tabular text-sm text-slate-300">
                 {plan.name} · {formatCurrency(plan.priceMonthly)}/mo · includes{" "}
                 {formatCurrency(plan.starterCredits)} starter credits
               </p>

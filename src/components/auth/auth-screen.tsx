@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Swords, Target, Wallet } from "lucide-react";
+import { toast } from "sonner";
 import { Brand } from "@/components/layout/brand";
 import { Button } from "@/components/ui/button";
 import { roleHome } from "@/config/site";

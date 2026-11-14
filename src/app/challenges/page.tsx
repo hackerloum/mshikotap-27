@@ -42,48 +42,48 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
   return (
     <article
       className={cn(
-        "flex flex-col rounded-3xl border-2 bg-ink-900 p-5",
-        ended
-          ? "border-ink-700 shadow-[0_5px_0_0_var(--color-ink-700)]"
-          : "border-coin shadow-[0_5px_0_0_var(--color-coin-deep)]",
+        "flex flex-col rounded-xl border bg-ink-900 p-5 shadow-sm shadow-black/20",
+        ended ? "border-ink-700/80" : "border-coin/40",
       )}
     >
       <div className="flex flex-wrap items-center gap-2">
         <Badge tone={statusTone[challenge.status]}>
           {challenge.status === "live" ? (
-            <span className="h-1.5 w-1.5 rounded-full bg-mint" />
+            <span className="h-1.5 w-1.5 rounded-full bg-mint" aria-hidden="true" />
           ) : null}
           {statusLabel[challenge.status]}
         </Badge>
         <Badge tone="brand">{challenge.type.replaceAll("_", " ")}</Badge>
       </div>
 
-      <h2 className="mt-3 font-display text-2xl leading-tight text-white">
+      <h2 className="mt-3 font-display text-xl leading-tight text-white">
         {challenge.title}
       </h2>
-      <p className="mt-1.5 text-sm font-semibold text-slate-400">
+      <p className="mt-1.5 text-sm text-slate-400">
         {challenge.description}
       </p>
 
-      <div className="mt-4 flex items-center gap-3 rounded-2xl bg-ink-800 p-3">
-        <Coin size={36} />
+      <div className="mt-4 flex items-center gap-3 rounded-lg border border-ink-700/80 bg-ink-800 p-3">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-coin/10">
+          <Coin size={22} />
+        </span>
         <div className="min-w-0">
-          <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
             Prize pool
           </p>
-          <p className="truncate font-display text-2xl leading-tight text-coin">
+          <p className="tabular truncate font-display text-xl leading-tight text-coin">
             {formatCurrency(challenge.rewardPool)}
           </p>
         </div>
       </div>
 
       <div className="mt-4">
-        <div className="mb-2 flex items-center justify-between gap-2 text-xs font-extrabold uppercase tracking-wider text-slate-400">
+        <div className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
           <span className="flex items-center gap-1.5">
             <Timer className="h-4 w-4" aria-hidden="true" />
             {ended ? "Ended" : upcoming ? "Starts soon" : "Ends in"}
           </span>
-          <span className="flex items-center gap-1.5">
+          <span className="tabular flex items-center gap-1.5">
             <Users className="h-4 w-4" aria-hidden="true" />
             {formatNumber(challenge.participants)} racing
           </span>
@@ -94,7 +94,7 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
           tone={ended ? "sky" : "flame"}
           label="Race time used"
         />
-        <p className="mt-2 font-display text-xl text-white">
+        <p className="tabular mt-2 font-display text-lg text-white">
           {ended ? "Race closed" : countdown.label}
         </p>
       </div>
@@ -142,15 +142,15 @@ export default function ChallengesPage() {
     <div className="min-h-dvh bg-ink-950 text-slate-100">
       <MarketingHeader />
       <main>
-        <section className="dots border-b-2 border-ink-800">
+        <section className="grid-bg border-b border-ink-700/80">
           <div className="mx-auto max-w-6xl px-4 pb-8 pt-10 sm:pb-12 sm:pt-14">
-            <p className="text-xs font-extrabold uppercase tracking-wider text-flame">
+            <p className="text-xs font-semibold uppercase tracking-wider text-flame">
               Races
             </p>
-            <h1 className="mt-2 max-w-2xl font-display text-4xl leading-[1.05] text-white sm:text-6xl">
-              Jump into a <span className="scribble text-coin">race</span> 🏁
+            <h1 className="mt-2 max-w-2xl font-display text-3xl leading-[1.1] text-white sm:text-5xl">
+              Jump into a <span className="text-coin">race</span>
             </h1>
-            <p className="mt-3 max-w-xl text-base font-semibold text-slate-300 sm:text-lg">
+            <p className="mt-3 max-w-xl text-base text-slate-300 sm:text-lg">
               Beat the clock, score points, share the prize pool.
             </p>
           </div>
@@ -158,13 +158,13 @@ export default function ChallengesPage() {
 
         <div className="mx-auto max-w-6xl px-4 py-10">
           {loading ? (
-            <p className="text-sm font-semibold text-slate-400">
+            <p className="text-sm text-slate-400">
               Loading races…
             </p>
           ) : challenges.length === 0 ? (
             <EmptyState
               title="No races right now"
-              description="Check back soon. New ones drop all the time."
+              description="Check back soon. New races are added regularly."
             />
           ) : (
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">

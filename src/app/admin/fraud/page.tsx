@@ -69,7 +69,7 @@ export default function AdminFraudPage() {
         {byKind.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {byKind.map(([kind, count]) => (
-              <span key={kind} className="rounded-full bg-ink-800 px-3 py-1.5 text-xs font-extrabold text-slate-300">
+              <span key={kind} className="tabular rounded-md border border-ink-700/80 bg-ink-800 px-2.5 py-1 text-xs font-semibold text-slate-300">
                 {flagLabels[kind as keyof typeof flagLabels] ?? kind} · {count}
               </span>
             ))}
@@ -84,35 +84,35 @@ export default function AdminFraudPage() {
             description="Alerts appear when the system blocks reused proof, rushed claims, shared devices and similar tricks."
           />
         ) : (
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-3 xl:grid-cols-2">
             {items.map((f) => (
               <Card key={f.id} className={f.severity === "high" && f.status === "open" ? "border-coral/60" : undefined}>
                 <CardContent className="space-y-3 pt-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-display text-xl text-white">{flagLabels[f.kind] ?? f.kind}</p>
-                      <p className="mt-0.5 break-words text-sm font-semibold text-slate-300">{f.detail}</p>
+                      <p className="font-display text-lg text-white">{flagLabels[f.kind] ?? f.kind}</p>
+                      <p className="mt-0.5 break-words text-sm text-slate-300">{f.detail}</p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
                       <Badge tone={severityTone[f.severity]}>{f.severity}</Badge>
-                      {f.points !== 0 ? <span className="text-xs font-extrabold text-slate-400">{f.points > 0 ? "+" : ""}{f.points} risk</span> : null}
+                      {f.points !== 0 ? <span className="tabular text-xs font-semibold text-slate-400">{f.points > 0 ? "+" : ""}{f.points} risk</span> : null}
                     </div>
                   </div>
                   <PlayerChip player={f.player} fallback={f.userId} />
-                  <p className="text-xs font-semibold text-slate-500">
+                  <p className="tabular text-xs text-slate-500">
                     {relativeTime(f.createdAt)} · {dateTime(f.createdAt)}
                   </p>
                   {f.status === "open" ? (
                     <div className="grid grid-cols-3 gap-2">
-                      <Button size="sm" variant="secondary" className="min-h-11" disabled={busy} onClick={() => void resolve(f, "dismiss")}>
+                      <Button size="sm" variant="secondary" disabled={busy} onClick={() => void resolve(f, "dismiss")}>
                         False alarm
                       </Button>
-                      <Button size="sm" variant="danger" className="min-h-11" disabled={busy} onClick={() => void resolve(f, "confirm")}>
+                      <Button size="sm" variant="danger" disabled={busy} onClick={() => void resolve(f, "confirm")}>
                         Confirm
                       </Button>
                       <Link
                         href={`/admin/users/${f.userId}`}
-                        className="inline-flex min-h-11 items-center justify-center rounded-xl border-2 border-coin px-3 font-display text-sm text-coin hover:bg-coin/10"
+                        className="inline-flex h-9 items-center justify-center rounded-lg border border-coin/60 px-3 text-[13px] font-semibold text-coin transition-colors hover:bg-coin/10"
                       >
                         Open player
                       </Link>

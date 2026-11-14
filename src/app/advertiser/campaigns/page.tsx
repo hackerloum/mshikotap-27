@@ -94,7 +94,7 @@ export default function AdvertiserCampaignsPage() {
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>New campaign</CardTitle>
+            <CardTitle className="text-xl">New campaign</CardTitle>
           </CardHeader>
           <CardContent>
             <form className="grid gap-4 md:grid-cols-2" onSubmit={onCreate}>
@@ -163,7 +163,7 @@ export default function AdvertiserCampaignsPage() {
               </div>
               <div className="md:col-span-2">
                 <Button type="submit" disabled={saving} className="w-full sm:w-auto">
-                  {saving ? "Creating…" : "Launch it"}
+                  {saving ? "Creating…" : "Launch campaign"}
                 </Button>
               </div>
             </form>
@@ -171,7 +171,7 @@ export default function AdvertiserCampaignsPage() {
         </Card>
 
         {campaigns.length === 0 ? (
-          <EmptyState title="No campaigns yet" description="Make your first one above." />
+          <EmptyState title="No campaigns yet" description="Create your first campaign above." />
         ) : (
           <div className="grid gap-4">
             {campaigns.map((c) => (
@@ -179,10 +179,14 @@ export default function AdvertiserCampaignsPage() {
                 <CardHeader className="flex flex-row items-start justify-between gap-3">
                   <div className="min-w-0">
                     <CardTitle className="truncate">{c.title}</CardTitle>
-                    <p className="mt-1 text-sm text-slate-400">
-                      {c.type.replaceAll("_", " ")} · CPA {c.costPerAction} ·{" "}
-                      {formatNumber(c.completions)} completions
-                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                      <Badge tone="info">{c.type.replaceAll("_", " ")}</Badge>
+                      <p className="text-sm text-slate-400">
+                        CPA <span className="tabular">{c.costPerAction}</span> ·{" "}
+                        <span className="tabular">{formatNumber(c.completions)}</span>{" "}
+                        completions
+                      </p>
+                    </div>
                   </div>
                   <Badge tone={statusTone[c.status]}>{c.status}</Badge>
                 </CardHeader>
@@ -194,7 +198,7 @@ export default function AdvertiserCampaignsPage() {
                     label={`${c.title} budget used`}
                   />
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-sm text-slate-400">
+                    <p className="tabular text-sm text-slate-400">
                       Spent {formatNumber(c.spentCredits)} /{" "}
                       {formatNumber(c.budgetCredits)} credits
                     </p>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { CircleCheck, Receipt, Target, Wallet } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -53,15 +54,35 @@ export default function AdvertiserAnalyticsPage() {
     <DashboardShell role="advertiser" title="Analytics">
       <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Completions" value={formatNumber(totals.completions)} tone="mint" />
-          <StatCard label="Credits spent" value={formatNumber(totals.spent)} tone="coin" />
-          <StatCard label="Budget" value={formatNumber(totals.budget)} tone="sky" />
-          <StatCard label="Avg CPA" value={formatNumber(totals.cpa)} tone="flame" />
+          <StatCard
+            label="Completions"
+            value={formatNumber(totals.completions)}
+            icon={<CircleCheck className="h-5 w-5" aria-hidden="true" />}
+            tone="mint"
+          />
+          <StatCard
+            label="Credits spent"
+            value={formatNumber(totals.spent)}
+            icon={<Receipt className="h-5 w-5" aria-hidden="true" />}
+            tone="coin"
+          />
+          <StatCard
+            label="Budget"
+            value={formatNumber(totals.budget)}
+            icon={<Wallet className="h-5 w-5" aria-hidden="true" />}
+            tone="sky"
+          />
+          <StatCard
+            label="Avg CPA"
+            value={formatNumber(totals.cpa)}
+            icon={<Target className="h-5 w-5" aria-hidden="true" />}
+            tone="flame"
+          />
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>How campaigns are doing</CardTitle>
+            <CardTitle className="text-xl">Campaign performance</CardTitle>
           </CardHeader>
           <CardContent className="h-80">
             {chartData.length === 0 ? (
@@ -84,14 +105,14 @@ export default function AdvertiserAnalyticsPage() {
                   <Tooltip
                     contentStyle={{
                       background: "#1c2150",
-                      border: "2px solid #3b4290",
-                      borderRadius: 14,
+                      border: "1px solid #3b4290",
+                      borderRadius: 8,
                       color: "#fff",
                     }}
                     cursor={{ fill: "#2a3070", opacity: 0.4 }}
                   />
-                  <Bar dataKey="completions" fill="#ffc21a" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="spent" fill="#34d17d" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="completions" fill="#ffc21a" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="spent" fill="#34d17d" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}

@@ -126,13 +126,13 @@ export default function AdminReviewsPage() {
         </div>
 
         {tab === "submitted" && selected.size > 0 ? (
-          <div className="sticky top-[72px] z-10 flex items-center justify-between gap-3 rounded-2xl border-2 border-mint/50 bg-ink-900 p-3 shadow-lg">
-            <p className="text-sm font-extrabold text-white">{selected.size} selected</p>
+          <div className="sticky top-[72px] z-10 flex items-center justify-between gap-3 rounded-xl border border-mint/30 bg-ink-900 p-3 shadow-lg shadow-black/30">
+            <p className="tabular text-sm font-semibold text-white">{selected.size} selected</p>
             <div className="flex gap-2">
-              <Button size="sm" variant="ghost" className="min-h-11" onClick={() => setSelected(new Set())}>
+              <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
                 Clear
               </Button>
-              <Button size="sm" variant="mint" className="min-h-11" disabled={busy} onClick={() => void approve([...selected])}>
+              <Button size="sm" variant="mint" disabled={busy} onClick={() => void approve([...selected])}>
                 Approve selected
               </Button>
             </div>
@@ -147,7 +147,7 @@ export default function AdminReviewsPage() {
             description={tab === "submitted" ? "New quest submissions land here as players send proof." : undefined}
           />
         ) : (
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-3 xl:grid-cols-2">
             {filtered.map((s) => {
               const risky = s.player && (s.player.risk === "high" || s.player.isBanned);
               return (
@@ -165,7 +165,7 @@ export default function AdminReviewsPage() {
                       ) : null}
                       <div className="min-w-0">
                         <CardTitle className="truncate">{s.taskTitle ?? s.taskId}</CardTitle>
-                        <p className="mt-0.5 text-sm font-bold text-coin">
+                        <p className="tabular mt-0.5 text-sm font-semibold text-coin">
                           {formatCurrency(s.reward ?? 0)} · {relativeTime(s.submittedAt)}
                         </p>
                       </div>
@@ -175,32 +175,31 @@ export default function AdminReviewsPage() {
                   <CardContent className="space-y-3">
                     <PlayerChip player={s.player} fallback={s.userName} />
                     <ProofLink url={s.proofUrl} />
-                    <div className="flex flex-wrap gap-2 text-xs font-extrabold">
+                    <div className="tabular flex flex-wrap gap-2 text-xs font-semibold">
                       {typeof s.elapsedSeconds === "number" ? (
-                        <span className="rounded-full bg-ink-800 px-2.5 py-1 text-slate-300">
+                        <span className="rounded-md bg-ink-800 px-2 py-1 text-slate-300">
                           Took {s.elapsedSeconds}s
                         </span>
                       ) : null}
-                      <span className="rounded-full bg-ink-800 px-2.5 py-1 text-slate-300">
+                      <span className="rounded-md bg-ink-800 px-2 py-1 text-slate-300">
                         Sent {dateTime(s.submittedAt)}
                       </span>
                     </div>
                     {s.notes ? (
-                      <p className="break-words rounded-2xl bg-ink-800 p-3 text-sm font-semibold text-slate-300">
+                      <p className="break-words rounded-lg bg-ink-800 p-3 text-sm text-slate-300">
                         {s.notes}
                       </p>
                     ) : null}
                     {s.status === "rejected" && s.rejectionReason ? (
-                      <p className="text-sm font-bold text-coral">Reason: {s.rejectionReason}</p>
+                      <p className="text-sm font-semibold text-coral">Reason: {s.rejectionReason}</p>
                     ) : null}
                     {s.status === "submitted" ? (
                       <div className="grid grid-cols-2 gap-2">
-                        <Button variant="mint" className="min-h-11" disabled={busy} onClick={() => void approve([s.id])}>
+                        <Button variant="mint" disabled={busy} onClick={() => void approve([s.id])}>
                           Approve
                         </Button>
                         <Button
                           variant="danger"
-                          className="min-h-11"
                           disabled={busy}
                           onClick={() => {
                             setRejecting(s);
@@ -223,11 +222,11 @@ export default function AdminReviewsPage() {
 
       {rejecting ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label="Reject quest">
-          <div className="max-h-[92dvh] w-full max-w-lg space-y-4 overflow-y-auto rounded-t-3xl border-2 border-ink-600 bg-ink-900 p-5 sm:rounded-3xl">
+          <div className="max-h-[92dvh] w-full max-w-lg space-y-4 overflow-y-auto rounded-t-xl border border-ink-700/80 bg-ink-900 p-5 shadow-xl shadow-black/40 sm:rounded-xl">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-wider text-coral">Reject</p>
-              <h2 className="font-display text-2xl text-white">{rejecting.taskTitle}</h2>
-              <p className="text-sm font-semibold text-slate-400">{rejecting.userName}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-coral">Reject</p>
+              <h2 className="font-display text-xl text-white">{rejecting.taskTitle}</h2>
+              <p className="text-sm text-slate-400">{rejecting.userName}</p>
             </div>
             <div>
               <Label htmlFor="preset">Reason the player will see</Label>
@@ -243,20 +242,20 @@ export default function AdminReviewsPage() {
               <Label htmlFor="custom">Or write your own</Label>
               <Textarea id="custom" value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="Optional, replaces the reason above" />
             </div>
-            <label className="flex items-start gap-3 rounded-2xl border-2 border-coral/40 bg-coral/10 p-3 text-sm font-bold text-slate-200">
+            <label className="flex items-start gap-3 rounded-lg border border-coral/30 bg-coral/10 p-3 text-sm font-semibold text-slate-200">
               <input type="checkbox" className="mt-0.5 h-5 w-5 shrink-0 accent-[#ff5b57]" checked={fraud} onChange={(e) => setFraud(e.target.checked)} />
               <span>
                 This is cheating (fake, edited or stolen proof)
-                <span className="mt-0.5 block text-xs font-semibold text-slate-400">
+                <span className="mt-0.5 block text-xs font-normal text-slate-400">
                   Adds a big risk penalty and raises a fraud alert. Repeat cases are suspended automatically.
                 </span>
               </span>
             </label>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="secondary" className="min-h-12" onClick={() => setRejecting(null)}>
+              <Button variant="secondary" onClick={() => setRejecting(null)}>
                 Cancel
               </Button>
-              <Button variant="danger" className="min-h-12" disabled={busy} onClick={() => void reject()}>
+              <Button variant="danger" disabled={busy} onClick={() => void reject()}>
                 {busy ? "Rejecting…" : "Reject"}
               </Button>
             </div>
