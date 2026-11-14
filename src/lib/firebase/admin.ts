@@ -23,7 +23,12 @@ function clean(value: string | undefined) {
 function readPrivateKey() {
   const raw = clean(process.env.FIREBASE_ADMIN_PRIVATE_KEY);
   if (!raw) return undefined;
-  return raw.replace(/\\n/g, "\n");
+  const text = raw.replace(/\\+n/g, "\n").replace(/\r/g, "");
+  const match = text.match(/-----BEGIN ([A-Z ]*PRIVATE KEY)-----([\s\S]*?)-----END \1-----/);
+  if (!match) return text;
+  const body = match[2].replace(/[^A-Za-z0-9+/=]/g, "");
+  const lines = body.match(/.{1,64}/g)?.join("\n") ?? body;
+  return `-----BEGIN ${match[1]}-----\n${lines}\n-----END ${match[1]}-----\n`;
 }
 
 export function isFirebaseAdminConfigured() {
