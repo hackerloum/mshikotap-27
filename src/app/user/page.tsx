@@ -21,11 +21,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Coin, Flame } from "@/components/ui/coin";
-import { demoEarnings, demoTasks } from "@/data/demo";
+import { EmptyState } from "@/components/ui/empty-state";
+import { earningsService } from "@/services/admin.service";
 import { tasksService } from "@/services/tasks.service";
 import { useAuthStore } from "@/store/auth-store";
 import { cn, formatCurrency, formatNumber, relativeTime, xpForLevel } from "@/lib/utils";
-import type { TaskSubmission } from "@/types";
+import type { EarningsPoint, Task, TaskSubmission } from "@/types";
 
 const COOLDOWN_MS = 20 * 60 * 60 * 1000;
 
@@ -57,6 +58,8 @@ export default function UserOverviewPage() {
   const user = useAuthStore((s) => s.user);
   const claimDaily = useAuthStore((s) => s.claimDaily);
   const [submissions, setSubmissions] = useState<TaskSubmission[]>([]);
+  const [quests, setQuests] = useState<Task[]>([]);
+  const [earnings, setEarnings] = useState<EarningsPoint[]>([]);
   const [claiming, setClaiming] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
@@ -65,12 +68,21 @@ export default function UserOverviewPage() {
     return () => window.clearInterval(id);
   }, []);
 
+  const uid = user?.uid;
+  const balance = user?.wallet.balance;
+
   useEffect(() => {
-    if (!user) return;
-    void tasksService.listSubmissions(user.uid).then((res) => {
+    if (!uid) return;
+    void tasksService.listSubmissions().then((res) => {
       if (res.ok) setSubmissions(res.data.slice(0, 4));
     });
-  }, [user]);
+    void tasksService.list().then((res) => {
+      if (res.ok) setQuests(res.data.slice(0, 4));
+    });
+    void earningsService.mine().then((res) => {
+      if (res.ok) setEarnings(res.data);
+    });
+  }, [uid, balance]);
 
   if (!user) return <DashboardShell role="user" title="Home">{null}</DashboardShell>;
 
@@ -86,11 +98,9 @@ export default function UserOverviewPage() {
     : 0;
   const wait = lastClaim ? lastClaim + COOLDOWN_MS - now : 0;
   const canClaim = wait <= 0;
-  const nextReward = Number((0.1 + Math.min(gamification.streakDays + 1, 7) * 0.02).toFixed(2));
+  const nextReward = 100 + Math.min(gamification.streakDays + 1, 7) * 50;
   const firstName = user.displayName.split(" ")[0];
 
-  const quests = demoTasks.filter((t) => t.status === "open").slice(0, 4);
-  const taskTitle = (taskId: string) => demoTasks.find((t) => t.id === taskId)?.title ?? taskId;
 
   async function onClaim() {
     setClaiming(true);
@@ -221,6 +231,12 @@ export default function UserOverviewPage() {
               See all
             </Link>
           </div>
+          {quests.length === 0 ? (
+            <EmptyState
+              title="No open quests right now"
+              description="New quests land every day. Claim your daily bonus and check back soon."
+            />
+          ) : null}
           <div className="space-y-3">
             {quests.map((task) => (
               <Link
@@ -243,7 +259,7 @@ export default function UserOverviewPage() {
 
         <div className="grid gap-4 lg:grid-cols-5">
           <div className="lg:col-span-3">
-            <EarningsChart data={demoEarnings} />
+            <EarningsChart data={earnings} />
           </div>
           <Card className="lg:col-span-2">
             <CardHeader>
@@ -258,7 +274,7 @@ export default function UserOverviewPage() {
                 submissions.map((s) => (
                   <div key={s.id} className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-extrabold text-white">{taskTitle(s.taskId)}</p>
+                      <p className="truncate text-sm font-extrabold text-white">{s.taskTitle ?? "Quest"}</p>
                       <p className="text-xs font-semibold text-slate-400">{relativeTime(s.submittedAt)}</p>
                     </div>
                     <Badge tone={statusTone[s.status]}>{s.status}</Badge>

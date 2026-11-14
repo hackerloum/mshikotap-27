@@ -36,7 +36,7 @@ export default function UserNotificationsPage() {
 
   const load = useCallback(async () => {
     if (!user) return;
-    const res = await notificationsService.list(user.uid);
+    const res = await notificationsService.list();
     if (res.ok) setItems(res.data);
   }, [user]);
 
@@ -51,7 +51,7 @@ export default function UserNotificationsPage() {
 
   async function markAll() {
     if (!user) return;
-    const res = await notificationsService.markAllRead(user.uid);
+    const res = await notificationsService.markAllRead();
     if (res.ok) toast.success(`Marked ${res.data.count} as read`);
     void load();
   }

@@ -1,21 +1,27 @@
-import { demoChallenges, demoLeaderboard, demoReferralStats } from "@/data/demo";
-import { fromUnknown, ok } from "@/lib/errors/app-error";
+import { api } from "@/lib/api-client";
 import type { ApiResult, Challenge, LeaderboardEntry, ReferralStats } from "@/types";
 
 export const challengesService = {
-  async list(): Promise<ApiResult<Challenge[]>> {
-    try {
-      return ok(structuredClone(demoChallenges));
-    } catch (error) {
-      return fromUnknown(error);
-    }
+  list(): Promise<ApiResult<Challenge[]>> {
+    return api<Challenge[]>("/api/challenges", { auth: false });
   },
 
-  async leaderboard(): Promise<ApiResult<LeaderboardEntry[]>> {
-    return ok(structuredClone(demoLeaderboard));
+  create(input: {
+    title: string;
+    description?: string;
+    type: Challenge["type"];
+    rewardPool: number;
+    startsAt: string;
+    endsAt: string;
+  }): Promise<ApiResult<Challenge>> {
+    return api<Challenge>("/api/challenges", { method: "POST", body: input });
   },
 
-  async referralStats(): Promise<ApiResult<ReferralStats>> {
-    return ok(structuredClone(demoReferralStats));
+  leaderboard(): Promise<ApiResult<LeaderboardEntry[]>> {
+    return api<LeaderboardEntry[]>("/api/leaderboard", { auth: false });
+  },
+
+  referralStats(): Promise<ApiResult<ReferralStats>> {
+    return api<ReferralStats>("/api/referrals");
   },
 };

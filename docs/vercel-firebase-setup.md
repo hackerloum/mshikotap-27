@@ -5,7 +5,7 @@
 1. Open [vercel.com/new](https://vercel.com/new)
 2. Import `hackerloum/mshikotap-27`
 3. Framework: **Next.js** (auto-detected)
-4. Do **not** deploy yet if Firebase keys are missing — or deploy once with `NEXT_PUBLIC_DEMO_MODE=true`
+4. Add the Firebase env vars before the first deploy
 
 Team slug (from connected account): `hackerloum-gmailcoms-projects`
 
@@ -26,8 +26,6 @@ Project → **Settings** → **Environment Variables**
 |---|---|---|
 | `NEXT_PUBLIC_APP_NAME` | Production, Preview, Development | `MshikoTap` |
 | `NEXT_PUBLIC_APP_URL` | Production | `https://mshikotap.co.tz` |
-| `NEXT_PUBLIC_DEMO_MODE` | Production, Preview | `false` |
-| `NEXT_PUBLIC_DEMO_MODE` | Development | `true` (optional) |
 | `NEXT_PUBLIC_FIREBASE_API_KEY` | All | From Firebase web config |
 | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | All | `your-id.firebaseapp.com` |
 | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | All | Firebase project id |
@@ -79,7 +77,6 @@ Or push to `main` once Git is connected.
 
 Hit `/api/health` — expect:
 
-- `demoMode: false`
 - `firebaseConfigured: true`
 - `firebaseAdminConfigured: true`
 - empty `missingPublic` / `missingAdmin`

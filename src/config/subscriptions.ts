@@ -4,11 +4,11 @@ export const subscriptionTiers: SubscriptionTier[] = [
   {
     id: "basic",
     name: "Basic",
-    priceMonthly: 9,
-    starterCredits: 50,
+    priceMonthly: 20000,
+    starterCredits: 50000,
     features: [
       "Player dashboard and daily quests",
-      "50 starter campaign credits",
+      "TSh 50,000 starter credits",
       "Standard task priority",
       "Email support",
     ],
@@ -16,12 +16,12 @@ export const subscriptionTiers: SubscriptionTier[] = [
   {
     id: "pro",
     name: "Pro",
-    priceMonthly: 29,
-    starterCredits: 250,
+    priceMonthly: 60000,
+    starterCredits: 250000,
     highlighted: true,
     features: [
       "Everything in Basic",
-      "250 starter credits",
+      "TSh 250,000 starter credits",
       "Premium analytics",
       "Campaign priority queue",
       "Referral race boosts",
@@ -30,11 +30,11 @@ export const subscriptionTiers: SubscriptionTier[] = [
   {
     id: "premium",
     name: "Premium",
-    priceMonthly: 79,
-    starterCredits: 800,
+    priceMonthly: 150000,
+    starterCredits: 800000,
     features: [
       "Everything in Pro",
-      "800 starter credits",
+      "TSh 800,000 starter credits",
       "Dedicated success manager",
       "AI insights (coming soon)",
       "Custom challenge sponsorship",

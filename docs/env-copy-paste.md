@@ -4,12 +4,10 @@
 
 1. Copy `.env.example` → `.env.local`
 2. Replace every `PASTE_...` value
-3. For local only, you can set `NEXT_PUBLIC_DEMO_MODE=true` until Firebase is ready
 
 ```env
 NEXT_PUBLIC_APP_NAME=MshikoTap
 NEXT_PUBLIC_APP_URL=https://mshikotap.co.tz
-NEXT_PUBLIC_DEMO_MODE=false
 
 NEXT_PUBLIC_FIREBASE_API_KEY=PASTE_FIREBASE_API_KEY
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=PASTE_PROJECT_ID.firebaseapp.com
@@ -35,8 +33,6 @@ Targets: **Production**, **Preview**, **Development** (unless noted).
 | `NEXT_PUBLIC_APP_NAME` | `MshikoTap` | All | No |
 | `NEXT_PUBLIC_APP_URL` | `https://mshikotap.co.tz` | Production | No |
 | `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | Development | No |
-| `NEXT_PUBLIC_DEMO_MODE` | `false` | Production, Preview | No |
-| `NEXT_PUBLIC_DEMO_MODE` | `true` | Development | No |
 | `NEXT_PUBLIC_FIREBASE_API_KEY` | from Firebase web config `apiKey` | All | No |
 | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | from Firebase `authDomain` | All | No |
 | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | from Firebase `projectId` | All | No |
@@ -66,7 +62,6 @@ Firebase Console → Project settings → Service accounts → Generate new priv
 ```text
 NEXT_PUBLIC_APP_NAME
 NEXT_PUBLIC_APP_URL
-NEXT_PUBLIC_DEMO_MODE
 NEXT_PUBLIC_FIREBASE_API_KEY
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
 NEXT_PUBLIC_FIREBASE_PROJECT_ID

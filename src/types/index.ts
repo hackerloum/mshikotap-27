@@ -124,6 +124,10 @@ export interface Task {
 export interface TaskSubmission {
   id: string;
   taskId: string;
+  taskTitle?: string;
+  reward?: number;
+  xpReward?: number;
+  userName?: string;
   userId: string;
   status: Extract<TaskStatus, "submitted" | "approved" | "rejected">;
   proofUrl?: string;
@@ -175,6 +179,7 @@ export interface LeaderboardEntry {
   userId: string;
   displayName: string;
   score: number;
+  level?: number;
   avatarUrl?: string;
 }
 

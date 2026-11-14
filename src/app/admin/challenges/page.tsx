@@ -29,8 +29,9 @@ export default function AdminChallengesPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<ChallengeType>("flash");
-  const [rewardPool, setRewardPool] = useState("250");
+  const [rewardPool, setRewardPool] = useState("100000");
   const [days, setDays] = useState("3");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     void challengesService.list().then((res) => {
@@ -38,23 +39,25 @@ export default function AdminChallengesPage() {
     });
   }, []);
 
-  function onCreate(e: React.FormEvent) {
+  async function onCreate(e: React.FormEvent) {
     e.preventDefault();
     const now = Date.now();
-    const durationMs = Number(days) * 864e5;
-    const created: Challenge = {
-      id: `ch-${Date.now()}`,
+    setSaving(true);
+    const res = await challengesService.create({
       title,
       description,
       type,
       rewardPool: Number(rewardPool),
       startsAt: new Date(now).toISOString(),
-      endsAt: new Date(now + durationMs).toISOString(),
-      participants: 0,
-      status: "live",
-    };
-    setChallenges((prev) => [created, ...prev]);
-    toast.success("Challenge announced (demo)");
+      endsAt: new Date(now + Number(days) * 864e5).toISOString(),
+    });
+    setSaving(false);
+    if (!res.ok) {
+      toast.error(res.error.message);
+      return;
+    }
+    setChallenges((prev) => [res.data, ...prev]);
+    toast.success("Race announced");
     setTitle("");
     setDescription("");
   }
@@ -92,7 +95,7 @@ export default function AdminChallengesPage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="pool">Reward pool (USD)</Label>
+                <Label htmlFor="pool">Reward pool (TSh)</Label>
                 <Input
                   id="pool"
                   type="number"
@@ -123,8 +126,8 @@ export default function AdminChallengesPage() {
                 />
               </div>
               <div className="md:col-span-2">
-                <Button type="submit" className="w-full sm:w-auto">
-                  Publish challenge
+                <Button type="submit" className="w-full sm:w-auto" disabled={saving}>
+                  {saving ? "Publishing…" : "Publish race"}
                 </Button>
               </div>
             </form>

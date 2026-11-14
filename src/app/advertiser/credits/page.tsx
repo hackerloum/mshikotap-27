@@ -7,30 +7,29 @@ import { Button } from "@/components/ui/button";
 import { Coin } from "@/components/ui/coin";
 import { StatCard } from "@/components/ui/stat";
 import { useAuthStore } from "@/store/auth-store";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
+import { siteConfig } from "@/config/site";
 import { toast } from "sonner";
 import { Check, Wallet } from "lucide-react";
 
 const packages = [
-  { id: "starter", credits: 100, price: 19, label: "Starter" },
-  { id: "growth", credits: 500, price: 79, label: "Growth", popular: true },
-  { id: "scale", credits: 1500, price: 199, label: "Scale" },
-  { id: "enterprise", credits: 5000, price: 599, label: "Enterprise" },
+  { id: "starter", credits: 50000, label: "Starter" },
+  { id: "growth", credits: 200000, label: "Growth", popular: true },
+  { id: "scale", credits: 500000, label: "Scale" },
+  { id: "big", credits: 1000000, label: "Big push" },
 ];
 
 export default function AdvertiserCreditsPage() {
   const user = useAuthStore((s) => s.user);
-  const setUser = useAuthStore((s) => s.setUser);
   const [selected, setSelected] = useState("growth");
 
-  function purchase() {
+  function requestTopUp() {
     const pkg = packages.find((p) => p.id === selected);
     if (!pkg || !user) return;
-    setUser({
-      ...user,
-      advertiserCredits: (user.advertiserCredits ?? 0) + pkg.credits,
-    });
-    toast.success(`Demo purchase: +${pkg.credits} credits`);
+    const subject = encodeURIComponent(`Credit top-up: ${formatCurrency(pkg.credits)}`);
+    const body = encodeURIComponent(`Hi, please top up ${formatCurrency(pkg.credits)} credits for ${user.email}.`);
+    window.location.href = `mailto:${siteConfig.supportEmail}?subject=${subject}&body=${body}`;
+    toast.success("Opening your email app");
   }
 
   return (
@@ -38,7 +37,7 @@ export default function AdvertiserCreditsPage() {
       <div className="space-y-6">
         <StatCard
           label="Credit balance"
-          value={formatNumber(user?.advertiserCredits ?? 0)}
+          value={formatCurrency(user?.advertiserCredits ?? 0)}
           hint="Spent as people finish your tasks"
           icon={<Wallet className="h-5 w-5" />}
           tone="coin"
@@ -69,19 +68,16 @@ export default function AdvertiserCreditsPage() {
                 </div>
                 <p className="mt-3 flex items-center gap-2 font-display text-3xl text-white">
                   <Coin size={28} />
-                  {formatNumber(pkg.credits)}
+                  {formatCurrency(pkg.credits)}
                 </p>
-                <p className="text-sm text-slate-400">credits</p>
-                <p className="mt-4 font-display text-xl text-mint">
-                  {formatCurrency(pkg.price)}
-                </p>
+                <p className="text-sm text-slate-400">in campaign credits</p>
               </button>
             );
           })}
         </div>
 
-        <Button size="lg" className="w-full sm:w-auto" onClick={purchase}>
-          Buy selected pack (demo)
+        <Button size="lg" className="w-full sm:w-auto" onClick={requestTopUp}>
+          Request this top-up
         </Button>
       </div>
     </DashboardShell>

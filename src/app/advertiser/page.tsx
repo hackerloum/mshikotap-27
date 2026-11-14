@@ -12,7 +12,7 @@ import { ProgressBar } from "@/components/ui/progress";
 import { StatCard } from "@/components/ui/stat";
 import { campaignsService } from "@/services/campaigns.service";
 import { useAuthStore } from "@/store/auth-store";
-import { formatNumber } from "@/lib/utils";
+import { formatCurrency, formatNumber } from "@/lib/utils";
 import type { Campaign } from "@/types";
 
 const statusTone = {
@@ -29,7 +29,7 @@ export default function AdvertiserOverviewPage() {
 
   useEffect(() => {
     if (!user) return;
-    void campaignsService.list(user.uid).then((res) => {
+    void campaignsService.list().then((res) => {
       if (res.ok) setCampaigns(res.data);
     });
   }, [user]);
@@ -44,7 +44,7 @@ export default function AdvertiserOverviewPage() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label="Credits"
-            value={formatNumber(user?.advertiserCredits ?? 0)}
+            value={formatCurrency(user?.advertiserCredits ?? 0)}
             hint="Available to spend"
             icon={<Wallet className="h-5 w-5" />}
             tone="coin"
@@ -56,7 +56,7 @@ export default function AdvertiserOverviewPage() {
             icon={<Flag className="h-5 w-5" />}
             tone="mint"
           />
-          <StatCard label="Credits spent" value={formatNumber(spent)} tone="flame" />
+          <StatCard label="Credits spent" value={formatCurrency(spent)} tone="flame" />
           <StatCard label="Completions" value={formatNumber(completions)} tone="sky" />
         </div>
 
@@ -66,7 +66,7 @@ export default function AdvertiserOverviewPage() {
           </Link>
           <Link href="/advertiser/credits">
             <Button variant="secondary" className="w-full sm:w-auto">
-              Buy credits
+              Top up credits
             </Button>
           </Link>
           <Link href="/advertiser/analytics">
@@ -111,8 +111,7 @@ export default function AdvertiserOverviewPage() {
                     label={`${c.title} budget used`}
                   />
                   <p className="text-xs text-slate-400">
-                    {formatNumber(c.spentCredits)} / {formatNumber(c.budgetCredits)}{" "}
-                    credits
+                    {formatCurrency(c.spentCredits)} / {formatCurrency(c.budgetCredits)}
                   </p>
                 </div>
               ))

@@ -2,6 +2,7 @@
 
 import { onAuthStateChanged } from "firebase/auth";
 import { create } from "zustand";
+import { api } from "@/lib/api-client";
 import { getClientAuth } from "@/lib/firebase/client";
 import { authService } from "@/services/auth.service";
 import type { UserProfile } from "@/types";
@@ -23,6 +24,7 @@ interface AuthState {
   init: () => void;
   signInWithGoogle: () => Promise<boolean>;
   claimDaily: () => Promise<ClaimResult>;
+  refreshProfile: () => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
   setUser: (user: UserProfile | null) => void;
@@ -39,11 +41,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   init: () => {
     if (started) return;
     started = true;
-
-    if (authService.isDemo()) {
-      set({ user: authService.getDemoSession(), hydrated: true });
-      return;
-    }
 
     const auth = getClientAuth();
     if (!auth) {
@@ -86,23 +83,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { user } = get();
     if (!user) return { ok: false, message: "Sign in first" };
 
-    if (authService.isDemo()) {
-      const reward = 0.12;
-      const next: UserProfile = {
-        ...user,
-        wallet: { ...user.wallet, balance: user.wallet.balance + reward },
-        gamification: {
-          ...user.gamification,
-          xp: user.gamification.xp + 12,
-          streakDays: user.gamification.streakDays + 1,
-          lastDailyClaimAt: new Date().toISOString(),
-        },
-      };
-      authService.setDemoSession(next);
-      set({ user: next });
-      return { ok: true, reward, xpGain: 12 };
-    }
-
     const auth = getClientAuth();
     const token = await auth?.currentUser?.getIdToken();
     if (!token) return { ok: false, message: "Sign in again to claim" };
@@ -130,6 +110,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       return { ok: false, message: "Network hiccup. Try again." };
     }
+  },
+
+  refreshProfile: async () => {
+    const res = await api<{ profile: UserProfile }>("/api/me", {
+      method: "POST",
+      body: {},
+    });
+    if (res.ok) set({ user: res.data.profile });
   },
 
   logout: async () => {

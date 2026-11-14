@@ -11,7 +11,6 @@ export async function GET() {
     ok: true,
     data: {
       service: siteConfig.name,
-      demoMode: siteConfig.demoMode,
       firebaseConfigured: isFirebaseConfigured,
       firebaseAdminConfigured: isFirebaseAdminConfigured(),
       env: {

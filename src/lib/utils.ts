@@ -5,12 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount: number, currency = "USD") {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 2,
-  }).format(amount);
+export function formatCurrency(amount: number) {
+  const rounded = Math.round(amount);
+  return `${rounded < 0 ? "-" : ""}TSh ${new Intl.NumberFormat("en-US").format(Math.abs(rounded))}`;
 }
 
 export function formatNumber(value: number) {

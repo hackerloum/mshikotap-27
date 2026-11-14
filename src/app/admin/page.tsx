@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat";
-import { demoUser, demoAdvertiser, demoEarnings } from "@/data/demo";
+import { adminService, type AdminStats } from "@/services/admin.service";
 import { tasksService } from "@/services/tasks.service";
 import { walletService } from "@/services/wallet.service";
 import { formatCurrency, formatNumber } from "@/lib/utils";
@@ -17,12 +17,15 @@ import type { TaskSubmission, Withdrawal } from "@/types";
 export default function AdminOverviewPage() {
   const [pendingSubs, setPendingSubs] = useState<TaskSubmission[]>([]);
   const [pendingWd, setPendingWd] = useState<Withdrawal[]>([]);
+  const [stats, setStats] = useState<AdminStats | null>(null);
 
   useEffect(() => {
     void Promise.all([
-      tasksService.listSubmissions(),
-      walletService.listWithdrawals(),
-    ]).then(([subs, wds]) => {
+      tasksService.listAllSubmissions(),
+      walletService.listAllWithdrawals(),
+      adminService.stats(),
+    ]).then(([subs, wds, st]) => {
+      if (st.ok) setStats(st.data);
       if (subs.ok) {
         setPendingSubs(subs.data.filter((s) => s.status === "submitted"));
       }
@@ -36,7 +39,7 @@ export default function AdminOverviewPage() {
     });
   }, []);
 
-  const revenue = demoEarnings.reduce((s, p) => s + p.amount, 0);
+  const volume = (stats?.series ?? []).reduce((sum, p) => sum + p.amount, 0);
 
   return (
     <DashboardShell role="admin" title="Overview">
@@ -44,15 +47,15 @@ export default function AdminOverviewPage() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label="Platform users"
-            value={formatNumber(12840)}
-            hint="Demo KPI"
+            value={formatNumber(stats?.users ?? 0)}
+            hint="Signed in with Google"
             icon={<Users className="h-5 w-5" />}
             tone="sky"
           />
           <StatCard
-            label="14-day volume"
-            value={formatCurrency(revenue)}
-            hint="Task + fee volume"
+            label="14-day payouts earned"
+            value={formatCurrency(volume)}
+            hint="Quest and bonus rewards"
             icon={<Wallet className="h-5 w-5" />}
             tone="mint"
           />
@@ -89,7 +92,7 @@ export default function AdminOverviewPage() {
                     key={s.id}
                     className="flex items-center justify-between gap-2 rounded-2xl border-2 border-ink-700 bg-ink-800 px-3 py-2.5"
                   >
-                    <span className="min-w-0 truncate text-sm font-bold text-white">{s.id}</span>
+                    <span className="min-w-0 truncate text-sm font-bold text-white">{s.taskTitle ?? s.id} · {s.userName ?? ""}</span>
                     <Badge tone="warning">{s.status}</Badge>
                   </div>
                 ))
@@ -126,16 +129,6 @@ export default function AdminOverviewPage() {
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Demo logins</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            <Badge className="normal-case">{demoUser.email}</Badge>
-            <Badge tone="info" className="normal-case">{demoAdvertiser.email}</Badge>
-            <Badge tone="brand" className="normal-case">admin@mshikotap.com</Badge>
-          </CardContent>
-        </Card>
       </div>
     </DashboardShell>
   );

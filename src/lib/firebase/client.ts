@@ -1,8 +1,7 @@
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
+import { connectAuthEmulator, getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
-import { siteConfig } from "@/config/site";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -27,7 +26,7 @@ let db: Firestore | undefined;
 let storage: FirebaseStorage | undefined;
 
 export function getFirebaseApp() {
-  if (!isFirebaseConfigured || siteConfig.demoMode) {
+  if (!isFirebaseConfigured) {
     return null;
   }
   if (!app) {
@@ -39,7 +38,11 @@ export function getFirebaseApp() {
 export function getClientAuth() {
   const firebaseApp = getFirebaseApp();
   if (!firebaseApp) return null;
-  if (!auth) auth = getAuth(firebaseApp);
+  if (!auth) {
+    auth = getAuth(firebaseApp);
+    const emulator = process.env.NEXT_PUBLIC_AUTH_EMULATOR_HOST;
+    if (emulator) connectAuthEmulator(auth, `http://${emulator}`, { disableWarnings: true });
+  }
   return auth;
 }
 

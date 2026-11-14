@@ -56,7 +56,7 @@ export default function AdvertiserSettingsPage() {
             {plan ? (
               <p className="text-sm text-slate-300">
                 {plan.name} · {formatCurrency(plan.priceMonthly)}/mo · includes{" "}
-                {formatNumber(plan.starterCredits)} starter credits
+                {formatCurrency(plan.starterCredits)} starter credits
               </p>
             ) : (
               <p className="text-sm text-slate-400">No paid plan</p>

@@ -45,7 +45,7 @@ export function newProfile(
       balance: 0,
       pendingBalance: 0,
       lifetimeEarnings: 0,
-      currency: "USD",
+      currency: "TZS",
       updatedAt: now,
     },
     gamification: {

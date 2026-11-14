@@ -5,7 +5,7 @@ Modern digital earning platform — tasks, referrals, challenges, advertiser cam
 ## Stack
 
 - **Next.js 15** (App Router) + TypeScript
-- **Firebase** Google sign-in / Firestore / Storage (demo mode when unset)
+- **Firebase** Google sign-in / Firestore / Storage
 - **Zustand** state · **Tailwind CSS 4** · **Recharts**
 - **Vercel**-ready API routes
 
@@ -18,18 +18,6 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
-
-### Demo login
-
-Demo mode is on by default (`NEXT_PUBLIC_DEMO_MODE=true`).
-
-| Email contains | Role |
-|---|---|
-| `admin` | Admin |
-| `advertiser` or `brand` | Advertiser |
-| anything else | User |
-
-Password can be any non-empty value in demo mode.
 
 ## Architecture
 
@@ -45,7 +33,6 @@ src/
   lib/           # firebase client, errors, utils
   types/         # shared TypeScript models
   config/        # site + subscription config
-  data/          # demo fixtures
 ```
 
 ## Vercel + Firebase hosting
@@ -54,7 +41,6 @@ Full guide: [`docs/vercel-firebase-setup.md`](docs/vercel-firebase-setup.md)
 
 1. Import this repo in [Vercel](https://vercel.com/new) (Next.js)
 2. Add env vars from `.env.example` (Firebase web config + Admin service account)
-3. Set `NEXT_PUBLIC_DEMO_MODE=false` for Production/Preview
 4. Deploy and add your `*.vercel.app` domain in Firebase Auth → Authorized domains
 5. Deploy rules: `npx -y firebase-tools@latest deploy --only firestore:rules,storage`
 
@@ -72,7 +58,7 @@ Security rules live in `firestore/`.
 
 ## Phase roadmap
 
-**Phase 1 (this PR):** scalable architecture, dashboards, demo services, API layer, rules templates.
+**Status:** all data lives in Firestore behind authenticated server routes. Amounts are whole Tanzanian shillings (TSh).
 
 **Next:** live Firebase session cookies, FCM push, payment providers for credits, multi-level referral payouts, AI screenshot verification via `aiService`.
 
@@ -83,3 +69,9 @@ Security rules live in `firestore/`.
 - `POST /api/daily-claim` runs the daily bonus in a Firestore transaction (20h cooldown, streak bonus up to 7 days).
 - Set `ADMIN_EMAILS` (comma separated) in Vercel to promote specific Google accounts to the admin role.
 - Firebase Console checklist: enable the Google provider, add `www.mshikotap.co.tz`, `mshikotap.co.tz` and your `*.vercel.app` domain under Authorized domains, create the Firestore database, publish the rules in `firestore/`.
+
+## Money and data
+
+- Currency is **TZS** and amounts are whole shillings. Daily bonus is TSh 150 to 450 (streak), minimum cash out TSh 5,000, 2.5% fee, referral bonus TSh 500.
+- Everything is stored in Firestore: `users`, `tasks`, `taskSubmissions`, `withdrawals`, `campaigns`, `challenges`, `marketplaceListings`, `notifications`, `earningsDaily`. Clients never write these directly (see `firestore/firestore.rules`); the `/api/*` routes verify the Firebase ID token and role, then write with the Admin SDK in transactions.
+- Nothing is pre-filled. Sign in with a Google account listed in `ADMIN_EMAILS`, open **Quests** to publish the first quest, **Races** to announce a race, and **Players** to turn an account into an advertiser and add credits.

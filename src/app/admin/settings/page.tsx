@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
 import { siteConfig } from "@/config/site";
+import { formatCurrency } from "@/lib/utils";
 
 export default function AdminSettingsPage() {
   return (
@@ -13,9 +14,7 @@ export default function AdminSettingsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle>General</CardTitle>
-            <Badge tone={siteConfig.demoMode ? "warning" : "success"}>
-              {siteConfig.demoMode ? "demo mode" : "live"}
-            </Badge>
+            <Badge tone="success">live</Badge>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -44,7 +43,7 @@ export default function AdminSettingsPage() {
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label>Minimum withdrawal</Label>
-              <Input value={String(siteConfig.minWithdrawal)} readOnly />
+              <Input value={formatCurrency(siteConfig.minWithdrawal)} readOnly />
             </div>
             <div>
               <Label>Withdrawal fee %</Label>

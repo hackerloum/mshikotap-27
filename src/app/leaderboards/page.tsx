@@ -26,10 +26,6 @@ function avatarTone(name: string) {
   return rowTones[sum % rowTones.length];
 }
 
-function levelFor(score: number) {
-  return Math.max(1, Math.floor(Math.sqrt(Math.max(0, score) / 40)) + 1);
-}
-
 function Avatar({
   name,
   className,
@@ -50,10 +46,10 @@ function Avatar({
   );
 }
 
-function LevelChip({ score }: { score: number }) {
+function LevelChip({ level }: { level: number }) {
   return (
     <span className="inline-flex items-center rounded-full bg-sky/20 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-sky">
-      Lv {levelFor(score)}
+      Lv {level}
     </span>
   );
 }
@@ -100,7 +96,7 @@ function PodiumSpot({ entry }: { entry: LeaderboardEntry }) {
         {entry.displayName}
       </p>
       <div className="mt-1">
-        <LevelChip score={entry.score} />
+        <LevelChip level={entry.level ?? 1} />
       </div>
       <div
         className={cn(
@@ -215,7 +211,7 @@ export default function LeaderboardsPage() {
                         <p className="truncate font-extrabold text-white">
                           {entry.displayName}
                         </p>
-                        <LevelChip score={entry.score} />
+                        <LevelChip level={entry.level ?? 1} />
                       </div>
                       <p className="flex shrink-0 items-center gap-1.5 font-display text-xl text-coin">
                         <Coin size={20} />

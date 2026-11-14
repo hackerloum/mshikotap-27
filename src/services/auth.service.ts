@@ -5,22 +5,15 @@ import {
   signOut,
   type User as FirebaseUser,
 } from "firebase/auth";
-import { getClientAuth, isFirebaseConfigured } from "@/lib/firebase/client";
+import { getClientAuth } from "@/lib/firebase/client";
 import { AppError, ok, fromUnknown } from "@/lib/errors/app-error";
-import { siteConfig } from "@/config/site";
-import { demoUser } from "@/data/demo";
 import type { ApiResult, UserProfile } from "@/types";
 
-const DEMO_SESSION_KEY = "mshikotap.demo.session";
 const REFERRAL_KEY = "mshikotap.referral";
 
 const inflight = new Map<string, Promise<UserProfile>>();
 
 export const authService = {
-  isDemo() {
-    return siteConfig.demoMode || !isFirebaseConfigured;
-  },
-
   rememberReferral(code?: string | null) {
     if (typeof window === "undefined" || !code) return;
     window.localStorage.setItem(REFERRAL_KEY, code);
@@ -29,26 +22,6 @@ export const authService = {
   takeReferral(): string | undefined {
     if (typeof window === "undefined") return undefined;
     return window.localStorage.getItem(REFERRAL_KEY) || undefined;
-  },
-
-  getDemoSession(): UserProfile | null {
-    if (typeof window === "undefined") return null;
-    const raw = window.localStorage.getItem(DEMO_SESSION_KEY);
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw) as UserProfile;
-    } catch {
-      return null;
-    }
-  },
-
-  setDemoSession(profile: UserProfile | null) {
-    if (typeof window === "undefined") return;
-    if (!profile) {
-      window.localStorage.removeItem(DEMO_SESSION_KEY);
-      return;
-    }
-    window.localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(profile));
   },
 
   /** Exchanges a Firebase session for the server-owned game profile. */
@@ -72,24 +45,6 @@ export const authService = {
           | { ok: false; error: { message: string } };
         if (!json.ok) throw new AppError("PROFILE_FAILED", json.error.message, res.status);
         return json.data.profile;
-      } catch (error) {
-        if (error instanceof AppError && error.status === 403) throw error;
-        return {
-          ...demoUser,
-          uid: firebaseUser.uid,
-          email: firebaseUser.email || "",
-          displayName: firebaseUser.displayName || "Player",
-          photoURL: firebaseUser.photoURL || undefined,
-          role: "user" as const,
-          wallet: { ...demoUser.wallet, balance: 0, pendingBalance: 0, lifetimeEarnings: 0 },
-          gamification: {
-            xp: 0,
-            level: 1,
-            streakDays: 0,
-            longestStreak: 0,
-            badges: [],
-          },
-        } satisfies UserProfile;
       } finally {
         window.setTimeout(() => inflight.delete(firebaseUser.uid), 1500);
       }
@@ -101,12 +56,6 @@ export const authService = {
 
   async signInWithGoogle(): Promise<ApiResult<UserProfile>> {
     try {
-      if (this.isDemo()) {
-        const profile = structuredClone(demoUser);
-        this.setDemoSession(profile);
-        return ok(profile);
-      }
-
       const auth = getClientAuth();
       if (!auth) throw new AppError("AUTH_UNAVAILABLE", "Sign-in is not available right now", 503);
 
@@ -151,7 +100,6 @@ export const authService = {
 
   async logout(): Promise<ApiResult<{ success: true }>> {
     try {
-      this.setDemoSession(null);
       const auth = getClientAuth();
       if (auth) await signOut(auth);
       return ok({ success: true });

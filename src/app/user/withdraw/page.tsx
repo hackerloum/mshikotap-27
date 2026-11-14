@@ -41,15 +41,16 @@ const statusTone = {
 
 export default function UserWithdrawPage() {
   const user = useAuthStore((s) => s.user);
+  const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const [history, setHistory] = useState<Withdrawal[]>([]);
-  const [amount, setAmount] = useState("25");
+  const [amount, setAmount] = useState(String(siteConfig.minWithdrawal));
   const [method, setMethod] = useState<WithdrawalMethod>("mobile_money");
   const [destination, setDestination] = useState("");
   const [loading, setLoading] = useState(false);
 
   const load = useCallback(async () => {
     if (!user) return;
-    const res = await walletService.listWithdrawals(user.uid);
+    const res = await walletService.listWithdrawals();
     if (res.ok) setHistory(res.data);
   }, [user]);
 
@@ -63,11 +64,9 @@ export default function UserWithdrawPage() {
     if (!user) return;
     setLoading(true);
     const res = await walletService.requestWithdrawal({
-      userId: user.uid,
       amount: Number(amount),
       method,
       destination,
-      availableBalance: user.wallet.balance,
     });
     setLoading(false);
     if (!res.ok) {
@@ -76,14 +75,16 @@ export default function UserWithdrawPage() {
     }
     toast.success("Cash out requested");
     void load();
+    void refreshProfile();
   }
 
   const balance = user?.wallet.balance ?? 0;
   const pending = user?.wallet.pendingBalance ?? 0;
   const canCashOut = balance >= siteConfig.minWithdrawal;
   const remaining = Math.max(0, siteConfig.minWithdrawal - balance);
-  const feePreview =
-    Number(amount || 0) * (siteConfig.withdrawalFeePercent / 100);
+  const feePreview = Math.round(
+    Number(amount || 0) * (siteConfig.withdrawalFeePercent / 100),
+  );
   const netPreview = Math.max(0, Number(amount || 0) - feePreview);
 
   return (
@@ -166,13 +167,13 @@ export default function UserWithdrawPage() {
             <CardContent>
               <form className="space-y-5" onSubmit={onSubmit}>
                 <div>
-                  <Label htmlFor="amount">Amount (USD)</Label>
+                  <Label htmlFor="amount">Amount (TSh)</Label>
                   <Input
                     id="amount"
                     type="number"
                     inputMode="decimal"
                     min={siteConfig.minWithdrawal}
-                    step="0.01"
+                    step="100"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     required

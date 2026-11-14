@@ -102,9 +102,9 @@ export default function HomePage() {
                 </div>
                 <div className="mt-3 space-y-2.5">
                   {[
-                    { t: "Follow @urbanwear", r: "$0.40", c: "bg-coral" },
-                    { t: "Watch: Kilimanjaro vlog", r: "$0.25", c: "bg-sky" },
-                    { t: "2 min opinion survey", r: "$0.90", c: "bg-mint" },
+                    { t: "Follow a brand on Instagram", r: "TSh 500", c: "bg-coral" },
+                    { t: "Watch a short video", r: "TSh 300", c: "bg-sky" },
+                    { t: "2 min opinion survey", r: "TSh 1,000", c: "bg-mint" },
                   ].map((q) => (
                     <div
                       key={q.t}
@@ -121,6 +121,9 @@ export default function HomePage() {
                 <div className="mt-3 rounded-2xl bg-mint py-3 text-center font-display text-lg text-ink-950 shadow-[0_4px_0_0_var(--color-mint-deep)]">
                   Claim daily bonus
                 </div>
+                <p className="mt-2 text-center text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  Example screen
+                </p>
               </div>
             </div>
           </div>
@@ -225,7 +228,7 @@ export default function HomePage() {
             <div className="mt-5 flex items-center justify-between rounded-2xl bg-ink-800 px-4 py-3">
               <span className="font-bold text-slate-300">Day 5 reward</span>
               <span className="flex items-center gap-1.5 font-display text-xl text-coin">
-                <Coin size={22} /> +$0.20
+                <Coin size={22} /> +TSh 350
               </span>
             </div>
           </div>

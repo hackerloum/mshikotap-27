@@ -13,13 +13,14 @@ import { StatCard } from "@/components/ui/stat";
 import { challengesService } from "@/services/challenges.service";
 import { useAuthStore } from "@/store/auth-store";
 import { cn, formatCurrency, formatNumber } from "@/lib/utils";
+import { REFERRAL_BONUS } from "@/config/site";
 import type { LeaderboardEntry, ReferralStats } from "@/types";
 import { toast } from "sonner";
 
 const tiers = [
-  { need: 3, name: "Rookie squad", reward: "Bonus coins" },
-  { need: 10, name: "Pro squad", reward: "Bigger bonus" },
-  { need: 25, name: "Legend squad", reward: "Top reward" },
+  { need: 3, name: "Rookie squad" },
+  { need: 10, name: "Pro squad" },
+  { need: 25, name: "Legend squad" },
 ];
 
 export default function UserReferralsPage() {
@@ -84,7 +85,7 @@ export default function UserReferralsPage() {
                 Bring friends. Win together.
               </h2>
               <p className="mt-1 text-sm font-bold text-ink-950/75">
-                Every friend who joins and plays earns you a reward.
+                Earn {formatCurrency(REFERRAL_BONUS)} when a friend you invite gets their first quest approved.
               </p>
             </div>
             <Users className="hidden h-14 w-14 shrink-0 sm:block" />
@@ -172,7 +173,7 @@ export default function UserReferralsPage() {
                         {t.name}
                       </p>
                       <p className="text-xs font-semibold text-slate-400">
-                        {t.need} friends · {t.reward}
+                        {t.need} friends
                       </p>
                     </div>
                     <Badge tone={done ? "success" : "default"}>

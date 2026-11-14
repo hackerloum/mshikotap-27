@@ -32,52 +32,45 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // All writes below go through server routes (Admin SDK bypasses rules).
     match /tasks/{taskId} {
       allow read: if signedIn();
-      allow write: if isAdmin() || hasRole('advertiser');
+      allow write: if false;
     }
 
     match /taskSubmissions/{submissionId} {
       allow read: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if signedIn() && request.resource.data.userId == request.auth.uid
-        && request.resource.data.status == 'submitted';
-      allow update: if isAdmin();
+      allow write: if false;
     }
 
     match /withdrawals/{withdrawalId} {
       allow read: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if signedIn() && request.resource.data.userId == request.auth.uid
-        && request.resource.data.status == 'pending';
-      allow update: if isAdmin();
+      allow write: if false;
     }
 
     match /campaigns/{campaignId} {
       allow read: if signedIn() && (resource.data.advertiserId == request.auth.uid || isAdmin());
-      allow create: if hasRole('advertiser');
-      allow update: if hasRole('advertiser') && resource.data.advertiserId == request.auth.uid || isAdmin();
+      allow write: if false;
     }
 
     match /notifications/{notificationId} {
       allow read: if signedIn() && resource.data.userId == request.auth.uid;
-      allow update: if signedIn() && resource.data.userId == request.auth.uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
-      allow create: if isAdmin();
+      allow write: if false;
     }
 
-    match /activityLogs/{logId} {
-      allow read: if isAdmin();
-      allow create: if signedIn() && request.resource.data.actorId == request.auth.uid;
+    match /earningsDaily/{docId} {
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false;
     }
 
     match /challenges/{challengeId} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
+      allow read: if true;
+      allow write: if false;
     }
 
     match /marketplaceListings/{listingId} {
       allow read: if true;
-      allow create, update: if signedIn();
-      allow delete: if isAdmin();
+      allow write: if false;
     }
   }
 }

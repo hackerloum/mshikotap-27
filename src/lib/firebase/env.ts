@@ -23,7 +23,6 @@ export const firebaseAdminEnvKeys = [
 export const appEnvKeys = [
   "NEXT_PUBLIC_APP_NAME",
   "NEXT_PUBLIC_APP_URL",
-  "NEXT_PUBLIC_DEMO_MODE",
 ] as const;
 
 export function getFirebaseEnvStatus() {
@@ -33,7 +32,6 @@ export function getFirebaseEnvStatus() {
   const missingAdmin = firebaseAdminEnvKeys.filter((key) => !process.env[key]);
 
   return {
-    demoMode: process.env.NEXT_PUBLIC_DEMO_MODE === "true",
     clientReady: missingPublic.length === 0,
     adminReady: missingAdmin.length === 0,
     missingPublic,

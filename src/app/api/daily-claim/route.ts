@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { verifyRequest } from "@/lib/server/auth";
+import { bumpEarnings } from "@/lib/server/ledger";
 import { levelFromXp } from "@/lib/utils";
 import type { UserProfile } from "@/types";
 
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
 
       const streak = last && now - last < STREAK_BREAK_MS ? profile.gamification.streakDays + 1 : 1;
       const bonusSteps = Math.min(streak, 7);
-      const reward = Number((0.1 + bonusSteps * 0.02).toFixed(2));
+      const reward = 100 + bonusSteps * 50;
       const xpGain = 10 + bonusSteps * 2;
       const xp = profile.gamification.xp + xpGain;
       const stamp = new Date(now).toISOString();
@@ -63,12 +64,13 @@ export async function POST(request: Request) {
       };
       const wallet = {
         ...profile.wallet,
-        balance: Number((profile.wallet.balance + reward).toFixed(2)),
-        lifetimeEarnings: Number((profile.wallet.lifetimeEarnings + reward).toFixed(2)),
+        balance: profile.wallet.balance + reward,
+        lifetimeEarnings: profile.wallet.lifetimeEarnings + reward,
         updatedAt: stamp,
       };
 
       tx.update(ref, { gamification, wallet, updatedAt: stamp });
+      bumpEarnings(tx, db, decoded.uid, reward, new Date(now));
 
       return {
         data: {

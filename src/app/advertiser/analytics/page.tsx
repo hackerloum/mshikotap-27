@@ -24,7 +24,7 @@ export default function AdvertiserAnalyticsPage() {
 
   useEffect(() => {
     if (!user) return;
-    void campaignsService.list(user.uid).then((res) => {
+    void campaignsService.list().then((res) => {
       if (res.ok) setCampaigns(res.data);
     });
   }, [user]);

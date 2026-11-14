@@ -23,6 +23,13 @@ export async function POST(request: Request) {
 
   const { profile, persisted } = await ensureProfile(decoded, referral);
 
+  if (!persisted) {
+    return NextResponse.json(
+      { ok: false, error: { code: "DB_UNAVAILABLE", message: "We are still setting things up. Try again in a minute." } },
+      { status: 503 },
+    );
+  }
+
   if (profile.isBanned) {
     return NextResponse.json(
       { ok: false, error: { code: "BANNED", message: "This account is suspended" } },

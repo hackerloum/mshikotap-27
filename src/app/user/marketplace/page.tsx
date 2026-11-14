@@ -11,7 +11,6 @@ import { Input, Label } from "@/components/ui/input";
 import { marketplaceService } from "@/services/marketplace.service";
 import { cn, formatCurrency, formatNumber } from "@/lib/utils";
 import type { MarketplaceCategory, MarketplaceListing } from "@/types";
-import { toast } from "sonner";
 
 const categories: Array<MarketplaceCategory | "all"> = [
   "all",
@@ -135,11 +134,9 @@ export default function UserMarketplacePage() {
                 <Button
                   variant="sky"
                   className="mt-5 w-full"
-                  onClick={() =>
-                    toast.success(`Demo order started for “${item.title}”`)
-                  }
+                  disabled
                 >
-                  Hire (demo)
+                  Ordering opens soon
                 </Button>
               </Card>
             ))}

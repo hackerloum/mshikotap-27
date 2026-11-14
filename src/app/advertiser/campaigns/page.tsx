@@ -37,15 +37,15 @@ export default function AdvertiserCampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [title, setTitle] = useState("");
   const [type, setType] = useState<CampaignType>("instagram_follow");
-  const [budget, setBudget] = useState("100");
-  const [cpa, setCpa] = useState("2");
+  const [budget, setBudget] = useState("50000");
+  const [cpa, setCpa] = useState("500");
   const [instructions, setInstructions] = useState("");
   const [targetUrl, setTargetUrl] = useState("");
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     if (!user) return;
-    const res = await campaignsService.list(user.uid);
+    const res = await campaignsService.list();
     if (res.ok) setCampaigns(res.data);
   }, [user]);
 
@@ -58,7 +58,6 @@ export default function AdvertiserCampaignsPage() {
     if (!user) return;
     setSaving(true);
     const res = await campaignsService.create({
-      advertiserId: user.uid,
       title,
       type,
       budgetCredits: Number(budget),
@@ -81,7 +80,7 @@ export default function AdvertiserCampaignsPage() {
   async function toggleStatus(c: Campaign) {
     if (!user) return;
     const next = c.status === "active" ? "paused" : "active";
-    const res = await campaignsService.setStatus(c.id, next, user.uid);
+    const res = await campaignsService.setStatus(c.id, next);
     if (!res.ok) {
       toast.error(res.error.message);
       return;

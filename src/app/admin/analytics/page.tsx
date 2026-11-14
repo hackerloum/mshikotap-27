@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -14,46 +15,40 @@ import {
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat";
-import { demoEarnings, demoTasks, demoCampaigns } from "@/data/demo";
+import { adminService, type AdminStats } from "@/services/admin.service";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 
-const activityData = demoEarnings.map((p, i) => ({
-  date: p.date,
-  revenue: Number((p.amount * 1.35).toFixed(2)),
-  tasks: Math.max(12, Math.round(p.amount * 8 + i * 3)),
-}));
-
-const categoryData = demoTasks.reduce<Array<{ category: string; completions: number }>>(
-  (acc, task) => {
-    const existing = acc.find((a) => a.category === task.category);
-    if (existing) existing.completions += task.completions;
-    else acc.push({ category: task.category, completions: task.completions });
-    return acc;
-  },
-  [],
-);
-
 export default function AdminAnalyticsPage() {
+  const [stats, setStats] = useState<AdminStats | null>(null);
+
+  useEffect(() => {
+    void adminService.stats().then((res) => {
+      if (res.ok) setStats(res.data);
+    });
+  }, []);
+
+  const activityData = (stats?.series ?? []).map((p) => ({ date: p.date, revenue: p.amount }));
+  const categoryData = stats?.categories ?? [];
   const revenue = activityData.reduce((s, d) => s + d.revenue, 0);
-  const taskVolume = activityData.reduce((s, d) => s + d.tasks, 0);
-  const campaignSpend = demoCampaigns.reduce((s, c) => s + c.spentCredits, 0);
+  const taskVolume = categoryData.reduce((s, c) => s + c.completions, 0);
+  const campaignSpend = stats?.campaignSpend ?? 0;
 
   return (
     <DashboardShell role="admin" title="Analytics">
       <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard label="14-day revenue" value={formatCurrency(revenue)} tone="mint" />
-          <StatCard label="Task actions" value={formatNumber(taskVolume)} tone="coin" />
+          <StatCard label="14-day rewards paid" value={formatCurrency(revenue)} tone="mint" />
+          <StatCard label="Quests completed" value={formatNumber(taskVolume)} tone="coin" />
           <StatCard
             label="Campaign credits spent"
-            value={formatNumber(campaignSpend)}
+            value={formatCurrency(campaignSpend)}
             tone="sky"
           />
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Revenue trend</CardTitle>
+            <CardTitle>Rewards earned per day</CardTitle>
           </CardHeader>
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">

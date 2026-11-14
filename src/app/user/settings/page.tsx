@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
@@ -12,64 +11,13 @@ import { Flame, Star } from "@/components/ui/coin";
 import { StatCard } from "@/components/ui/stat";
 import { subscriptionTiers } from "@/config/subscriptions";
 import { useAuthStore } from "@/store/auth-store";
-import { cn, formatCurrency, formatNumber } from "@/lib/utils";
-
-const toggles = [
-  { id: "payouts", label: "Payout updates", hint: "Cash out status changes" },
-  { id: "quests", label: "Quest reviews", hint: "Approved or rejected proofs" },
-  { id: "races", label: "Race alerts", hint: "New races and final calls" },
-  { id: "streak", label: "Streak reminders", hint: "Don't lose your flame" },
-] as const;
-
-function Toggle({
-  checked,
-  onChange,
-  label,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onClick={() => onChange(!checked)}
-      className="flex h-11 w-16 shrink-0 items-center"
-    >
-      <span
-        className={cn(
-          "relative h-8 w-14 rounded-full border-2 transition-colors",
-          checked ? "border-mint-deep bg-mint" : "border-ink-600 bg-ink-800",
-        )}
-      >
-        <span
-          className={cn(
-            "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-[0_2px_0_0_#b8bdd9] transition-all",
-            checked ? "left-[1.625rem]" : "left-0.5",
-          )}
-        />
-      </span>
-    </button>
-  );
-}
+import { formatCurrency, formatNumber } from "@/lib/utils";
 
 export default function UserSettingsPage() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const [prefs, setPrefs] = useState<Record<string, boolean>>({
-    payouts: true,
-    quests: true,
-    races: true,
-    streak: false,
-  });
-
-  const plan =
-    subscriptionTiers.find((t) => t.id === user?.subscription) ??
-    subscriptionTiers.find((t) => t.id === "pro");
+  const plan = subscriptionTiers.find((t) => t.id === user?.subscription);
 
   const initial = (user?.displayName || "P").charAt(0).toUpperCase();
 
@@ -150,30 +98,6 @@ export default function UserSettingsPage() {
             </CardContent>
           </Card>
         ) : null}
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Alerts</CardTitle>
-          </CardHeader>
-          <CardContent className="divide-y-2 divide-ink-700">
-            {toggles.map((t) => (
-              <div
-                key={t.id}
-                className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
-              >
-                <div className="min-w-0">
-                  <p className="font-extrabold text-white">{t.label}</p>
-                  <p className="text-xs font-semibold text-slate-400">{t.hint}</p>
-                </div>
-                <Toggle
-                  label={t.label}
-                  checked={!!prefs[t.id]}
-                  onChange={(v) => setPrefs((p) => ({ ...p, [t.id]: v }))}
-                />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
 
         <Button
           variant="danger"

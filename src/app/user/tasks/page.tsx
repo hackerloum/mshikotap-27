@@ -49,6 +49,7 @@ const look: Record<string, { icon: LucideIcon; tone: string }> = {
 
 export default function UserTasksPage() {
   const user = useAuthStore((s) => s.user);
+  const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<TaskCategory | "all">("all");
@@ -72,7 +73,6 @@ export default function UserTasksPage() {
     setSubmitting(true);
     const res = await tasksService.submit({
       taskId: selected.id,
-      userId: user.uid,
       proofUrl: proofUrl || undefined,
       notes: notes || undefined,
     });
@@ -82,6 +82,8 @@ export default function UserTasksPage() {
       return;
     }
     toast.success("Quest sent! We'll review it soon.");
+    void refreshProfile();
+    void load();
     setSelected(null);
     setProofUrl("");
     setNotes("");

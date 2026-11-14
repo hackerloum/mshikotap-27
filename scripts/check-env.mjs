@@ -39,7 +39,6 @@ const requiredAdmin = [
 const optional = [
   "NEXT_PUBLIC_APP_NAME",
   "NEXT_PUBLIC_APP_URL",
-  "NEXT_PUBLIC_DEMO_MODE",
   "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID",
   "NEXT_PUBLIC_FIREBASE_VAPID_KEY",
 ];
@@ -58,8 +57,5 @@ for (const key of optional) console.log(`  ${status(key).padEnd(7)} ${key}`);
 
 const missing = [...requiredPublic, ...requiredAdmin].filter(
   (key) => !process.env[key],
-);
-console.log(
-  `\nDemo mode: ${process.env.NEXT_PUBLIC_DEMO_MODE ?? "(unset → true if no Firebase key)"}\n`,
 );
 process.exit(missing.length ? 1 : 0);
