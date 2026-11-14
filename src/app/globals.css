@@ -19,13 +19,11 @@
   --color-flame-deep: #c75a00;
   --color-cream: #fff6dc;
 
-  --font-display: var(--font-display), "Lilita One", system-ui, sans-serif;
-  --font-sans: var(--font-body), "Nunito", system-ui, sans-serif;
+  --font-display: var(--font-display), system-ui, sans-serif;
+  --font-sans: var(--font-body), system-ui, sans-serif;
 
   --animate-marquee: marquee 28s linear infinite;
-  --animate-pop: pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  --animate-bob: bob 3.2s ease-in-out infinite;
-  --animate-wiggle: wiggle 0.6s ease-in-out;
+  --animate-rise: rise 0.35s ease-out both;
 
   @keyframes marquee {
     from {
@@ -35,35 +33,14 @@
       transform: translateX(-50%);
     }
   }
-  @keyframes pop {
-    0% {
+  @keyframes rise {
+    from {
       opacity: 0;
-      transform: scale(0.85) translateY(8px);
+      transform: translateY(6px);
     }
-    100% {
+    to {
       opacity: 1;
-      transform: scale(1) translateY(0);
-    }
-  }
-  @keyframes bob {
-    0%,
-    100% {
-      transform: translateY(0) rotate(var(--tilt, 0deg));
-    }
-    50% {
-      transform: translateY(-8px) rotate(var(--tilt, 0deg));
-    }
-  }
-  @keyframes wiggle {
-    0%,
-    100% {
-      transform: rotate(0);
-    }
-    25% {
-      transform: rotate(-6deg);
-    }
-    75% {
-      transform: rotate(6deg);
+      transform: translateY(0);
     }
   }
 }
@@ -79,8 +56,9 @@ html {
 
 body {
   background: var(--color-ink-950);
-  color: #eef0ff;
+  color: #e6e9fb;
   font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
   min-height: 100dvh;
   overflow-x: hidden;
 }
@@ -92,28 +70,20 @@ body {
 
 .font-display {
   font-family: var(--font-display);
-  letter-spacing: 0.01em;
-  font-weight: 400;
+  letter-spacing: -0.015em;
+  font-weight: 700;
 }
 
-/* Hand-drawn style underline used on highlighted headline words */
-.scribble {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12' preserveAspectRatio='none'%3E%3Cpath d='M2 8 C 30 2, 60 11, 100 6 S 170 3, 198 7' fill='none' stroke='%23ffc21a' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: 0 100%;
-  background-size: 100% 0.32em;
-  padding-bottom: 0.18em;
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
 
-/* Dotted paper texture for flat sections */
-.dots {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1.2px, transparent 1.2px);
-  background-size: 22px 22px;
-}
-
-.dots-dark {
-  background-image: radial-gradient(rgba(13, 16, 33, 0.18) 1.4px, transparent 1.4px);
-  background-size: 20px 20px;
+/* Fine grid used behind hero and banner sections */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
 /* Safe-area helpers for phones with home indicators */

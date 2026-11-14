@@ -10,6 +10,7 @@ import {
   Flag,
   Home,
   LogOut,
+  Loader2,
   MoreHorizontal,
   ScrollText,
   Settings,
@@ -23,7 +24,7 @@ import {
   X,
 } from "lucide-react";
 import { Brand } from "@/components/layout/brand";
-import { Coin, Flame } from "@/components/ui/coin";
+import { Coin, Flame, Star } from "@/components/ui/coin";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { useAuthStore } from "@/store/auth-store";
@@ -101,8 +102,8 @@ export function DashboardShell({
     return (
       <div className="grid min-h-dvh place-items-center bg-ink-950">
         <div className="text-center">
-          <Coin size={56} className="mx-auto animate-bob" />
-          <p className="mt-3 font-display text-xl text-slate-300">Loading your game…</p>
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-coin" aria-hidden="true" />
+          <p className="mt-3 text-sm font-medium text-slate-400">Loading your workspace…</p>
         </div>
       </div>
     );
@@ -117,9 +118,9 @@ export function DashboardShell({
 
   return (
     <div className="min-h-dvh bg-ink-950 text-slate-100">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r-2 border-ink-700 bg-ink-900 p-4 lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-ink-700/80 bg-ink-900 p-4 lg:flex">
         <Brand href={root} size="sm" className="mb-6 px-1" />
-        <nav className="flex-1 space-y-1.5 overflow-y-auto">
+        <nav className="flex-1 space-y-1 overflow-y-auto">
           {items.map((item) => {
             const active = isActive(pathname, item.href, root);
             const Icon = item.icon;
@@ -128,27 +129,27 @@ export function DashboardShell({
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-2xl px-3.5 py-3 font-display text-lg transition",
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors",
                   active
-                    ? "bg-coin text-ink-950 shadow-[0_3px_0_0_var(--color-coin-deep)]"
+                    ? "bg-coin/10 text-coin"
                     : "text-slate-300 hover:bg-ink-800 hover:text-white",
                 )}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className="h-[18px] w-[18px]" />
                 {item.label}
               </Link>
             );
           })}
         </nav>
-        <div className="mt-4 flex items-center gap-3 rounded-2xl border-2 border-ink-700 bg-ink-800 p-3">
+        <div className="mt-4 flex items-center gap-3 rounded-xl border border-ink-700/80 bg-ink-800 p-3">
           <Avatar url={user.photoURL} initial={initial} />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-extrabold text-white">{user.displayName}</p>
+            <p className="truncate text-sm font-semibold text-white">{user.displayName}</p>
             <p className="truncate text-xs text-slate-400">{user.email}</p>
           </div>
           <button
             onClick={signOut}
-            className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 hover:bg-ink-700 hover:text-white"
+            className="grid h-9 w-9 place-items-center rounded-lg text-slate-400 hover:bg-ink-700 hover:text-white"
             aria-label="Sign out"
           >
             <LogOut className="h-4 w-4" />
@@ -157,32 +158,31 @@ export function DashboardShell({
       </aside>
 
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 border-b-2 border-ink-700 bg-ink-950">
+        <header className="sticky top-0 z-20 border-b border-ink-700/80 bg-ink-950/95 backdrop-blur">
           <div className={cn("mx-auto flex h-16 items-center justify-between gap-3 px-4", width)}>
             <div className="flex min-w-0 items-center gap-3">
               <span className="lg:hidden">
                 <Avatar url={user.photoURL} initial={initial} />
               </span>
-              <h1 className="truncate font-display text-2xl text-white">{title}</h1>
+              <h1 className="truncate font-display text-xl text-white">{title}</h1>
             </div>
             {role === "user" ? (
               <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
                 <Chip className="hidden sm:inline-flex">
-                  <span className="rounded-md bg-sky px-1.5 text-xs text-ink-950">
-                    LV {user.gamification.level}
-                  </span>
+                  <Star size={16} />
+                  <span className="tabular">Level {user.gamification.level}</span>
                 </Chip>
                 <Chip>
                   <Flame size={18} />
-                  <span>{user.gamification.streakDays}</span>
+                  <span className="tabular">{user.gamification.streakDays}d</span>
                 </Chip>
                 <Chip className="text-coin">
                   <Coin size={18} />
-                  <span>{formatCurrency(user.wallet.balance)}</span>
+                  <span className="tabular">{formatCurrency(user.wallet.balance)}</span>
                 </Chip>
               </div>
             ) : (
-              <span className="rounded-full bg-ink-800 px-3 py-1 text-xs font-extrabold uppercase text-slate-300">
+              <span className="rounded-md bg-ink-800 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-slate-300">
                 {role}
               </span>
             )}
@@ -190,7 +190,7 @@ export function DashboardShell({
         </header>
 
         {announcement && role !== "admin" ? (
-          <div className="border-b-2 border-flame/40 bg-flame/10 px-4 py-2.5 text-center text-sm font-extrabold text-flame">
+          <div className="border-b border-flame/30 bg-flame/10 px-4 py-2.5 text-center text-sm font-semibold text-flame">
             {announcement}
           </div>
         ) : null}
@@ -199,7 +199,7 @@ export function DashboardShell({
       </div>
 
       <nav
-        className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t-2 border-ink-700 bg-ink-900 lg:hidden"
+        className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-ink-700/80 bg-ink-900 lg:hidden"
         aria-label="Primary"
       >
         <ul className="mx-auto grid max-w-lg grid-cols-5">
@@ -211,13 +211,13 @@ export function DashboardShell({
                 <Link
                   href={item.href}
                   className={cn(
-                    "flex flex-col items-center gap-0.5 py-2 text-[11px] font-extrabold",
+                    "flex flex-col items-center gap-0.5 py-2 text-[11px] font-semibold",
                     active ? "text-coin" : "text-slate-400",
                   )}
                 >
                   <span
                     className={cn(
-                      "grid h-8 w-12 place-items-center rounded-xl transition",
+                      "grid h-8 w-12 place-items-center rounded-lg transition",
                       active && "bg-coin/15",
                     )}
                   >
@@ -231,7 +231,7 @@ export function DashboardShell({
           <li>
             <button
               onClick={() => setMoreOpen(true)}
-              className="flex w-full flex-col items-center gap-0.5 py-2 text-[11px] font-extrabold text-slate-400"
+              className="flex w-full flex-col items-center gap-0.5 py-2 text-[11px] font-semibold text-slate-400"
             >
               <span className="grid h-8 w-12 place-items-center">
                 <MoreHorizontal className="h-5 w-5" />
@@ -249,12 +249,12 @@ export function DashboardShell({
             onClick={() => setMoreOpen(false)}
             aria-label="Close menu"
           />
-          <div className="pb-safe absolute inset-x-0 bottom-0 rounded-t-3xl border-t-2 border-ink-600 bg-ink-900 p-5">
+          <div className="pb-safe absolute inset-x-0 bottom-0 rounded-t-2xl border-t border-ink-600 bg-ink-900 p-5">
             <div className="mb-4 flex items-center justify-between">
-              <p className="font-display text-2xl text-white">More</p>
+              <p className="font-display text-xl text-white">More</p>
               <button
                 onClick={() => setMoreOpen(false)}
-                className="grid h-10 w-10 place-items-center rounded-xl bg-ink-800 text-white"
+                className="grid h-10 w-10 place-items-center rounded-lg bg-ink-800 text-white"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
@@ -268,7 +268,7 @@ export function DashboardShell({
                     key={item.href}
                     href={item.href}
                     onClick={() => setMoreOpen(false)}
-                    className="flex flex-col items-center gap-2 rounded-2xl border-2 border-ink-700 bg-ink-800 px-2 py-4 text-sm font-extrabold text-white active:translate-y-0.5"
+                    className="flex flex-col items-center gap-2 rounded-xl border border-ink-700 bg-ink-800 px-2 py-4 text-sm font-semibold text-white"
                   >
                     <Icon className="h-6 w-6 text-coin" />
                     {item.label}
@@ -277,7 +277,7 @@ export function DashboardShell({
               })}
               <button
                 onClick={signOut}
-                className="flex flex-col items-center gap-2 rounded-2xl border-2 border-coral/40 bg-coral/10 px-2 py-4 text-sm font-extrabold text-coral"
+                className="flex flex-col items-center gap-2 rounded-xl border border-coral/40 bg-coral/10 px-2 py-4 text-sm font-semibold text-coral"
               >
                 <LogOut className="h-6 w-6" />
                 Sign out
@@ -300,7 +300,7 @@ function Chip({
   return (
     <span
       className={cn(
-        "inline-flex h-9 items-center gap-1.5 rounded-full border-2 border-ink-700 bg-ink-800 px-2.5 font-display text-sm text-white",
+        "inline-flex h-9 items-center gap-1.5 rounded-lg border border-ink-700 bg-ink-800 px-2.5 text-sm font-semibold text-white",
         className,
       )}
     >
@@ -316,10 +316,10 @@ function Avatar({ url, initial }: { url?: string; initial: string }) {
       src={url}
       alt=""
       referrerPolicy="no-referrer"
-      className="h-10 w-10 shrink-0 rounded-full border-2 border-coin object-cover"
+      className="h-10 w-10 shrink-0 rounded-full border border-ink-600 object-cover"
     />
   ) : (
-    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-ink-950 bg-sky font-display text-lg text-ink-950">
+    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sky font-display text-base text-ink-950">
       {initial}
     </span>
   );
