@@ -29,7 +29,8 @@ export function getFirebaseEnvStatus() {
   const missingPublic = firebasePublicEnvKeys.filter(
     (key) => !process.env[key] && key !== "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID" && key !== "NEXT_PUBLIC_FIREBASE_VAPID_KEY",
   );
-  const missingAdmin = firebaseAdminEnvKeys.filter((key) => !process.env[key]);
+  const hasJson = Boolean(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+  const missingAdmin = hasJson ? [] : firebaseAdminEnvKeys.filter((key) => !process.env[key]);
 
   return {
     clientReady: missingPublic.length === 0,

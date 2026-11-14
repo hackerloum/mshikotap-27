@@ -45,6 +45,16 @@ Targets: **Production**, **Preview**, **Development** (unless noted).
 | `FIREBASE_ADMIN_CLIENT_EMAIL` | service account `client_email` | All | **Yes** |
 | `FIREBASE_ADMIN_PRIVATE_KEY` | service account `private_key` (keep `\n`) | All | **Yes** |
 
+## B2) Easiest way for the server key (recommended)
+
+Long private keys often get cut off when pasted. Instead add **one** variable:
+
+| Key | Value | Targets |
+|---|---|---|
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | open the downloaded service-account `.json` file, select all, copy, paste the whole file | All |
+
+When this is set the three `FIREBASE_ADMIN_*` variables are ignored. After redeploying, open `/api/health`: `"firestore":{"ok":true}` means the server can reach your database.
+
 ## C) Where to get Firebase values
 
 **Web config** (client keys):  

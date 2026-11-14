@@ -20,9 +20,7 @@ function clean(value: string | undefined) {
   return out || undefined;
 }
 
-function readPrivateKey() {
-  const raw = clean(process.env.FIREBASE_ADMIN_PRIVATE_KEY);
-  if (!raw) return undefined;
+function normalisePem(raw: string) {
   const text = raw.replace(/\\+n/g, "\n").replace(/\r/g, "");
   const match = text.match(/-----BEGIN ([A-Z ]*PRIVATE KEY)-----([\s\S]*?)-----END \1-----/);
   if (!match) return text;
@@ -31,18 +29,57 @@ function readPrivateKey() {
   return `-----BEGIN ${match[1]}-----\n${lines}\n-----END ${match[1]}-----\n`;
 }
 
+type Credentials = { projectId: string; clientEmail: string; privateKey: string };
+
+function fromServiceAccountJson(): Credentials | undefined {
+  const raw = clean(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+  if (!raw) return undefined;
+  const candidates = [raw];
+  try {
+    candidates.push(Buffer.from(raw, "base64").toString("utf8"));
+  } catch {
+    // not base64
+  }
+  for (const text of candidates) {
+    try {
+      const json = JSON.parse(text) as {
+        project_id?: string;
+        client_email?: string;
+        private_key?: string;
+      };
+      if (json.project_id && json.client_email && json.private_key) {
+        return {
+          projectId: json.project_id,
+          clientEmail: json.client_email,
+          privateKey: normalisePem(json.private_key),
+        };
+      }
+    } catch {
+      // try next form
+    }
+  }
+  return undefined;
+}
+
+function readCredentials(): Credentials | undefined {
+  const fromJson = fromServiceAccountJson();
+  if (fromJson) return fromJson;
+  const projectId = clean(process.env.FIREBASE_ADMIN_PROJECT_ID);
+  const clientEmail = clean(process.env.FIREBASE_ADMIN_CLIENT_EMAIL);
+  const key = clean(process.env.FIREBASE_ADMIN_PRIVATE_KEY);
+  if (!projectId || !clientEmail || !key) return undefined;
+  return { projectId, clientEmail, privateKey: normalisePem(key) };
+}
+
 export function isFirebaseAdminConfigured() {
-  return Boolean(
-    process.env.FIREBASE_ADMIN_PROJECT_ID &&
-      process.env.FIREBASE_ADMIN_CLIENT_EMAIL &&
-      process.env.FIREBASE_ADMIN_PRIVATE_KEY,
-  );
+  return Boolean(readCredentials());
 }
 
 let app: App | undefined;
 
 export function getAdminApp() {
-  if (!isFirebaseAdminConfigured()) return null;
+  const credentials = readCredentials();
+  if (!credentials) return null;
   if (app) return app;
 
   const existing = getApps()[0];
@@ -52,12 +89,8 @@ export function getAdminApp() {
   }
 
   app = initializeApp({
-    credential: cert({
-      projectId: clean(process.env.FIREBASE_ADMIN_PROJECT_ID)!,
-      clientEmail: clean(process.env.FIREBASE_ADMIN_CLIENT_EMAIL)!,
-      privateKey: readPrivateKey()!,
-    }),
-    projectId: clean(process.env.FIREBASE_ADMIN_PROJECT_ID),
+    credential: cert(credentials),
+    projectId: credentials.projectId,
     storageBucket: clean(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET),
   });
 
@@ -92,5 +125,6 @@ export function describePrivateKey() {
     startsWithQuote: /^["']/.test(raw.trim()),
     bodyLength: match ? match[2].replace(/[^A-Za-z0-9+/=]/g, "").length : 0,
     clientEmailSet: Boolean(process.env.FIREBASE_ADMIN_CLIENT_EMAIL),
+    serviceAccountJsonSet: Boolean(process.env.FIREBASE_SERVICE_ACCOUNT_JSON),
   };
 }
