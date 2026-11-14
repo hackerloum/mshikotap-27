@@ -138,7 +138,7 @@ export default function AdminQuestsPage() {
               </div>
               <div>
                 <Label htmlFor="q-min">Min seconds to finish</Label>
-                <Input id="q-min" type="number" min={0} max={3600} placeholder="Default" value={form.minSeconds} onChange={(e) => setForm({ ...form, minSeconds: e.target.value })} />
+                <Input id="q-min" type="number" min={0} max={3600} placeholder="Automatic" value={form.minSeconds} onChange={(e) => setForm({ ...form, minSeconds: e.target.value })} />
                 <p className="mt-1 text-xs text-slate-500">Players cannot send proof before this. Stops instant claims.</p>
               </div>
               <Button type="submit" size="lg" className="md:col-span-2 xl:col-span-4" disabled={saving}>
