@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type { DocumentData, QuerySnapshot } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { verifyRequest } from "@/lib/server/auth";
+import { isAdminEmail } from "@/lib/server/admins";
 import type { UserProfile, UserRole } from "@/types";
 
 export class HttpError extends Error {
@@ -52,6 +53,7 @@ export async function requireSession(request: Request, roles?: UserRole[]): Prom
   if (!snap.exists) throw new HttpError(404, "NO_PROFILE", "Profile not found. Sign in again.");
 
   const profile = { ...(snap.data() as UserProfile), uid: decoded.uid };
+  if (profile.role === "admin" && !isAdminEmail(profile.email)) profile.role = "user";
   if (profile.isBanned) throw new HttpError(403, "BANNED", "This account is suspended");
   if (roles && !roles.includes(profile.role)) {
     throw new HttpError(403, "FORBIDDEN", "You do not have access to this");

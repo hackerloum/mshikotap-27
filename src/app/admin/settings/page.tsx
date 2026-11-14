@@ -181,7 +181,7 @@ export default function AdminSettingsPage() {
               <Input value={siteConfig.supportEmail} readOnly />
             </div>
             <p className="text-xs font-semibold text-slate-500 sm:col-span-2">
-              Admins are set with the ADMIN_EMAILS variable in Vercel. Name and email come from environment settings.
+              Only the owner account can open this panel.
             </p>
           </CardContent>
         </Card>

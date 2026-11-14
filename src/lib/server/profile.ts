@@ -2,6 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import type { DecodedIdToken } from "firebase-admin/auth";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { isAdminEmail } from "@/lib/server/admins";
 import type { UserProfile } from "@/types";
 
 const USERS = "users";
@@ -18,20 +19,13 @@ function sanitizeReferral(code: string | null | undefined, uid: string) {
   return clean;
 }
 
-function adminEmails() {
-  return (process.env.ADMIN_EMAILS || "")
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
-}
-
 export function newProfile(
   decoded: DecodedIdToken,
   referral?: string | null,
 ): UserProfile {
   const now = new Date().toISOString();
   const email = decoded.email || "";
-  const isAdmin = email ? adminEmails().includes(email.toLowerCase()) : false;
+  const isAdmin = isAdminEmail(email) && decoded.email_verified !== false;
 
   return {
     uid: decoded.uid,
@@ -87,12 +81,14 @@ export async function ensureProfile(
     }
 
     const stored = { ...(snap.data() as UserProfile), uid: decoded.uid };
-    const shouldBeAdmin =
-      Boolean(stored.email) && adminEmails().includes(stored.email.toLowerCase());
+    const shouldBeAdmin = isAdminEmail(stored.email) && decoded.email_verified !== false;
 
     if (shouldBeAdmin && stored.role !== "admin") {
       stored.role = "admin";
       await ref.update({ role: "admin" });
+    } else if (!shouldBeAdmin && stored.role === "admin") {
+      stored.role = "user";
+      await ref.update({ role: "user" });
     }
     if (!stored.photoURL && decoded.picture) {
       stored.photoURL = decoded.picture;

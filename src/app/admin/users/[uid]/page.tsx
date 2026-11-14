@@ -161,7 +161,7 @@ export default function AdminPlayerPage({ params }: { params: Promise<{ uid: str
             </CardHeader>
             <CardContent className="space-y-5">
               {isAdmin ? (
-                <p className="text-sm font-bold text-slate-400">Admins are managed with the ADMIN_EMAILS setting.</p>
+                <p className="text-sm font-bold text-slate-400">Only the owner account has admin access.</p>
               ) : (
                 <>
                   <div className="space-y-2">

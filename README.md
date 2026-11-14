@@ -67,14 +67,14 @@ Security rules live in `firestore/`.
 - Sign-in is **Google only**. Sign-up and log-in are the same one-tap flow, and everyone lands on `/user`.
 - On first sign-in the browser calls `POST /api/me` with the Firebase ID token. The server (Admin SDK) creates the profile in `users/{uid}` with zero balance, so clients can never grant themselves coins.
 - `POST /api/daily-claim` runs the daily bonus in a Firestore transaction (20h cooldown, streak bonus up to 7 days).
-- Set `ADMIN_EMAILS` (comma separated) in Vercel to promote specific Google accounts to the admin role.
+- Admin access is limited to one Google account (`src/lib/server/admins.ts`). Any other account is kept at the player role.
 - Firebase Console checklist: enable the Google provider, add `www.mshikotap.co.tz`, `mshikotap.co.tz` and your `*.vercel.app` domain under Authorized domains, create the Firestore database, publish the rules in `firestore/`.
 
 ## Money and data
 
 - Currency is **TZS** and amounts are whole shillings. The numbers below are defaults. Admins change them live in **Admin > Settings** (stored in Firestore `settings/system`): daily bonus TSh 150 to 450 (streak), minimum cash out TSh 5,000, 2.5% fee, referral bonus TSh 500.
 - Everything is stored in Firestore: `users`, `tasks`, `taskSubmissions`, `withdrawals`, `campaigns`, `challenges`, `marketplaceListings`, `notifications`, `earningsDaily`. Clients never write these directly (see `firestore/firestore.rules`); the `/api/*` routes verify the Firebase ID token and role, then write with the Admin SDK in transactions.
-- Nothing is pre-filled. Sign in with a Google account listed in `ADMIN_EMAILS`, open **Quests** to publish the first quest, **Races** to announce a race, and **Players** to turn an account into an advertiser and add credits.
+- Nothing is pre-filled. Sign in with the owner Google account. open **Quests** to publish the first quest, **Races** to announce a race, and **Players** to turn an account into an advertiser and add credits.
 
 ## Anti-cheat
 
@@ -92,7 +92,7 @@ These collections are server-only (Admin SDK): `userSecurity`, `fraudFlags`, `qu
 
 ## Admin control room
 
-Sign in with a Google account listed in `ADMIN_EMAILS`.
+Sign in with the owner Google account.
 
 - **Home**: players, review and payout queues, money owed to players, fraud alerts, and kill switches for sign-ups, quests and cash outs.
 - **Reviews**: proof queue with player risk, time taken, bulk approve, reject with a reason, and a "this is cheating" option.

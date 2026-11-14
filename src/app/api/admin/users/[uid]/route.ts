@@ -107,7 +107,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ uid: stri
       if (!snap.exists) throw new HttpError(404, "NOT_FOUND", "Player not found");
       const user = snap.data() as UserProfile;
       if (user.role === "admin" && uid !== adminId) {
-        throw new HttpError(403, "FORBIDDEN", "Admins are managed through ADMIN_EMAILS");
+        throw new HttpError(403, "FORBIDDEN", "Admin access is limited to the owner account");
       }
       const sec = await readSecurity(tx, firestore, uid);
 
