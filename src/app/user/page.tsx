@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import {
   Bell,
+  ChevronRight,
   Gift,
   Rocket,
   Store,
@@ -13,15 +14,16 @@ import {
   Trophy,
   Users,
   Wallet,
-  ChevronRight,
 } from "lucide-react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { EarningsChart } from "@/components/charts/earnings-chart";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Coin, Flame } from "@/components/ui/coin";
+import { Coin, Flame, Star } from "@/components/ui/coin";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ProgressBar } from "@/components/ui/progress";
+import { StatCard } from "@/components/ui/stat";
 import { earningsService } from "@/services/admin.service";
 import { tasksService } from "@/services/tasks.service";
 import { useAuthStore } from "@/store/auth-store";
@@ -38,14 +40,14 @@ const statusTone = {
 } as const;
 
 const tiles = [
-  { href: "/user/tasks", label: "Quests", hint: "Earn coins", icon: Target, tone: "bg-coin" },
-  { href: "/user/challenges", label: "Races", hint: "Win prizes", icon: Swords, tone: "bg-sky" },
-  { href: "/user/withdraw", label: "Wallet", hint: "Cash out", icon: Wallet, tone: "bg-mint" },
-  { href: "/user/referrals", label: "Squad", hint: "Invite friends", icon: Users, tone: "bg-coral" },
-  { href: "/user/marketplace", label: "Market", hint: "Gigs & deals", icon: Store, tone: "bg-flame" },
-  { href: "/leaderboards", label: "Ranks", hint: "Top players", icon: Trophy, tone: "bg-coin" },
-  { href: "/pricing", label: "Boosts", hint: "Earn faster", icon: Rocket, tone: "bg-sky" },
-  { href: "/user/notifications", label: "Alerts", hint: "What's new", icon: Bell, tone: "bg-mint" },
+  { href: "/user/tasks", label: "Quests", hint: "Earn coins", icon: Target, tone: "bg-coin/10 text-coin" },
+  { href: "/user/challenges", label: "Races", hint: "Win prizes", icon: Swords, tone: "bg-sky/10 text-sky" },
+  { href: "/user/withdraw", label: "Wallet", hint: "Cash out", icon: Wallet, tone: "bg-mint/10 text-mint" },
+  { href: "/user/referrals", label: "Squad", hint: "Invite friends", icon: Users, tone: "bg-coral/10 text-coral" },
+  { href: "/user/marketplace", label: "Market", hint: "Gigs & deals", icon: Store, tone: "bg-flame/10 text-flame" },
+  { href: "/leaderboards", label: "Ranks", hint: "Top players", icon: Trophy, tone: "bg-coin/10 text-coin" },
+  { href: "/pricing", label: "Boosts", hint: "Earn faster", icon: Rocket, tone: "bg-sky/10 text-sky" },
+  { href: "/user/notifications", label: "Alerts", hint: "What's new", icon: Bell, tone: "bg-mint/10 text-mint" },
 ];
 
 function remaining(ms: number) {
@@ -102,7 +104,7 @@ export default function UserOverviewPage() {
   const canClaim = wait <= 0;
   const nextReward = config.dailyBonusBase + Math.min(gamification.streakDays + 1, 7) * config.dailyBonusStep;
   const firstName = user.displayName.split(" ")[0];
-
+  const streakDays = Math.min(gamification.streakDays, 7);
 
   async function onClaim() {
     setClaiming(true);
@@ -110,7 +112,7 @@ export default function UserOverviewPage() {
     setClaiming(false);
     if (res.ok) {
       toast.success(`+${formatCurrency(res.reward ?? 0)} and +${res.xpGain ?? 0} XP`, {
-        description: res.levelUp ? "Level up! Nice work." : "Streak kept alive.",
+        description: res.levelUp ? "Level up. Nice work." : "Streak kept alive.",
       });
     } else {
       toast.error(res.message || "Could not claim right now");
@@ -120,63 +122,75 @@ export default function UserOverviewPage() {
   return (
     <DashboardShell role="user" title="Home">
       <div className="space-y-5">
-        <section className="rounded-3xl border-2 border-ink-950 bg-sky p-5 text-ink-950 shadow-[0_6px_0_0_var(--color-sky-deep)]">
-          <p className="font-extrabold">Hey {firstName}, ready to play?</p>
-          <div className="mt-2 flex items-end justify-between gap-3">
-            <div>
-              <p className="font-display text-4xl leading-none sm:text-5xl">Level {level}</p>
-              <p className="mt-1 text-sm font-bold">
-                {formatNumber(intoLevel)} / {formatNumber(span)} XP to level {level + 1}
-              </p>
+        <section className="grid-bg rounded-xl border border-ink-700/80 bg-ink-900 p-5">
+          <p className="text-sm font-medium text-slate-400">Welcome back, {firstName}</p>
+          <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <span className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-sky/10 text-sky">
+                <Star size={28} />
+              </span>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Current level
+                </p>
+                <p className="tabular font-display text-3xl leading-none text-white">Level {level}</p>
+              </div>
             </div>
-            <Link
-              href="/user/tasks"
-              className="inline-flex h-12 shrink-0 items-center gap-1.5 rounded-2xl border-2 border-ink-950 bg-ink-950 px-4 font-display text-white active:translate-y-0.5"
-            >
-              Play quests <ChevronRight className="h-4 w-4" />
+            <Link href="/user/tasks" className={buttonVariants({ size: "default" })}>
+              Browse quests <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
-          <div className="mt-3 h-4 overflow-hidden rounded-full border-2 border-ink-950 bg-white/60">
-            <div
-              className="h-full rounded-full bg-ink-950 transition-[width] duration-700"
-              style={{ width: `${Math.min(100, (intoLevel / span) * 100)}%` }}
+          <div className="mt-4">
+            <div className="mb-1.5 flex items-center justify-between text-xs text-slate-400">
+              <span>Progress to level {level + 1}</span>
+              <span className="tabular">
+                {formatNumber(intoLevel)} / {formatNumber(span)} XP
+              </span>
+            </div>
+            <ProgressBar
+              value={intoLevel}
+              max={span}
+              tone="sky"
+              label={`Progress to level ${level + 1}`}
             />
           </div>
         </section>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <section className="rounded-3xl border-2 border-ink-700 bg-ink-900 p-5 shadow-[0_5px_0_0_var(--color-ink-700)]">
+          <Card className="p-5">
             <div className="flex items-center gap-3">
-              <span className="grid h-14 w-14 place-items-center rounded-2xl bg-flame/15">
-                <Gift className="h-7 w-7 text-flame" />
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-flame/10 text-flame">
+                <Gift className="h-5 w-5" aria-hidden="true" />
               </span>
               <div className="min-w-0">
-                <h2 className="font-display text-2xl text-white">Daily bonus</h2>
-                <p className="text-sm font-semibold text-slate-400">
+                <h2 className="font-display text-xl text-white">Daily reward</h2>
+                <p className="text-sm text-slate-400">
                   {canClaim
                     ? `Claim ${formatCurrency(nextReward)} and keep your streak`
-                    : `Next bonus in ${remaining(wait)}`}
+                    : `Next reward in ${remaining(wait)}`}
                 </p>
               </div>
             </div>
-            <div className="mt-4 flex items-center gap-1.5">
-              {Array.from({ length: 7 }).map((_, i) => (
-                <span
-                  key={i}
-                  className={cn(
-                    "grid h-9 flex-1 place-items-center rounded-xl border-2",
-                    i < Math.min(gamification.streakDays, 7)
-                      ? "border-flame/60 bg-flame/15"
-                      : "border-ink-700 bg-ink-800",
-                  )}
-                >
-                  {i < Math.min(gamification.streakDays, 7) ? (
-                    <Flame size={18} />
-                  ) : (
-                    <span className="h-1.5 w-1.5 rounded-full bg-ink-600" />
-                  )}
-                </span>
-              ))}
+            <div className="mt-4">
+              <div className="mb-1.5 flex items-center justify-between text-xs text-slate-400">
+                <span>Streak</span>
+                <span className="tabular">{streakDays} / 7 days</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <span
+                    key={i}
+                    className={cn(
+                      "tabular grid h-8 flex-1 place-items-center rounded-md text-xs font-semibold",
+                      i < streakDays
+                        ? "bg-flame/15 text-flame"
+                        : "bg-ink-800 text-slate-500",
+                    )}
+                  >
+                    {i + 1}
+                  </span>
+                ))}
+              </div>
             </div>
             <Button
               variant={canClaim ? "mint" : "secondary"}
@@ -185,20 +199,20 @@ export default function UserOverviewPage() {
               disabled={!canClaim || claiming}
               onClick={onClaim}
             >
-              {claiming ? "Claiming…" : canClaim ? "Claim daily bonus" : "Come back later"}
+              {claiming ? "Claiming…" : canClaim ? "Claim daily reward" : "Come back later"}
             </Button>
-          </section>
+          </Card>
 
           <div className="grid grid-cols-2 gap-3">
-            <MiniStat label="Balance" value={formatCurrency(wallet.balance)} icon={<Coin size={26} />} accent="text-coin" />
-            <MiniStat label="Streak" value={`${gamification.streakDays} days`} icon={<Flame size={26} />} accent="text-flame" />
-            <MiniStat label="Total earned" value={formatCurrency(wallet.lifetimeEarnings)} icon={<Wallet className="h-6 w-6 text-mint" />} accent="text-mint" />
-            <MiniStat label="Pending" value={formatCurrency(wallet.pendingBalance)} icon={<Target className="h-6 w-6 text-sky" />} accent="text-sky" />
+            <StatCard label="Balance" value={formatCurrency(wallet.balance)} icon={<Coin size={22} />} tone="coin" />
+            <StatCard label="Streak" value={`${gamification.streakDays} days`} icon={<Flame size={22} />} tone="flame" />
+            <StatCard label="Total earned" value={formatCurrency(wallet.lifetimeEarnings)} icon={<Wallet className="h-5 w-5" aria-hidden="true" />} tone="mint" />
+            <StatCard label="Pending" value={formatCurrency(wallet.pendingBalance)} icon={<Target className="h-5 w-5" aria-hidden="true" />} tone="sky" />
           </div>
         </div>
 
         <section>
-          <h2 className="mb-3 font-display text-2xl text-white">Jump in</h2>
+          <h2 className="mb-3 font-display text-xl text-white">Quick links</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {tiles.map((tile) => {
               const Icon = tile.icon;
@@ -206,19 +220,14 @@ export default function UserOverviewPage() {
                 <Link
                   key={tile.href}
                   href={tile.href}
-                  className="group flex flex-col gap-3 rounded-3xl border-2 border-ink-700 bg-ink-900 p-4 shadow-[0_5px_0_0_var(--color-ink-700)] transition active:translate-y-1 active:shadow-[0_1px_0_0_var(--color-ink-700)]"
+                  className="group flex flex-col gap-3 rounded-xl border border-ink-700/80 bg-ink-900 p-4 shadow-sm shadow-black/20 transition-colors hover:border-ink-600 hover:bg-ink-800"
                 >
-                  <span
-                    className={cn(
-                      "grid h-12 w-12 place-items-center rounded-2xl border-2 border-ink-950 text-ink-950 transition group-hover:-rotate-6",
-                      tile.tone,
-                    )}
-                  >
-                    <Icon className="h-6 w-6" />
+                  <span className={cn("grid h-11 w-11 place-items-center rounded-lg", tile.tone)}>
+                    <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <span>
-                    <span className="block font-display text-xl leading-none text-white">{tile.label}</span>
-                    <span className="text-xs font-bold text-slate-400">{tile.hint}</span>
+                    <span className="block font-display text-base leading-tight text-white">{tile.label}</span>
+                    <span className="text-xs text-slate-400">{tile.hint}</span>
                   </span>
                 </Link>
               );
@@ -228,15 +237,15 @@ export default function UserOverviewPage() {
 
         <section>
           <div className="mb-3 flex items-end justify-between">
-            <h2 className="font-display text-2xl text-white">Quests for you</h2>
-            <Link href="/user/tasks" className="text-sm font-extrabold text-coin hover:underline">
+            <h2 className="font-display text-xl text-white">Quests for you</h2>
+            <Link href="/user/tasks" className="text-sm font-semibold text-coin hover:underline">
               See all
             </Link>
           </div>
           {quests.length === 0 ? (
             <EmptyState
               title="No open quests right now"
-              description="New quests land every day. Claim your daily bonus and check back soon."
+              description="New quests are added every day. Claim your daily reward and check back soon."
             />
           ) : null}
           <div className="space-y-3">
@@ -244,16 +253,16 @@ export default function UserOverviewPage() {
               <Link
                 key={task.id}
                 href="/user/tasks"
-                className="flex items-center gap-3 rounded-3xl border-2 border-ink-700 bg-ink-900 p-4 shadow-[0_5px_0_0_var(--color-ink-700)] transition active:translate-y-1"
+                className="flex items-center gap-3 rounded-xl border border-ink-700/80 bg-ink-900 p-4 shadow-sm shadow-black/20 transition-colors hover:border-ink-600 hover:bg-ink-800"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-extrabold text-white">{task.title}</p>
-                  <p className="text-xs font-bold text-sky">+{task.xpReward} XP</p>
+                  <p className="truncate font-semibold text-white">{task.title}</p>
+                  <p className="tabular text-xs font-medium text-sky">+{task.xpReward} XP</p>
                 </div>
-                <span className="flex items-center gap-1.5 rounded-full bg-coin px-3 py-1.5 font-display text-ink-950">
-                  <Coin size={18} />
-                  {formatCurrency(task.reward)}
-                </span>
+                <Badge tone="brand" className="gap-1.5 px-2.5 py-1 text-xs normal-case">
+                  <Coin size={14} />
+                  <span className="tabular">{formatCurrency(task.reward)}</span>
+                </Badge>
               </Link>
             ))}
           </div>
@@ -269,15 +278,15 @@ export default function UserOverviewPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {submissions.length === 0 ? (
-                <p className="rounded-2xl border-2 border-dashed border-ink-600 p-4 text-center text-sm font-semibold text-slate-400">
+                <p className="rounded-lg border border-dashed border-ink-600 p-4 text-center text-sm text-slate-400">
                   Nothing yet. Finish a quest and it shows up here.
                 </p>
               ) : (
                 submissions.map((s) => (
                   <div key={s.id} className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-extrabold text-white">{s.taskTitle ?? "Quest"}</p>
-                      <p className="text-xs font-semibold text-slate-400">{relativeTime(s.submittedAt)}</p>
+                      <p className="truncate text-sm font-semibold text-white">{s.taskTitle ?? "Quest"}</p>
+                      <p className="text-xs text-slate-400">{relativeTime(s.submittedAt)}</p>
                     </div>
                     <Badge tone={statusTone[s.status]}>{s.status}</Badge>
                   </div>
@@ -288,27 +297,5 @@ export default function UserOverviewPage() {
         </div>
       </div>
     </DashboardShell>
-  );
-}
-
-function MiniStat({
-  label,
-  value,
-  icon,
-  accent,
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-  accent: string;
-}) {
-  return (
-    <div className="rounded-3xl border-2 border-ink-700 bg-ink-900 p-4 shadow-[0_5px_0_0_var(--color-ink-700)]">
-      <div className="flex items-center justify-between">
-        <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">{label}</p>
-        {icon}
-      </div>
-      <p className={cn("mt-2 truncate font-display text-2xl", accent)}>{value}</p>
-    </div>
   );
 }

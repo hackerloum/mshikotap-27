@@ -76,21 +76,21 @@ export default function AdminCampaignsPage() {
         ) : shown.length === 0 ? (
           <EmptyState title="No campaigns here" description="Advertiser campaigns show up here and can be paused at any time." />
         ) : (
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-3 xl:grid-cols-2">
             {shown.map((c) => (
               <Card key={c.id}>
                 <CardContent className="space-y-3 pt-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate font-display text-xl text-white">{c.title}</p>
-                      <p className="text-xs font-semibold text-slate-400">
+                      <p className="truncate font-display text-lg text-white">{c.title}</p>
+                      <p className="tabular text-xs text-slate-400">
                         {c.advertiserName} · {c.type.replaceAll("_", " ")} · {relativeTime(c.createdAt)}
                       </p>
                     </div>
                     <Badge tone={tone[c.status]}>{label[c.status]}</Badge>
                   </div>
                   <div>
-                    <div className="mb-1.5 flex justify-between text-xs font-extrabold text-slate-300">
+                    <div className="tabular mb-1.5 flex justify-between text-xs font-semibold text-slate-300">
                       <span>
                         Spent {formatCurrency(c.spentCredits)} of {formatCurrency(c.budgetCredits)}
                       </span>
@@ -98,13 +98,13 @@ export default function AdminCampaignsPage() {
                     </div>
                     <ProgressBar value={c.spentCredits} max={Math.max(1, c.budgetCredits)} tone="sky" label="Budget used" />
                   </div>
-                  <p className="text-xs font-semibold text-slate-400">
+                  <p className="text-xs text-slate-400">
                     {formatCurrency(c.costPerAction)} per action · player gets {formatCurrency(c.playerReward ?? Math.floor((c.costPerAction * share) / 100))}
                   </p>
-                  {c.statusReason ? <p className="text-xs font-semibold text-slate-400">Note: {c.statusReason}</p> : null}
+                  {c.statusReason ? <p className="text-xs text-slate-400">Note: {c.statusReason}</p> : null}
                   {c.instructions ? <p className="line-clamp-3 text-xs font-semibold text-slate-300">{c.instructions}</p> : null}
                   {c.targetUrl ? (
-                    <a href={c.targetUrl} target="_blank" rel="noreferrer" className="block truncate text-xs font-bold text-sky hover:underline">
+                    <a href={c.targetUrl} target="_blank" rel="noreferrer" className="block truncate text-xs font-semibold text-sky hover:underline">
                       {c.targetUrl}
                     </a>
                   ) : null}

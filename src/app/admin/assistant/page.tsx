@@ -105,17 +105,17 @@ export default function AdminAssistantPage() {
           </CardHeader>
           <CardContent className="flex flex-1 flex-col gap-3">
             {!status.configured && (
-              <p className="rounded-2xl bg-coral/10 p-3 text-sm font-semibold text-coral">
+              <p className="rounded-lg bg-coral/10 p-3 text-sm font-semibold text-coral">
                 AI is not connected yet. Add AI_GATEWAY_API_KEY in Vercel, then redeploy.
               </p>
             )}
             <div className="flex-1 space-y-3 overflow-y-auto pr-1">
               {messages.length === 0 && (
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold text-slate-400">Ask in plain words. Try one of these.</p>
+                  <p className="text-sm text-slate-400">Ask in plain words. Try one of these.</p>
                   <div className="flex flex-wrap gap-2">
                     {ideas.map((idea) => (
-                      <button key={idea} type="button" onClick={() => void send(idea)} className="rounded-full bg-ink-800 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-ink-700">
+                      <button key={idea} type="button" onClick={() => void send(idea)} className="rounded-full bg-ink-800 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-ink-700">
                         {idea}
                       </button>
                     ))}
@@ -123,7 +123,7 @@ export default function AdminAssistantPage() {
                 </div>
               )}
               {messages.map((m, i) => (
-                <div key={i} className={m.role === "user" ? "ml-auto max-w-[85%] rounded-2xl bg-coin px-4 py-2.5 text-sm font-bold text-ink-950" : "mr-auto max-w-[92%] rounded-2xl bg-ink-800 px-4 py-2.5 text-sm font-semibold text-slate-100"}>
+                <div key={i} className={m.role === "user" ? "ml-auto max-w-[85%] rounded-lg bg-coin px-4 py-2.5 text-sm font-semibold text-ink-950" : "mr-auto max-w-[92%] rounded-lg bg-ink-800 px-4 py-2.5 text-sm font-semibold text-slate-100"}>
                   <p className="whitespace-pre-wrap">{m.content}</p>
                   {m.actions && m.actions.length > 0 && (
                     <ul className="mt-2 space-y-1 border-t border-ink-600 pt-2 text-xs text-mint">
@@ -134,7 +134,7 @@ export default function AdminAssistantPage() {
                   )}
                 </div>
               ))}
-              {busy && <p className="text-sm font-semibold text-slate-400">Working on it, this can take a minute…</p>}
+              {busy && <p className="text-sm text-slate-400">Working on it, this can take a minute…</p>}
               <div ref={bottom} />
             </div>
             <form
@@ -171,7 +171,7 @@ export default function AdminAssistantPage() {
                   <Play className="h-4 w-4" /> {running ? "Running…" : "Run now"}
                 </Button>
               </div>
-              <p className="text-xs font-semibold text-slate-500">Set the limits in Settings, under AI.</p>
+              <p className="text-xs text-slate-500">Set the limits in Settings, under AI.</p>
             </CardContent>
           </Card>
 
@@ -180,11 +180,11 @@ export default function AdminAssistantPage() {
               <CardTitle>Last runs</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {!last && <p className="text-sm font-semibold text-slate-400">No runs yet.</p>}
+              {!last && <p className="text-sm text-slate-400">No runs yet.</p>}
               {status.runs.slice(0, 5).map((run) => (
-                <div key={run.id} className="rounded-2xl bg-ink-800 p-3">
+                <div key={run.id} className="rounded-lg bg-ink-800 p-3">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-bold text-slate-400">{relativeTime(run.startedAt)} · {run.trigger === "cron" ? "automatic" : "by you"}</p>
+                    <p className="text-xs text-slate-400">{relativeTime(run.startedAt)} · {run.trigger === "cron" ? "automatic" : "by you"}</p>
                     <Badge tone={run.error ? "danger" : "success"}>{run.error ? "failed" : `${run.actions.length} actions`}</Badge>
                   </div>
                   <p className="mt-2 whitespace-pre-wrap text-sm font-semibold text-slate-200">{run.error ?? run.report}</p>

@@ -130,7 +130,7 @@ export function QuestFormFields({
             </option>
           ))}
         </Select>
-        {def ? <p className="mt-1.5 text-xs font-semibold text-slate-500">{def.hint}</p> : null}
+        {def ? <p className="mt-1.5 text-xs text-slate-500">{def.hint}</p> : null}
       </div>
 
       {fields.includes("platform") ? (
@@ -205,7 +205,7 @@ export function QuestFormFields({
         <div className="space-y-3 md:col-span-2 xl:col-span-4">
           <Label>{quiz ? "Quiz questions" : "Survey questions"}</Label>
           {draft.questions.map((q, qi) => (
-            <div key={qi} className="space-y-3 rounded-2xl border-2 border-ink-700 bg-ink-950 p-3">
+            <div key={qi} className="space-y-3 rounded-lg border border-ink-700 bg-ink-950 p-3">
               <div className="flex items-center justify-between gap-2">
                 <p className="font-display text-sm text-coin">Question {qi + 1}</p>
                 <Button

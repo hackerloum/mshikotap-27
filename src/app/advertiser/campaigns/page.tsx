@@ -149,18 +149,18 @@ export default function AdvertiserCampaignsPage() {
               <div className="xl:col-span-2">
                 <Label htmlFor="cpa">You pay per person (TSh)</Label>
                 <Input id="cpa" type="number" min={cfg.minCostPerAction} value={cpa} onChange={(e) => setCpa(e.target.value)} required />
-                <p className="mt-1 text-xs font-semibold text-slate-500">
+                <p className="mt-1 text-xs text-slate-500">
                   Minimum {formatCurrency(cfg.minCostPerAction)}. The player gets {formatCurrency(playerGets)}.
                 </p>
               </div>
-              <div className="rounded-2xl border-2 border-ink-700 bg-ink-800 p-4 md:col-span-2 xl:col-span-4">
-                <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Total to pay now</p>
+              <div className="rounded-lg border border-ink-700 bg-ink-800 p-4 md:col-span-2 xl:col-span-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total to pay now</p>
                 <p className="font-display text-3xl text-white">{formatCurrency(total)}</p>
-                <p className="text-xs font-semibold text-slate-400">
+                <p className="text-xs text-slate-400">
                   Your balance: {formatCurrency(balance)}. Whatever is not used is returned if you stop the quest.
                 </p>
                 {short ? (
-                  <Link href="/advertiser/credits" className="mt-2 inline-block text-sm font-extrabold text-coin hover:underline">
+                  <Link href="/advertiser/credits" className="mt-2 inline-block text-sm font-semibold text-coin hover:underline">
                     Add {formatCurrency(total - balance)} to continue
                   </Link>
                 ) : null}
@@ -238,14 +238,14 @@ export default function AdvertiserCampaignsPage() {
 
 function SurveyResults({ data }: { data: CampaignResults }) {
   if (data.responses === 0) {
-    return <p className="rounded-2xl bg-ink-800 p-3 text-sm font-semibold text-slate-400">No answers yet.</p>;
+    return <p className="rounded-lg bg-ink-800 p-3 text-sm text-slate-400">No answers yet.</p>;
   }
   return (
-    <div className="space-y-4 rounded-2xl bg-ink-800 p-4">
-      <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">{data.responses} answers</p>
+    <div className="space-y-4 rounded-lg bg-ink-800 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{data.responses} answers</p>
       {data.questions.map((q) => (
         <div key={q.id} className="space-y-1.5">
-          <p className="text-sm font-extrabold text-white">{q.text}</p>
+          <p className="text-sm font-semibold text-white">{q.text}</p>
           {q.counts
             ? Object.entries(q.counts).map(([label, n]) => (
                 <div key={label} className="flex items-center gap-2 text-xs font-semibold text-slate-300">
@@ -257,7 +257,7 @@ function SurveyResults({ data }: { data: CampaignResults }) {
                 </div>
               ))
             : null}
-          {q.average !== undefined ? <p className="text-xs font-semibold text-slate-400">Average {q.average} of 5</p> : null}
+          {q.average !== undefined ? <p className="text-xs text-slate-400">Average {q.average} of 5</p> : null}
           {q.texts ? (
             <ul className="space-y-1 text-xs font-semibold text-slate-300">
               {q.texts.map((t, i) => (

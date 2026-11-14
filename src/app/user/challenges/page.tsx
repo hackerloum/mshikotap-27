@@ -21,8 +21,8 @@ const statusTone = {
 
 const statusLabel = {
   live: "Live",
-  upcoming: "Soon",
-  ended: "Over",
+  upcoming: "Upcoming",
+  ended: "Ended",
 } as const;
 
 function ChallengeCard({ challenge }: { challenge: Challenge }) {
@@ -46,28 +46,28 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
     <Card
       className={cn(
         "overflow-hidden",
-        challenge.status === "live" && "border-mint shadow-[0_5px_0_0_var(--color-mint-deep)]",
+        challenge.status === "live" && "border-mint/40",
       )}
     >
       <div className="flex items-start justify-between gap-3 p-5 pb-3">
         <div className="flex min-w-0 items-start gap-3">
           <div
             className={cn(
-              "grid h-12 w-12 shrink-0 place-items-center rounded-2xl",
+              "grid h-11 w-11 shrink-0 place-items-center rounded-lg",
               challenge.status === "live"
-                ? "bg-mint text-ink-950"
+                ? "bg-mint/10 text-mint"
                 : upcoming
-                  ? "bg-sky/20 text-sky"
+                  ? "bg-sky/10 text-sky"
                   : "bg-ink-700 text-slate-300",
             )}
           >
-            <Swords className="h-6 w-6" />
+            <Swords className="h-5 w-5" aria-hidden="true" />
           </div>
           <div className="min-w-0">
-            <h3 className="font-display text-xl leading-tight text-white">
+            <h3 className="font-display text-lg leading-tight text-white">
               {challenge.title}
             </h3>
-            <p className="mt-0.5 text-xs font-extrabold uppercase tracking-wider text-slate-400">
+            <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
               {challenge.type.replaceAll("_", " ")}
             </p>
           </div>
@@ -80,26 +80,28 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
       <div className="space-y-4 p-5 pt-1">
         <p className="text-sm text-slate-300">{challenge.description}</p>
 
-        <div className="flex items-center gap-3 rounded-2xl bg-coin/10 p-3">
-          <Coin size={40} />
+        <div className="flex items-center gap-3 rounded-lg border border-ink-700/80 bg-ink-800 p-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-coin/10">
+            <Coin size={22} />
+          </span>
           <div className="min-w-0">
-            <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
               Prize pool
             </p>
-            <p className="truncate font-display text-3xl leading-none text-coin">
+            <p className="tabular truncate font-display text-2xl leading-none text-coin">
               {formatCurrency(challenge.rewardPool)}
             </p>
           </div>
-          <Trophy className="ml-auto h-7 w-7 shrink-0 text-coin" />
+          <Trophy className="ml-auto h-5 w-5 shrink-0 text-slate-500" aria-hidden="true" />
         </div>
 
         <div>
-          <div className="mb-1.5 flex items-center justify-between gap-2 text-xs font-extrabold uppercase tracking-wider">
+          <div className="mb-1.5 flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wider">
             <span className="flex items-center gap-1 text-slate-400">
-              <Timer className="h-4 w-4" />
+              <Timer className="h-4 w-4" aria-hidden="true" />
               {upcoming ? "Starts in" : ended ? "Finished" : "Ends in"}
             </span>
-            <span className="truncate font-display text-base normal-case tracking-normal text-white">
+            <span className="tabular truncate font-display text-base normal-case tracking-normal text-white">
               {timeLabel}
             </span>
           </div>
@@ -111,9 +113,9 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
           />
         </div>
 
-        <div className="flex items-center gap-2 text-sm font-extrabold text-slate-300">
-          <Users className="h-4 w-4 text-sky" />
-          {formatNumber(challenge.participants)} racing
+        <div className="tabular flex items-center gap-2 text-sm font-medium text-slate-300">
+          <Users className="h-4 w-4 text-sky" aria-hidden="true" />
+          {formatNumber(challenge.participants)} participants
         </div>
       </div>
     </Card>

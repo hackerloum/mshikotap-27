@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Swords, Target, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Brand } from "@/components/layout/brand";
 import { Button } from "@/components/ui/button";
-import { Coin, Flame, Star } from "@/components/ui/coin";
 import { roleHome } from "@/config/site";
 import { authService } from "@/services/auth.service";
 import { useAuthStore } from "@/store/auth-store";
@@ -55,48 +55,42 @@ export function AuthScreen({ mode }: { mode: "login" | "register" }) {
     clearError();
     if (isRegister && code.trim()) authService.rememberReferral(code.trim());
     const okay = await signIn();
-    if (okay) toast.success(isRegister ? "Welcome to the game!" : "Welcome back, player!");
+    if (okay) toast.success(isRegister ? "Account created. Welcome aboard." : "Welcome back.");
   }
 
   return (
     <div className="relative flex min-h-dvh flex-col overflow-hidden bg-ink-950">
-      <div className="dots pointer-events-none absolute inset-0" />
+      <div className="grid-bg pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,black,transparent_70%)]" />
       <div className="relative flex items-center justify-between px-4 py-4">
         <Brand />
         <Link
           href="/"
-          className="rounded-xl px-3 py-2 text-sm font-extrabold text-slate-400 hover:text-white"
+          className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-400 hover:text-white"
         >
           Back
         </Link>
       </div>
 
       <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 pb-10">
-        <div className="relative mb-6 h-24">
-          <Coin size={64} className="absolute left-6 top-2 animate-bob [--tilt:-8deg]" />
-          <Flame size={52} className="absolute left-1/2 top-0 -translate-x-1/2 animate-bob [animation-delay:0.6s]" />
-          <Star size={56} className="absolute right-6 top-4 animate-bob [--tilt:10deg] [animation-delay:1.1s]" />
-        </div>
-
-        <div className="rounded-[2rem] border-2 border-ink-600 bg-ink-900 p-6 shadow-[0_8px_0_0_var(--color-ink-700)] sm:p-8">
-          <h1 className="text-center font-display text-4xl leading-tight text-white">
-            {isRegister ? "Create your player" : "Welcome back"}
+        <div className="rounded-2xl border border-ink-700/80 bg-ink-900 p-6 shadow-xl shadow-black/30 sm:p-8">
+          <h1 className="text-center font-display text-3xl leading-tight text-white">
+            {isRegister ? "Create your account" : "Welcome back"}
           </h1>
-          <p className="mt-2 text-center text-sm font-semibold text-slate-400">
+          <p className="mt-2 text-center text-sm text-slate-400">
             {isRegister
               ? "One tap with Google and you land straight in your quest board."
-              : "Pick up your streak and keep stacking coins."}
+              : "Pick up your streak and keep earning."}
           </p>
 
-          <ul className="mt-5 grid grid-cols-3 gap-2 text-center text-xs font-extrabold text-slate-300">
-            <li className="rounded-2xl bg-ink-800 px-2 py-3">
-              <span className="block text-xl">🎯</span>Daily quests
+          <ul className="mt-5 grid grid-cols-3 gap-2 text-center text-xs font-semibold text-slate-300">
+            <li className="rounded-lg bg-ink-800 px-2 py-3">
+              <Target className="mx-auto mb-1.5 h-5 w-5 text-coin" aria-hidden="true" />Daily quests
             </li>
-            <li className="rounded-2xl bg-ink-800 px-2 py-3">
-              <span className="block text-xl">🏁</span>Live races
+            <li className="rounded-lg bg-ink-800 px-2 py-3">
+              <Swords className="mx-auto mb-1.5 h-5 w-5 text-sky" aria-hidden="true" />Live races
             </li>
-            <li className="rounded-2xl bg-ink-800 px-2 py-3">
-              <span className="block text-xl">💸</span>Fast payouts
+            <li className="rounded-lg bg-ink-800 px-2 py-3">
+              <Wallet className="mx-auto mb-1.5 h-5 w-5 text-mint" aria-hidden="true" />Fast payouts
             </li>
           </ul>
 
@@ -104,7 +98,7 @@ export function AuthScreen({ mode }: { mode: "login" | "register" }) {
             <div className="mt-5">
               <label
                 htmlFor="invite"
-                className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-slate-400"
+                className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-400"
               >
                 Invite code <span className="text-slate-500">(optional)</span>
               </label>
@@ -115,7 +109,7 @@ export function AuthScreen({ mode }: { mode: "login" | "register" }) {
                 maxLength={12}
                 placeholder="e.g. MTA1B2C3"
                 autoComplete="off"
-                className="h-12 w-full rounded-2xl border-2 border-ink-700 bg-ink-950 px-4 font-display text-lg tracking-widest text-white outline-none placeholder:font-sans placeholder:text-sm placeholder:font-semibold placeholder:tracking-normal placeholder:text-slate-500 focus:border-coin focus:ring-4 focus:ring-coin/20"
+                className="h-11 w-full rounded-lg border border-ink-700 bg-ink-950 px-3.5 font-mono text-base tracking-widest text-white outline-none placeholder:font-sans placeholder:text-sm placeholder:tracking-normal placeholder:text-slate-500 focus:border-coin focus:ring-2 focus:ring-coin/25"
               />
             </div>
           ) : null}
@@ -131,18 +125,18 @@ export function AuthScreen({ mode }: { mode: "login" | "register" }) {
             {loading ? "Opening Google…" : "Continue with Google"}
           </Button>
 
-          <p className="mt-5 text-center text-sm font-semibold text-slate-400">
-            {isRegister ? "Already playing?" : "New here?"}{" "}
+          <p className="mt-5 text-center text-sm text-slate-400">
+            {isRegister ? "Already have an account?" : "New here?"}{" "}
             <Link
               href={isRegister ? "/login" : "/register"}
-              className="font-extrabold text-coin hover:underline"
+              className="font-semibold text-coin hover:underline"
             >
-              {isRegister ? "Log in" : "Create a player"}
+              {isRegister ? "Log in" : "Create an account"}
             </Link>
           </p>
         </div>
 
-        <p className="mt-5 text-center text-xs font-semibold text-slate-500">
+        <p className="mt-5 text-center text-xs text-slate-500">
           We only use Google to confirm who you are. No passwords to remember.
         </p>
       </div>

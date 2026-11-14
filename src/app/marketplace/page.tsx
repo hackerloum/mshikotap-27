@@ -28,11 +28,11 @@ function categoryLabel(category: MarketplaceCategory) {
 }
 
 const avatarTones = [
-  "bg-coin text-ink-950",
-  "bg-mint text-ink-950",
-  "bg-sky text-ink-950",
-  "bg-flame text-ink-950",
-  "bg-coral text-white",
+  "bg-coin/10 text-coin",
+  "bg-mint/10 text-mint",
+  "bg-sky/10 text-sky",
+  "bg-flame/10 text-flame",
+  "bg-coral/10 text-coral",
 ];
 
 function toneFor(name: string) {
@@ -74,22 +74,22 @@ export default function MarketplacePage() {
     <div className="min-h-dvh bg-ink-950 text-slate-100">
       <MarketingHeader />
       <main>
-        <section className="dots border-b-2 border-ink-800">
+        <section className="grid-bg border-b border-ink-700/80">
           <div className="mx-auto max-w-6xl px-4 pb-8 pt-10 sm:pb-12 sm:pt-14">
-            <p className="text-xs font-extrabold uppercase tracking-wider text-sky">
+            <p className="text-xs font-semibold uppercase tracking-wider text-sky">
               Marketplace
             </p>
-            <h1 className="mt-2 max-w-2xl font-display text-4xl leading-[1.05] text-white sm:text-6xl">
-              Find a <span className="scribble text-coin">gig</span> you love
+            <h1 className="mt-2 max-w-2xl font-display text-3xl leading-[1.1] text-white sm:text-5xl">
+              Find a <span className="text-coin">gig</span> you need
             </h1>
-            <p className="mt-3 max-w-xl text-base font-semibold text-slate-300 sm:text-lg">
+            <p className="mt-3 max-w-xl text-base text-slate-300 sm:text-lg">
               Designers, editors, writers and coders. Pick a pro and get it
               done.
             </p>
 
             <div className="relative mt-6 max-w-md">
               <Search
-                className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
+                className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
                 aria-hidden="true"
               />
               <Input
@@ -97,7 +97,7 @@ export default function MarketplacePage() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search gigs…"
                 aria-label="Search marketplace"
-                className="pl-12"
+                className="pl-10"
               />
             </div>
           </div>
@@ -120,10 +120,10 @@ export default function MarketplacePage() {
                     aria-selected={active}
                     onClick={() => setCategory(item.id)}
                     className={cn(
-                      "h-11 shrink-0 whitespace-nowrap rounded-full border-2 px-4 font-display text-base transition active:translate-y-px",
+                      "h-10 shrink-0 whitespace-nowrap rounded-lg border px-4 text-sm font-semibold transition-colors",
                       active
-                        ? "border-coin bg-coin text-ink-950 shadow-[0_3px_0_0_var(--color-coin-deep)]"
-                        : "border-ink-600 bg-ink-800 text-slate-200 hover:bg-ink-700",
+                        ? "border-coin bg-coin text-ink-950"
+                        : "border-ink-700/80 bg-ink-800 text-slate-200 hover:bg-ink-700",
                     )}
                   >
                     {item.label}
@@ -135,7 +135,7 @@ export default function MarketplacePage() {
 
           <div className="py-8">
             {loading ? (
-              <p className="text-sm font-semibold text-slate-400">
+              <p className="text-sm text-slate-400">
                 Loading gigs…
               </p>
             ) : listings.length === 0 ? (
@@ -148,21 +148,21 @@ export default function MarketplacePage() {
                 {listings.map((listing) => (
                   <article
                     key={listing.id}
-                    className="flex flex-col rounded-3xl border-2 border-ink-700 bg-ink-900 p-5 shadow-[0_5px_0_0_var(--color-ink-700)]"
+                    className="flex flex-col rounded-xl border border-ink-700/80 bg-ink-900 p-5 shadow-sm shadow-black/20"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <Badge tone="info" className="max-w-[70%] truncate">
                         {categoryLabel(listing.category)}
                       </Badge>
-                      <span className="shrink-0 rounded-xl bg-coin px-3 py-1 font-display text-lg leading-tight text-ink-950 shadow-[0_3px_0_0_var(--color-coin-deep)]">
+                      <span className="tabular shrink-0 font-display text-lg leading-tight text-coin">
                         {formatCurrency(listing.price)}
                       </span>
                     </div>
 
-                    <h2 className="mt-4 font-display text-xl leading-tight text-white">
+                    <h2 className="mt-4 font-display text-lg leading-tight text-white">
                       {listing.title}
                     </h2>
-                    <p className="mt-2 text-sm font-semibold text-slate-400">
+                    <p className="mt-2 text-sm text-slate-400">
                       {listing.description}
                     </p>
 
@@ -176,31 +176,31 @@ export default function MarketplacePage() {
                       </div>
                     ) : null}
 
-                    <div className="mt-auto flex items-center justify-between gap-3 border-t-2 border-ink-800 pt-4">
+                    <div className="mt-auto flex items-center justify-between gap-3 border-t border-ink-700/80 pt-4">
                       <div className="flex min-w-0 items-center gap-2.5">
                         <span
                           className={cn(
-                            "grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-ink-950 font-display text-lg",
+                            "grid h-10 w-10 shrink-0 place-items-center rounded-lg font-display text-base",
                             toneFor(listing.sellerName),
                           )}
                         >
                           {listing.sellerName.charAt(0).toUpperCase()}
                         </span>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-extrabold text-white">
+                          <p className="truncate text-sm font-semibold text-white">
                             {listing.sellerName}
                           </p>
-                          <p className="flex items-center gap-1 text-xs font-semibold text-slate-400">
+                          <p className="tabular flex items-center gap-1 text-xs text-slate-400">
                             <Clock className="h-3 w-3" aria-hidden="true" />
                             {listing.deliveryDays}d · {listing.orders} orders
                           </p>
                         </div>
                       </div>
                       <p
-                        className="flex shrink-0 items-center gap-1 font-display text-lg text-white"
+                        className="tabular flex shrink-0 items-center gap-1 text-sm font-semibold text-white"
                         aria-label={`Rated ${listing.rating.toFixed(1)}`}
                       >
-                        <Star size={20} />
+                        <Star size={16} className="text-coin" />
                         {listing.rating.toFixed(1)}
                       </p>
                     </div>

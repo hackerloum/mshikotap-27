@@ -139,7 +139,7 @@ export default function AdminQuestsPage() {
               <div>
                 <Label htmlFor="q-min">Min seconds to finish</Label>
                 <Input id="q-min" type="number" min={0} max={3600} placeholder="Default" value={form.minSeconds} onChange={(e) => setForm({ ...form, minSeconds: e.target.value })} />
-                <p className="mt-1 text-xs font-semibold text-slate-500">Players cannot send proof before this. Stops instant claims.</p>
+                <p className="mt-1 text-xs text-slate-500">Players cannot send proof before this. Stops instant claims.</p>
               </div>
               <Button type="submit" size="lg" className="md:col-span-2 xl:col-span-4" disabled={saving}>
                 {saving ? "Publishing…" : "Publish quest"}
@@ -162,7 +162,7 @@ export default function AdminQuestsPage() {
           {loading ? (
             <Loading />
           ) : shown.length === 0 ? (
-            <p className="rounded-2xl border-2 border-dashed border-ink-700 p-6 text-center text-sm font-semibold text-slate-400">
+            <p className="rounded-xl border border-dashed border-ink-700/80 p-6 text-center text-sm text-slate-400">
               No quests here. Publish the first one above.
             </p>
           ) : (
@@ -173,24 +173,24 @@ export default function AdminQuestsPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="truncate font-display text-xl text-white">{q.title}</p>
-                        <p className="text-xs font-semibold text-slate-400">
+                        <p className="text-xs text-slate-400">
                           {categoryLabel(q.category)} · created {relativeTime(q.createdAt)}
                           {q.campaignId ? " · from a campaign" : ""}
                         </p>
                       </div>
                       <Badge tone={isClosed(q) ? "default" : "success"}>{isClosed(q) ? "closed" : "live"}</Badge>
                     </div>
-                    <div className="flex flex-wrap gap-2 text-xs font-extrabold">
-                      <span className="rounded-full bg-coin/15 px-2.5 py-1 text-coin">{formatCurrency(q.reward)}</span>
-                      <span className="rounded-full bg-ink-800 px-2.5 py-1 text-slate-300">
+                    <div className="tabular flex flex-wrap gap-2 text-xs font-semibold">
+                      <span className="rounded-md bg-coin/10 px-2 py-1 text-coin">{formatCurrency(q.reward)}</span>
+                      <span className="rounded-md bg-ink-800 px-2 py-1 text-slate-300">
                         {q.completions}
                         {q.maxCompletions ? ` / ${q.maxCompletions}` : ""} approved
                       </span>
-                      <span className="rounded-full bg-ink-800 px-2.5 py-1 text-slate-300">
+                      <span className="rounded-md bg-ink-800 px-2 py-1 text-slate-300">
                         Min {q.minSeconds ?? "default"}s
                       </span>
                       {q.expiresAt ? (
-                        <span className="rounded-full bg-ink-800 px-2.5 py-1 text-slate-300">
+                        <span className="rounded-md bg-ink-800 px-2 py-1 text-slate-300">
                           Ends {new Date(q.expiresAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
                         </span>
                       ) : null}
@@ -206,10 +206,10 @@ export default function AdminQuestsPage() {
                           <Label htmlFor={`m-${q.id}`}>Max players</Label>
                           <Input id={`m-${q.id}`} type="number" min={1} placeholder="No limit" value={edit.maxCompletions} onChange={(e) => setEdit({ ...edit, maxCompletions: e.target.value })} />
                         </div>
-                        <Button variant="mint" className="min-h-11" onClick={() => void saveEdit(q)}>
+                        <Button variant="mint" size="sm" onClick={() => void saveEdit(q)}>
                           Save
                         </Button>
-                        <Button variant="secondary" className="min-h-11" onClick={() => setEditing(null)}>
+                        <Button variant="secondary" size="sm" onClick={() => setEditing(null)}>
                           Cancel
                         </Button>
                       </div>
@@ -217,7 +217,7 @@ export default function AdminQuestsPage() {
                       <div className="grid grid-cols-2 gap-2">
                         <Button
                           variant="secondary"
-                          className="min-h-11"
+                          size="sm"
                           onClick={() => {
                             setEditing(q.id);
                             setEdit({ reward: String(q.reward), maxCompletions: q.maxCompletions ? String(q.maxCompletions) : "" });
@@ -225,7 +225,7 @@ export default function AdminQuestsPage() {
                         >
                           Edit
                         </Button>
-                        <Button variant={q.status === "open" ? "danger" : "mint"} className="min-h-11" onClick={() => void setStatus(q)}>
+                        <Button variant={q.status === "open" ? "danger" : "mint"} size="sm" onClick={() => void setStatus(q)}>
                           {q.status === "open" ? "Close" : "Reopen"}
                         </Button>
                       </div>

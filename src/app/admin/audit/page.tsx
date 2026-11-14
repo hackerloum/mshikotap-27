@@ -60,17 +60,17 @@ export default function AdminAuditPage() {
         ) : shown.length === 0 ? (
           <EmptyState title="No activity" description="Every admin action is recorded here with who did it and when." />
         ) : (
-          <div className="space-y-2">
+          <div className="divide-y divide-ink-700/60 rounded-xl border border-ink-700/80 bg-ink-900">
             {shown.map((r) => (
-              <div key={r.id} className="rounded-2xl border-2 border-ink-700 bg-ink-900 px-4 py-3">
+              <div key={r.id} className="px-4 py-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-display text-lg text-coin">{r.actorName}</span>
+                    <span className="text-sm font-semibold text-coin">{r.actorName}</span>
                     <Badge>{r.action}</Badge>
                   </div>
-                  <span className="text-xs font-semibold text-slate-500">{dateTime(r.createdAt)}</span>
+                  <span className="tabular text-xs text-slate-500">{dateTime(r.createdAt)}</span>
                 </div>
-                <p className="mt-1 break-words text-sm font-semibold text-slate-200">{r.summary}</p>
+                <p className="mt-1 break-words text-sm text-slate-200">{r.summary}</p>
               </div>
             ))}
           </div>

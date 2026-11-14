@@ -28,20 +28,12 @@ export function ProgressBar({
       aria-valuenow={Math.round(pct)}
       aria-valuemin={0}
       aria-valuemax={100}
-      className={cn(
-        "h-4 w-full overflow-hidden rounded-full border-2 border-ink-700 bg-ink-950",
-        className,
-      )}
+      className={cn("h-2 w-full overflow-hidden rounded-full bg-ink-800", className)}
     >
       <div
-        className={cn(
-          "relative h-full rounded-full transition-[width] duration-700",
-          fills[tone],
-        )}
-        style={{ width: `${Math.max(pct, pct > 0 ? 6 : 0)}%` }}
-      >
-        <span className="absolute inset-x-2 top-0.5 h-1 rounded-full bg-white/40" />
-      </div>
+        className={cn("h-full rounded-full transition-[width] duration-700", fills[tone])}
+        style={{ width: `${Math.max(pct, pct > 0 ? 3 : 0)}%` }}
+      />
     </div>
   );
 }

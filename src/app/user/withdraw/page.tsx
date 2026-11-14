@@ -93,30 +93,32 @@ export default function UserWithdrawPage() {
   return (
     <DashboardShell role="user" title="Wallet">
       <div className="space-y-6">
-        <section className="dots relative overflow-hidden rounded-3xl border-2 border-coin-deep bg-coin p-5 text-ink-950 shadow-[0_6px_0_0_var(--color-coin-deep)] sm:p-7">
-          <div className="flex items-start justify-between gap-3">
+        <section className="rounded-xl border border-ink-700/80 bg-ink-900 p-5 shadow-sm shadow-black/20 sm:p-6">
+          <div className="flex items-start gap-4">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-coin/10 text-coin">
+              <Coin size={26} />
+            </span>
             <div className="min-w-0">
-              <p className="text-xs font-extrabold uppercase tracking-wider text-ink-950/70">
-                Your stash
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                Available balance
               </p>
-              <p className="mt-1 truncate font-display text-5xl leading-none sm:text-6xl">
+              <p className="tabular mt-1 truncate font-display text-4xl leading-none text-coin">
                 {formatCurrency(balance)}
               </p>
               {pending > 0 ? (
-                <p className="mt-2 text-sm font-extrabold text-ink-950/70">
-                  + {formatCurrency(pending)} on the way
+                <p className="tabular mt-2 text-sm text-slate-400">
+                  + {formatCurrency(pending)} pending
                 </p>
               ) : null}
             </div>
-            <Coin size={64} className="animate-bob" />
           </div>
 
-          <div className="mt-5 rounded-2xl bg-ink-950 p-4 text-white">
-            <div className="mb-2 flex items-center justify-between gap-2 text-xs font-extrabold uppercase tracking-wider">
+          <div className="mt-5 rounded-lg border border-ink-700/80 bg-ink-950 p-4">
+            <div className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wider">
               <span className="text-slate-400">
                 {canCashOut ? "Ready to cash out" : "Next cash out"}
               </span>
-              <span className={canCashOut ? "text-mint" : "text-coin"}>
+              <span className={cn("tabular", canCashOut ? "text-mint" : "text-coin")}>
                 {formatCurrency(Math.min(balance, config.minWithdrawal))} /{" "}
                 {formatCurrency(config.minWithdrawal)}
               </span>
@@ -127,9 +129,9 @@ export default function UserWithdrawPage() {
               tone={canCashOut ? "mint" : "coin"}
               label="Progress toward minimum cash out"
             />
-            <p className="mt-2 text-sm text-slate-300">
+            <p className="mt-2 text-sm text-slate-400">
               {canCashOut
-                ? "Your stash is ready. Time to cash out!"
+                ? "Your balance is ready to cash out."
                 : `Earn ${formatCurrency(remaining)} more to unlock your first cash out.`}
             </p>
           </div>
@@ -137,11 +139,11 @@ export default function UserWithdrawPage() {
           <a
             href="#cashout"
             className={cn(
-              buttonVariants({ variant: "mint", size: "lg" }),
+              buttonVariants({ size: "lg" }),
               "mt-5 w-full sm:w-auto",
             )}
           >
-            <Banknote className="h-5 w-5" />
+            <Banknote className="h-5 w-5" aria-hidden="true" />
             Cash out
           </a>
         </section>
@@ -151,48 +153,52 @@ export default function UserWithdrawPage() {
             label="Lifetime earned"
             value={formatCurrency(user?.wallet.lifetimeEarnings ?? 0)}
             tone="mint"
-            icon={<Banknote className="h-6 w-6" />}
+            icon={<Banknote className="h-5 w-5" aria-hidden="true" />}
           />
           <StatCard
             label="Cash out fee"
             value={`${config.withdrawalFeePercent}%`}
             hint={`Min ${formatCurrency(config.minWithdrawal)}`}
             tone="sky"
-            icon={<CreditCard className="h-6 w-6" />}
+            icon={<CreditCard className="h-5 w-5" aria-hidden="true" />}
           />
         </div>
 
         {eligibility && !eligibility.canWithdraw ? (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-2xl">
-                <Lock className="h-5 w-5 text-coin" /> Unlock cash out
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Lock className="h-5 w-5 text-coin" aria-hidden="true" /> Unlock cash out
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {eligibility.checks.map((c) => (
                 <div
                   key={c.key}
-                  className="flex items-center justify-between gap-3 rounded-2xl border-2 border-ink-700 bg-ink-800 px-3 py-2.5"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-ink-700/80 bg-ink-800 px-3 py-2.5"
                 >
-                  <span className="flex min-w-0 items-center gap-2 text-sm font-bold text-white">
+                  <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-white">
                     <span
                       className={cn(
-                        "grid h-6 w-6 shrink-0 place-items-center rounded-full",
-                        c.ok ? "bg-mint text-ink-950" : "bg-ink-700 text-slate-400",
+                        "grid h-6 w-6 shrink-0 place-items-center rounded-md",
+                        c.ok ? "bg-mint/15 text-mint" : "bg-ink-700 text-slate-400",
                       )}
                     >
-                      {c.ok ? <Check className="h-4 w-4" /> : <Lock className="h-3.5 w-3.5" />}
+                      {c.ok ? (
+                        <Check className="h-4 w-4" aria-hidden="true" />
+                      ) : (
+                        <Lock className="h-3.5 w-3.5" aria-hidden="true" />
+                      )}
                     </span>
                     <span className="truncate">{c.label}</span>
                   </span>
-                  <span className={cn("shrink-0 text-xs font-extrabold", c.ok ? "text-mint" : "text-slate-400")}>
+                  <span className={cn("tabular shrink-0 text-xs font-semibold", c.ok ? "text-mint" : "text-slate-400")}>
                     {c.detail}
                   </span>
                 </div>
               ))}
-              <p className="pt-1 text-xs font-semibold text-slate-500">
-                These checks keep the game fair for everyone and protect your earnings.
+              <p className="pt-1 text-xs text-slate-400">
+                These checks keep the platform fair for everyone and protect your earnings.
               </p>
             </CardContent>
           </Card>
@@ -201,7 +207,7 @@ export default function UserWithdrawPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           <Card id="cashout" className="scroll-mt-24">
             <CardHeader>
-              <CardTitle className="text-2xl">Cash out</CardTitle>
+              <CardTitle className="text-xl">Cash out</CardTitle>
             </CardHeader>
             <CardContent>
               <form className="space-y-5" onSubmit={onSubmit}>
@@ -218,16 +224,16 @@ export default function UserWithdrawPage() {
                     onChange={(e) => setAmount(e.target.value)}
                     required
                   />
-                  <p className="mt-2 text-sm text-slate-400">
-                    Fee {formatCurrency(feePreview)} · You get{" "}
-                    <span className="font-extrabold text-mint">
+                  <p className="tabular mt-2 text-sm text-slate-400">
+                    Fee {formatCurrency(feePreview)} · You receive{" "}
+                    <span className="font-semibold text-mint">
                       {formatCurrency(netPreview)}
                     </span>
                   </p>
                 </div>
 
                 <div>
-                  <Label>Pay me via</Label>
+                  <Label>Payout method</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {methods.map((m) => {
                       const Icon = m.icon;
@@ -239,13 +245,13 @@ export default function UserWithdrawPage() {
                           aria-pressed={active}
                           onClick={() => setMethod(m.id)}
                           className={cn(
-                            "flex min-h-12 items-center gap-2 rounded-2xl border-2 px-3 text-left text-sm font-extrabold transition active:translate-y-px",
+                            "flex min-h-12 items-center gap-2 rounded-lg border px-3 text-left text-sm font-semibold transition-colors",
                             active
-                              ? "border-coin bg-coin/15 text-coin"
+                              ? "border-coin bg-coin/10 text-coin"
                               : "border-ink-700 bg-ink-950 text-slate-300 hover:border-ink-600",
                           )}
                         >
-                          <Icon className="h-5 w-5 shrink-0" />
+                          <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                           <span className="truncate">{m.label}</span>
                         </button>
                       );
@@ -254,7 +260,7 @@ export default function UserWithdrawPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="destination">Where to send it</Label>
+                  <Label htmlFor="destination">Destination</Label>
                   <Input
                     id="destination"
                     placeholder={method === "mobile_money" ? "0712 345 678" : "Account or wallet"}
@@ -266,12 +272,11 @@ export default function UserWithdrawPage() {
 
                 <Button
                   type="submit"
-                  variant="mint"
                   size="lg"
                   className="w-full"
                   disabled={loading || (eligibility ? !eligibility.canWithdraw : false)}
                 >
-                  {loading ? "Sending…" : "Cash out now"}
+                  {loading ? "Sending…" : "Request cash out"}
                 </Button>
               </form>
             </CardContent>
@@ -279,7 +284,7 @@ export default function UserWithdrawPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">Payout history</CardTitle>
+              <CardTitle className="text-xl">Payout history</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {history.length === 0 ? (
@@ -291,12 +296,12 @@ export default function UserWithdrawPage() {
                 history.map((w) => (
                   <div
                     key={w.id}
-                    className="rounded-2xl border-2 border-ink-700 bg-ink-800 p-3.5"
+                    className="rounded-lg border border-ink-700/80 bg-ink-800 p-3.5"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <p className="font-display text-xl text-white">
+                      <p className="tabular font-display text-lg text-white">
                         {formatCurrency(w.netAmount)}
-                        <span className="ml-2 text-sm text-slate-400">
+                        <span className="ml-2 text-sm font-medium text-slate-400">
                           of {formatCurrency(w.amount)}
                         </span>
                       </p>
@@ -304,7 +309,7 @@ export default function UserWithdrawPage() {
                         {w.status.replaceAll("_", " ")}
                       </Badge>
                     </div>
-                    <p className="mt-1 break-words text-xs font-semibold text-slate-400">
+                    <p className="mt-1 break-words text-xs text-slate-400">
                       {w.method.replaceAll("_", " ")} · {w.destination} ·{" "}
                       {relativeTime(w.createdAt)}
                     </p>

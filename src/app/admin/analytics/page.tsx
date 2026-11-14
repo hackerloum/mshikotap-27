@@ -36,7 +36,7 @@ export default function AdminAnalyticsPage() {
   return (
     <DashboardShell role="admin" title="Analytics">
       <div className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-3">
           <StatCard label="14-day rewards paid" value={formatCurrency(revenue)} tone="mint" />
           <StatCard label="Quests completed" value={formatNumber(taskVolume)} tone="coin" />
           <StatCard
@@ -69,8 +69,8 @@ export default function AdminAnalyticsPage() {
                 <Tooltip
                   contentStyle={{
                     background: "#1c2150",
-                    border: "2px solid #3b4290",
-                    borderRadius: 14,
+                    border: "1px solid #3b4290",
+                    borderRadius: 10,
                     color: "#fff",
                   }}
                 />
@@ -80,7 +80,7 @@ export default function AdminAnalyticsPage() {
                   stroke="#ffc21a"
                   fill="#ffc21a"
                   fillOpacity={0.18}
-                  strokeWidth={3}
+                  strokeWidth={2}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -109,15 +109,15 @@ export default function AdminAnalyticsPage() {
                 <Tooltip
                   contentStyle={{
                     background: "#1c2150",
-                    border: "2px solid #3b4290",
-                    borderRadius: 14,
+                    border: "1px solid #3b4290",
+                    borderRadius: 10,
                     color: "#fff",
                   }}
                 />
                 <Bar
                   dataKey="completions"
                   fill="#34d17d"
-                  radius={[8, 8, 0, 0]}
+                  radius={[4, 4, 0, 0]}
                 />
               </BarChart>
             </ResponsiveContainer>

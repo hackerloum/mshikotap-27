@@ -69,58 +69,58 @@ export default function AdminOverviewPage() {
   return (
     <DashboardShell role="admin" title="Control room">
       <div className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label="Players"
             value={formatNumber(stats?.users ?? 0)}
             hint={`${stats?.bannedUsers ?? 0} suspended`}
-            icon={<Users className="h-5 w-5" />}
+            icon={<Users className="h-5 w-5" aria-hidden="true" />}
             tone="sky"
           />
           <StatCard
             label="Quests to review"
             value={formatNumber(stats?.pendingReviews ?? reviews.length)}
-            icon={<ClipboardCheck className="h-5 w-5" />}
+            icon={<ClipboardCheck className="h-5 w-5" aria-hidden="true" />}
             tone="flame"
           />
           <StatCard
             label="Payout queue"
             value={formatCurrency(stats?.payoutQueueAmount ?? 0)}
             hint={`${stats?.pendingPayouts ?? payouts.length} waiting for review`}
-            icon={<Wallet className="h-5 w-5" />}
+            icon={<Wallet className="h-5 w-5" aria-hidden="true" />}
             tone="coin"
           />
           <StatCard
             label="Open fraud alerts"
             value={formatNumber(stats?.fraudOpen ?? 0)}
-            icon={<ShieldAlert className="h-5 w-5" />}
+            icon={<ShieldAlert className="h-5 w-5" aria-hidden="true" />}
             tone="coral"
           />
           <StatCard
             label="Owed to players"
             value={formatCurrency(stats?.walletLiability ?? 0)}
             hint="Total of all wallet balances"
-            icon={<Coins className="h-5 w-5" />}
+            icon={<Coins className="h-5 w-5" aria-hidden="true" />}
             tone="mint"
           />
           <StatCard
             label="Rewards on hold"
             value={formatCurrency(stats?.pendingRewards ?? 0)}
             hint="Waiting for quest approval"
-            icon={<ClipboardCheck className="h-5 w-5" />}
+            icon={<ClipboardCheck className="h-5 w-5" aria-hidden="true" />}
             tone="sky"
           />
           <StatCard
             label="Paid out, 14 days"
             value={formatCurrency(earned)}
             hint="Quest and bonus rewards"
-            icon={<Wallet className="h-5 w-5" />}
+            icon={<Wallet className="h-5 w-5" aria-hidden="true" />}
             tone="mint"
           />
           <StatCard
             label="Campaign spend"
             value={formatCurrency(stats?.campaignSpend ?? 0)}
-            icon={<Flag className="h-5 w-5" />}
+            icon={<Flag className="h-5 w-5" aria-hidden="true" />}
             tone="flame"
           />
         </div>
@@ -129,7 +129,7 @@ export default function AdminOverviewPage() {
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle>Kill switches</CardTitle>
             <Link href="/admin/settings">
-              <Button size="sm" variant="secondary" className="min-h-11">
+              <Button size="sm" variant="secondary">
                 All settings
               </Button>
             </Link>
@@ -166,28 +166,30 @@ export default function AdminOverviewPage() {
             <CardHeader className="flex flex-row items-center justify-between gap-3">
               <CardTitle>Fraud alerts</CardTitle>
               <Link href="/admin/fraud">
-                <Button size="sm" variant="secondary" className="min-h-11">
+                <Button size="sm" variant="secondary">
                   Open
                 </Button>
               </Link>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent>
               {flags.length === 0 ? (
-                <p className="text-sm font-semibold text-slate-400">No open alerts. All quiet.</p>
+                <p className="text-sm text-slate-400">No open alerts. All quiet.</p>
               ) : (
-                flags.slice(0, 5).map((f) => (
-                  <div key={f.id} className="rounded-2xl border-2 border-ink-700 bg-ink-800 p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-extrabold text-white">{flagLabels[f.kind] ?? f.kind}</p>
-                      <Badge tone={f.severity === "high" ? "danger" : f.severity === "medium" ? "warning" : "default"}>
-                        {f.severity}
-                      </Badge>
+                <div className="divide-y divide-ink-700/60">
+                  {flags.slice(0, 5).map((f) => (
+                    <div key={f.id} className="py-2.5 first:pt-0 last:pb-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-white">{flagLabels[f.kind] ?? f.kind}</p>
+                        <Badge tone={f.severity === "high" ? "danger" : f.severity === "medium" ? "warning" : "default"}>
+                          {f.severity}
+                        </Badge>
+                      </div>
+                      <p className="tabular mt-0.5 text-xs text-slate-400">
+                        {f.player?.name ?? f.userId} · {relativeTime(f.createdAt)}
+                      </p>
                     </div>
-                    <p className="mt-1 text-xs font-semibold text-slate-400">
-                      {f.player?.name ?? f.userId} · {relativeTime(f.createdAt)}
-                    </p>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -198,25 +200,27 @@ export default function AdminOverviewPage() {
             <CardHeader className="flex flex-row items-center justify-between gap-3">
               <CardTitle>Oldest quests waiting</CardTitle>
               <Link href="/admin/reviews">
-                <Button size="sm" variant="secondary" className="min-h-11">
+                <Button size="sm" variant="secondary">
                   Review queue
                 </Button>
               </Link>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent>
               {reviews.length === 0 ? (
-                <p className="text-sm font-semibold text-slate-400">Nothing to review.</p>
+                <p className="text-sm text-slate-400">Nothing to review.</p>
               ) : (
-                reviews.slice(0, 5).map((s) => (
-                  <div key={s.id} className="rounded-2xl border-2 border-ink-700 bg-ink-800 p-3">
-                    <p className="truncate text-sm font-extrabold text-white">
-                      {s.taskTitle ?? s.taskId} · {formatCurrency(s.reward ?? 0)}
-                    </p>
-                    <div className="mt-1">
-                      <PlayerChip player={s.player} fallback={s.userName} />
+                <div className="divide-y divide-ink-700/60">
+                  {reviews.slice(0, 5).map((s) => (
+                    <div key={s.id} className="py-2.5 first:pt-0 last:pb-0">
+                      <p className="tabular truncate text-sm font-semibold text-white">
+                        {s.taskTitle ?? s.taskId} · {formatCurrency(s.reward ?? 0)}
+                      </p>
+                      <div className="mt-1">
+                        <PlayerChip player={s.player} fallback={s.userName} />
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -225,25 +229,27 @@ export default function AdminOverviewPage() {
             <CardHeader className="flex flex-row items-center justify-between gap-3">
               <CardTitle>Payouts waiting</CardTitle>
               <Link href="/admin/withdrawals">
-                <Button size="sm" variant="secondary" className="min-h-11">
+                <Button size="sm" variant="secondary">
                   Payout queue
                 </Button>
               </Link>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent>
               {payouts.length === 0 ? (
-                <p className="text-sm font-semibold text-slate-400">No payouts waiting.</p>
+                <p className="text-sm text-slate-400">No payouts waiting.</p>
               ) : (
-                payouts.slice(0, 5).map((w) => (
-                  <div key={w.id} className="rounded-2xl border-2 border-ink-700 bg-ink-800 p-3">
-                    <p className="truncate text-sm font-extrabold text-white">
-                      {formatCurrency(w.amount)} · {w.destination}
-                    </p>
-                    <div className="mt-1">
-                      <PlayerChip player={w.player} />
+                <div className="divide-y divide-ink-700/60">
+                  {payouts.slice(0, 5).map((w) => (
+                    <div key={w.id} className="py-2.5 first:pt-0 last:pb-0">
+                      <p className="tabular truncate text-sm font-semibold text-white">
+                        {formatCurrency(w.amount)} · {w.destination}
+                      </p>
+                      <div className="mt-1">
+                        <PlayerChip player={w.player} />
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -253,23 +259,25 @@ export default function AdminOverviewPage() {
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle>Latest admin activity</CardTitle>
             <Link href="/admin/audit">
-              <Button size="sm" variant="secondary" className="min-h-11">
+              <Button size="sm" variant="secondary">
                 Audit log
               </Button>
             </Link>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent>
             {audit.length === 0 ? (
-              <p className="text-sm font-semibold text-slate-400">No admin actions recorded yet.</p>
+              <p className="text-sm text-slate-400">No admin actions recorded yet.</p>
             ) : (
-              audit.map((a) => (
-                <div key={a.id} className="flex flex-wrap items-baseline justify-between gap-2 rounded-2xl border-2 border-ink-700 bg-ink-800 px-3 py-2.5">
-                  <p className="min-w-0 break-words text-sm font-bold text-slate-200">
-                    <span className="text-coin">{a.actorName}</span> · {a.summary}
-                  </p>
-                  <span className="text-xs font-semibold text-slate-500">{dateTime(a.createdAt)}</span>
-                </div>
-              ))
+              <div className="divide-y divide-ink-700/60">
+                {audit.map((a) => (
+                  <div key={a.id} className="flex flex-wrap items-baseline justify-between gap-2 py-2.5 first:pt-0 last:pb-0">
+                    <p className="min-w-0 break-words text-sm font-medium text-slate-200">
+                      <span className="font-semibold text-coin">{a.actorName}</span> · {a.summary}
+                    </p>
+                    <span className="tabular text-xs text-slate-500">{dateTime(a.createdAt)}</span>
+                  </div>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>

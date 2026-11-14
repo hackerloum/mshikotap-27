@@ -134,7 +134,7 @@ export default function AdminChallengesPage() {
           </CardContent>
         </Card>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2">
           {challenges.map((ch) => (
             <Card key={ch.id}>
               <CardHeader className="flex flex-row items-start justify-between gap-3">
@@ -146,8 +146,8 @@ export default function AdminChallengesPage() {
               </CardHeader>
               <CardContent className="flex flex-wrap gap-2">
                 <Badge tone="brand">{ch.type.replaceAll("_", " ")}</Badge>
-                <Badge tone="success">Pool {formatCurrency(ch.rewardPool)}</Badge>
-                <Badge tone="info">
+                <Badge tone="success" className="tabular">Pool {formatCurrency(ch.rewardPool)}</Badge>
+                <Badge tone="info" className="tabular">
                   {formatNumber(ch.participants)} participants
                 </Badge>
               </CardContent>

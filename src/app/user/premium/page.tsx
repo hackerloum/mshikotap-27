@@ -46,20 +46,20 @@ export default function PremiumPage() {
           <CardContent className="space-y-5 p-6">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-wider text-coin">MshikoTap Premium</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-coin">MshikoTap Premium</p>
                 <h2 className="mt-1 font-display text-4xl text-white">
                   {formatCurrency(cfg.premiumPrice)}
                   <span className="ml-2 text-lg text-slate-400">for {cfg.premiumDays} days</span>
                 </h2>
               </div>
-              <div className="grid h-14 w-14 place-items-center rounded-2xl bg-coin/15 text-coin">
+              <div className="grid h-14 w-14 place-items-center rounded-lg bg-coin/15 text-coin">
                 <Crown className="h-7 w-7" />
               </div>
             </div>
 
             <ul className="space-y-2.5">
               {perks.map((perk) => (
-                <li key={perk} className="flex items-center gap-3 text-sm font-bold text-slate-200">
+                <li key={perk} className="flex items-center gap-3 text-sm font-semibold text-slate-200">
                   <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-mint/20 text-mint">
                     <Check className="h-4 w-4" />
                   </span>
@@ -69,9 +69,9 @@ export default function PremiumPage() {
             </ul>
 
             {active ? (
-              <div className="rounded-2xl border-2 border-mint/40 bg-mint/10 p-4">
+              <div className="rounded-lg border border-mint/40 bg-mint/10 p-4">
                 <Badge tone="success">Active</Badge>
-                <p className="mt-2 text-sm font-bold text-slate-200">
+                <p className="mt-2 text-sm font-semibold text-slate-200">
                   Premium runs until {until?.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })} ({daysLeft} day
                   {daysLeft === 1 ? "" : "s"} left). Renewing adds {cfg.premiumDays} more days.
                 </p>
@@ -81,7 +81,7 @@ export default function PremiumPage() {
             <Button size="lg" className="w-full" disabled={busy} onClick={() => void pay()}>
               {busy ? "Opening payment…" : active ? `Renew for ${formatCurrency(cfg.premiumPrice)}` : `Go Premium for ${formatCurrency(cfg.premiumPrice)}`}
             </Button>
-            <p className="text-center text-xs font-semibold text-slate-500">
+            <p className="text-center text-xs text-slate-500">
               Pay with M-Pesa, Airtel Money, Mixx by Yas or Halotel. Secure checkout by Snippe.
             </p>
           </CardContent>

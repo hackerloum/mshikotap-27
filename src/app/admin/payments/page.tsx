@@ -61,15 +61,15 @@ export default function AdminPaymentsPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             {items.length === 0 ? (
-              <p className="text-sm font-semibold text-slate-400">No payments yet. They appear here as soon as someone checks out.</p>
+              <p className="text-sm text-slate-400">No payments yet. They appear here as soon as someone checks out.</p>
             ) : (
               items.map((p) => (
-                <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-ink-800 px-4 py-3">
+                <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-ink-800 px-4 py-3">
                   <div className="min-w-0">
                     <p className="truncate font-display text-lg text-white">
                       {formatCurrency(p.amount)} · {p.kind === "premium" ? "Premium" : "Top-up"}
                     </p>
-                    <p className="truncate text-xs font-semibold text-slate-400">
+                    <p className="truncate text-xs text-slate-400">
                       {p.email ?? p.uid} · {relativeTime(p.createdAt)}
                     </p>
                   </div>

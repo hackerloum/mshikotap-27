@@ -62,7 +62,7 @@ export default function UserReferralsPage() {
       try {
         await navigator.share({
           title: "Join my squad on MshikoTap",
-          text: "Do quests, earn coins. Join my squad!",
+          text: "Complete quests and earn coins. Join my squad.",
           url: shareUrl,
         });
         return;
@@ -76,41 +76,49 @@ export default function UserReferralsPage() {
   return (
     <DashboardShell role="user" title="Squad">
       <div className="space-y-6">
-        <section className="dots rounded-3xl border-2 border-sky-deep bg-sky p-5 text-ink-950 shadow-[0_6px_0_0_var(--color-sky-deep)] sm:p-7">
-          <div className="flex items-start justify-between gap-3">
+        <section className="rounded-xl border border-ink-700/80 bg-ink-900 p-5 shadow-sm shadow-black/20 sm:p-6">
+          <div className="flex items-start gap-4">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-sky/10 text-sky">
+              <Users className="h-6 w-6" aria-hidden="true" />
+            </span>
             <div className="min-w-0">
-              <p className="text-xs font-extrabold uppercase tracking-wider text-ink-950/70">
-                Build your squad
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                Referral program
               </p>
-              <h2 className="mt-1 font-display text-3xl leading-tight sm:text-4xl">
-                Bring friends. Win together.
+              <h2 className="mt-1 font-display text-2xl leading-tight text-white">
+                Invite friends and earn together
               </h2>
-              <p className="mt-1 text-sm font-bold text-ink-950/75">
-                Earn {formatCurrency(referralBonus)} when a friend you invite gets their first quest approved.
+              <p className="mt-1 text-sm text-slate-400">
+                Earn{" "}
+                <span className="tabular font-semibold text-coin">{formatCurrency(referralBonus)}</span>{" "}
+                when a friend you invite gets their first quest approved.
               </p>
             </div>
-            <Users className="hidden h-14 w-14 shrink-0 sm:block" />
           </div>
 
-          <div className="mt-5 rounded-2xl bg-ink-950 p-4 text-white">
-            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+          <div className="mt-5 rounded-lg border border-ink-700/80 bg-ink-950 p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
               Your code
             </p>
-            <p className="mt-0.5 truncate font-display text-4xl tracking-widest text-coin">
+            <p className="mt-0.5 truncate font-display text-3xl tracking-widest text-coin">
               {code}
             </p>
-            <p className="mt-2 break-all rounded-xl border-2 border-ink-700 bg-ink-900 px-3 py-2.5 text-sm font-semibold text-slate-300">
+            <p className="mt-2 break-all rounded-lg border border-ink-700/80 bg-ink-900 px-3 py-2.5 text-sm text-slate-300">
               {shareUrl}
             </p>
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <Button variant="default" size="lg" onClick={() => void copyLink()}>
-              {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
-              {copied ? "Copied!" : "Copy link"}
+              {copied ? (
+                <Check className="h-5 w-5" aria-hidden="true" />
+              ) : (
+                <Copy className="h-5 w-5" aria-hidden="true" />
+              )}
+              {copied ? "Copied" : "Copy link"}
             </Button>
-            <Button variant="white" size="lg" onClick={() => void shareLink()}>
-              <Share2 className="h-5 w-5" />
+            <Button variant="secondary" size="lg" onClick={() => void shareLink()}>
+              <Share2 className="h-5 w-5" aria-hidden="true" />
               Invite friends
             </Button>
           </div>
@@ -121,30 +129,30 @@ export default function UserReferralsPage() {
             label="Squad size"
             value={formatNumber(total)}
             tone="sky"
-            icon={<Users className="h-6 w-6" />}
+            icon={<Users className="h-5 w-5" aria-hidden="true" />}
           />
           <StatCard
             label="Active now"
             value={formatNumber(stats?.activeReferrals ?? 0)}
             tone="flame"
-            icon={<Flame size={28} />}
+            icon={<Flame size={22} />}
           />
           <StatCard
             label="Squad earnings"
             value={formatCurrency(stats?.earnings ?? 0)}
             hint={`Rank #${stats?.rank ?? "—"}`}
             tone="coin"
-            icon={<Coin size={28} />}
+            icon={<Coin size={22} />}
           />
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Squad goals</CardTitle>
+            <CardTitle className="text-xl">Squad goals</CardTitle>
             <p className="mt-1 text-sm text-slate-400">
               {nextTier
                 ? `${nextTier.need - total} more ${nextTier.need - total === 1 ? "friend" : "friends"} to reach ${nextTier.name}.`
-                : "Max rank reached. You're a legend!"}
+                : "Top tier reached."}
             </p>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -154,30 +162,30 @@ export default function UserReferralsPage() {
                 <div
                   key={t.name}
                   className={cn(
-                    "rounded-2xl border-2 p-3.5",
+                    "rounded-lg border p-3.5",
                     done
-                      ? "border-mint bg-mint/10"
-                      : "border-ink-700 bg-ink-800",
+                      ? "border-mint/40 bg-mint/10"
+                      : "border-ink-700/80 bg-ink-800",
                   )}
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className={cn(
-                        "grid h-11 w-11 shrink-0 place-items-center rounded-2xl",
-                        done ? "bg-mint text-ink-950" : "bg-ink-700 text-slate-300",
+                        "grid h-10 w-10 shrink-0 place-items-center rounded-lg",
+                        done ? "bg-mint/15 text-mint" : "bg-ink-700 text-slate-300",
                       )}
                     >
-                      {done ? <Check className="h-6 w-6" /> : <Star size={26} />}
+                      {done ? <Check className="h-5 w-5" aria-hidden="true" /> : <Star size={20} className="text-current" />}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-display text-lg text-white">
+                      <p className="truncate font-display text-base text-white">
                         {t.name}
                       </p>
-                      <p className="text-xs font-semibold text-slate-400">
+                      <p className="text-xs text-slate-400">
                         {t.need} friends
                       </p>
                     </div>
-                    <Badge tone={done ? "success" : "default"}>
+                    <Badge tone={done ? "success" : "default"} className="tabular">
                       {done ? "Done" : `${Math.min(total, t.need)}/${t.need}`}
                     </Badge>
                   </div>
@@ -198,7 +206,7 @@ export default function UserReferralsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Top squads</CardTitle>
+            <CardTitle className="text-xl">Top squads</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {board.length === 0 ? (
@@ -213,27 +221,27 @@ export default function UserReferralsPage() {
                   <div
                     key={entry.userId}
                     className={cn(
-                      "flex items-center gap-3 rounded-2xl border-2 px-3 py-2.5",
+                      "flex items-center gap-3 rounded-lg border px-3 py-2.5",
                       me
-                        ? "border-coin bg-coin/10"
-                        : "border-ink-700 bg-ink-800",
+                        ? "border-coin/60 bg-coin/10"
+                        : "border-ink-700/80 bg-ink-800",
                     )}
                   >
                     <span
                       className={cn(
-                        "grid h-9 w-9 shrink-0 place-items-center rounded-xl font-display text-lg",
+                        "tabular grid h-8 w-8 shrink-0 place-items-center rounded-md font-display text-sm",
                         entry.rank === 1
-                          ? "bg-coin text-ink-950"
+                          ? "bg-coin/15 text-coin"
                           : entry.rank === 2
-                            ? "bg-slate-300 text-ink-950"
+                            ? "bg-slate-300/15 text-slate-200"
                             : entry.rank === 3
-                              ? "bg-flame text-ink-950"
+                              ? "bg-flame/15 text-flame"
                               : "bg-ink-700 text-slate-300",
                       )}
                     >
                       {entry.rank}
                     </span>
-                    <span className="min-w-0 flex-1 truncate font-extrabold text-white">
+                    <span className="min-w-0 flex-1 truncate font-semibold text-white">
                       {entry.displayName}
                       {me ? (
                         <Badge tone="brand" className="ml-2 align-middle">
@@ -241,9 +249,9 @@ export default function UserReferralsPage() {
                         </Badge>
                       ) : null}
                     </span>
-                    <span className="shrink-0 font-display text-lg text-coin">
+                    <span className="tabular shrink-0 font-display text-base text-coin">
                       {formatNumber(entry.score)}
-                      <span className="ml-1 text-xs text-slate-400">pts</span>
+                      <span className="ml-1 text-xs font-medium text-slate-400">pts</span>
                     </span>
                   </div>
                 );

@@ -72,7 +72,7 @@ export default function AdvertiserCreditsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Add money</CardTitle>
-            <p className="mt-1 text-sm font-semibold text-slate-400">
+            <p className="mt-1 text-sm text-slate-400">
               Pay with M-Pesa, Airtel Money, Mixx by Yas or Halotel. You must add money before you can post a quest.
             </p>
           </CardHeader>
@@ -86,9 +86,9 @@ export default function AdvertiserCreditsPage() {
                     type="button"
                     aria-pressed={Number(amount) === p}
                     onClick={() => setAmount(String(p))}
-                    className={`rounded-2xl border-2 p-4 text-left transition active:translate-y-[2px] ${
+                    className={`rounded-lg border p-4 text-left transition ${
                       Number(amount) === p
-                        ? "border-coin bg-ink-800 shadow-[0_4px_0_0_var(--color-coin-deep)]"
+                        ? "border-coin bg-ink-800"
                         : "border-ink-700 bg-ink-900 hover:border-ink-600"
                     }`}
                   >
@@ -114,10 +114,10 @@ export default function AdvertiserCreditsPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               {history.map((p) => (
-                <div key={p.id} className="flex items-center justify-between gap-3 rounded-2xl bg-ink-800 px-4 py-3">
+                <div key={p.id} className="flex items-center justify-between gap-3 rounded-lg bg-ink-800 px-4 py-3">
                   <div>
                     <p className="font-display text-lg text-white">{formatCurrency(p.amount)}</p>
-                    <p className="text-xs font-semibold text-slate-400">{relativeTime(p.createdAt)}</p>
+                    <p className="text-xs text-slate-400">{relativeTime(p.createdAt)}</p>
                   </div>
                   <Badge tone={tone[p.status]}>{p.status === "completed" ? "paid" : p.status}</Badge>
                 </div>

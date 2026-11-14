@@ -48,21 +48,21 @@ export default function UserSettingsPage() {
               <Image
                 src={user.photoURL}
                 alt=""
-                width={72}
-                height={72}
+                width={64}
+                height={64}
                 unoptimized
-                className="h-[72px] w-[72px] shrink-0 rounded-3xl border-2 border-coin object-cover"
+                className="h-16 w-16 shrink-0 rounded-full border border-ink-600 object-cover"
               />
             ) : (
-              <div className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-3xl border-2 border-coin-deep bg-coin font-display text-4xl text-ink-950">
+              <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-sky font-display text-3xl text-ink-950">
                 {initial}
               </div>
             )}
             <div className="min-w-0">
-              <h2 className="truncate font-display text-3xl leading-tight text-white">
+              <h2 className="truncate font-display text-2xl leading-tight text-white">
                 {user?.displayName ?? "Player"}
               </h2>
-              <p className="truncate text-sm font-semibold text-slate-400">
+              <p className="truncate text-sm text-slate-400">
                 {user?.email}
               </p>
               <Badge tone="info" className="mt-2">
@@ -78,14 +78,14 @@ export default function UserSettingsPage() {
             value={String(user?.gamification.level ?? 1)}
             hint={`${formatNumber(user?.gamification.xp ?? 0)} XP`}
             tone="sky"
-            icon={<Star size={28} />}
+            icon={<Star size={22} />}
           />
           <StatCard
             label="Streak"
             value={`${user?.gamification.streakDays ?? 0} days`}
             hint={`Best ${user?.gamification.longestStreak ?? 0}`}
             tone="flame"
-            icon={<Flame size={28} />}
+            icon={<Flame size={22} />}
           />
           <StatCard
             label="Plan"
@@ -99,7 +99,7 @@ export default function UserSettingsPage() {
         {(user?.gamification.badges ?? []).length > 0 ? (
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">Your badges</CardTitle>
+              <CardTitle className="text-xl">Your badges</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
               {(user?.gamification.badges ?? []).map((b) => (
@@ -115,7 +115,7 @@ export default function UserSettingsPage() {
           <Card className="p-5">
             <Crown className="h-6 w-6 text-coin" />
             <h3 className="mt-2 font-display text-2xl text-white">{premium ? "Premium member" : "Go Premium"}</h3>
-            <p className="mt-1 text-sm font-semibold text-slate-400">Bigger daily bonus and higher daily limits.</p>
+            <p className="mt-1 text-sm text-slate-400">Bigger daily bonus and higher daily limits.</p>
             <Link href="/user/premium" className="mt-4 block">
               <Button variant="secondary" className="w-full">
                 {premium ? "Renew" : "See Premium"}
@@ -125,7 +125,7 @@ export default function UserSettingsPage() {
           <Card className="p-5">
             <Megaphone className="h-6 w-6 text-sky" />
             <h3 className="mt-2 font-display text-2xl text-white">Promote your business</h3>
-            <p className="mt-1 text-sm font-semibold text-slate-400">Add money, post quests and let players promote you.</p>
+            <p className="mt-1 text-sm text-slate-400">Add money, post quests and let players promote you.</p>
             <Button variant="secondary" className="mt-4 w-full" onClick={() => void becomeAdvertiser()}>
               Open advertiser panel
             </Button>
@@ -138,7 +138,7 @@ export default function UserSettingsPage() {
           className="w-full sm:w-auto"
           onClick={() => void signOut()}
         >
-          <LogOut className="h-5 w-5" />
+          <LogOut className="h-5 w-5" aria-hidden="true" />
           Sign out
         </Button>
       </div>

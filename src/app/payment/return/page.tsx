@@ -52,19 +52,19 @@ function Return() {
 
   return (
     <div className="grid min-h-dvh place-items-center bg-ink-950 px-4">
-      <div className="w-full max-w-md rounded-[2rem] border-2 border-ink-600 bg-ink-900 p-8 text-center shadow-[0_8px_0_0_var(--color-ink-700)]">
+      <div className="w-full max-w-md rounded-[2rem] border border-ink-600 bg-ink-900 p-8 text-center">
         <Brand className="mx-auto mb-6 justify-center" />
         {error ? (
           <>
             <XCircle className="mx-auto h-14 w-14 text-rose-400" />
             <h1 className="mt-4 font-display text-3xl text-white">We could not check it</h1>
-            <p className="mt-2 text-sm font-semibold text-slate-400">{error}</p>
+            <p className="mt-2 text-sm text-slate-400">{error}</p>
           </>
         ) : done ? (
           <>
             <CheckCircle2 className="mx-auto h-14 w-14 text-mint" />
             <h1 className="mt-4 font-display text-3xl text-white">Payment received</h1>
-            <p className="mt-2 text-sm font-semibold text-slate-400">
+            <p className="mt-2 text-sm text-slate-400">
               {payment.kind === "premium"
                 ? "Premium is active on your account."
                 : `${formatCurrency(payment.amount)} was added to your credits.`}
@@ -74,7 +74,7 @@ function Return() {
           <>
             <XCircle className="mx-auto h-14 w-14 text-rose-400" />
             <h1 className="mt-4 font-display text-3xl text-white">Payment did not go through</h1>
-            <p className="mt-2 text-sm font-semibold text-slate-400">
+            <p className="mt-2 text-sm text-slate-400">
               {payment.status === "mismatch"
                 ? "The amount paid did not match. Contact support with your payment time."
                 : "No money was taken. You can try again."}
@@ -84,7 +84,7 @@ function Return() {
           <>
             <Clock className="mx-auto h-14 w-14 animate-pulse text-coin" />
             <h1 className="mt-4 font-display text-3xl text-white">Confirming your payment</h1>
-            <p className="mt-2 text-sm font-semibold text-slate-400">
+            <p className="mt-2 text-sm text-slate-400">
               Approve the prompt on your phone. This page updates by itself.
             </p>
           </>

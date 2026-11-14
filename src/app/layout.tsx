@@ -1,16 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Lilita_One, Nunito } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { AppProviders } from "@/components/providers/app-providers";
 import { siteConfig } from "@/config/site";
 import "./globals.css";
 
-const display = Lilita_One({
+const display = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  weight: "400",
+  weight: ["600", "700", "800"],
   variable: "--font-display",
 });
 
-const body = Nunito({
+const body = Inter({
   subsets: ["latin"],
   variable: "--font-body",
 });

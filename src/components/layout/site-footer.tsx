@@ -15,7 +15,7 @@ const cols = [
     title: "Explore",
     links: [
       { href: "/marketplace", label: "Marketplace" },
-      { href: "/pricing", label: "Boost plans" },
+      { href: "/pricing", label: "Plans" },
       { href: "/#how", label: "How it works" },
     ],
   },
@@ -23,7 +23,7 @@ const cols = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t-2 border-ink-700 bg-ink-900">
+    <footer className="border-t border-ink-700/80 bg-ink-900">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-[1.4fr_1fr_1fr]">
         <div>
           <Brand />
@@ -34,13 +34,15 @@ export function SiteFooter() {
         </div>
         {cols.map((col) => (
           <div key={col.title}>
-            <p className="font-display text-lg text-white">{col.title}</p>
-            <ul className="mt-2 space-y-1.5">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              {col.title}
+            </p>
+            <ul className="mt-3 space-y-2">
               {col.links.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm font-semibold text-slate-400 hover:text-coin"
+                    className="text-sm text-slate-400 transition-colors hover:text-coin"
                   >
                     {link.label}
                   </Link>
@@ -50,7 +52,7 @@ export function SiteFooter() {
           </div>
         ))}
       </div>
-      <div className="border-t-2 border-ink-800 px-4 py-4 text-center text-xs font-semibold text-slate-500">
+      <div className="border-t border-ink-700/80 px-4 py-4 text-center text-xs text-slate-500">
         © {new Date().getFullYear()} {siteConfig.name} · {siteConfig.supportEmail}
       </div>
     </footer>
