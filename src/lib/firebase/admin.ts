@@ -78,3 +78,19 @@ export function getAdminStorage() {
   const adminApp = getAdminApp();
   return adminApp ? getStorage(adminApp) : null;
 }
+
+export function describePrivateKey() {
+  const raw = process.env.FIREBASE_ADMIN_PRIVATE_KEY ?? "";
+  const text = raw.replace(/\\+n/g, "\n");
+  const match = text.match(/-----BEGIN ([A-Z ]*PRIVATE KEY)-----([\s\S]*?)-----END \1-----/);
+  return {
+    length: raw.length,
+    hasBegin: raw.includes("BEGIN PRIVATE KEY"),
+    hasEnd: raw.includes("END PRIVATE KEY"),
+    literalBackslashN: (raw.match(/\\n/g) ?? []).length,
+    realNewlines: (raw.match(/\n/g) ?? []).length,
+    startsWithQuote: /^["']/.test(raw.trim()),
+    bodyLength: match ? match[2].replace(/[^A-Za-z0-9+/=]/g, "").length : 0,
+    clientEmailSet: Boolean(process.env.FIREBASE_ADMIN_CLIENT_EMAIL),
+  };
+}

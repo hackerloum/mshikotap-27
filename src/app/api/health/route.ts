@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { siteConfig } from "@/config/site";
 import { isFirebaseConfigured } from "@/lib/firebase/client";
-import { getAdminDb, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
+import { describePrivateKey, getAdminDb, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
 import { getFirebaseEnvStatus } from "@/lib/firebase/env";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +29,7 @@ export async function GET() {
       firebaseConfigured: isFirebaseConfigured,
       firebaseAdminConfigured: isFirebaseAdminConfigured(),
       firestore,
+      key: firestore.ok ? undefined : describePrivateKey(),
       env: {
         clientReady: env.clientReady,
         adminReady: env.adminReady,
