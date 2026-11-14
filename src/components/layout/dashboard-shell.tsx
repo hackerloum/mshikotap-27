@@ -6,11 +6,14 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
   ChartNoAxesCombined,
+  ClipboardCheck,
   Flag,
   Home,
   LogOut,
   MoreHorizontal,
+  ScrollText,
   Settings,
+  ShieldAlert,
   Store,
   Swords,
   Target,
@@ -24,6 +27,7 @@ import { Coin, Flame } from "@/components/ui/coin";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { useAuthStore } from "@/store/auth-store";
+import { useConfigStore } from "@/store/config-store";
 import type { UserRole } from "@/types";
 
 type NavItem = {
@@ -53,11 +57,15 @@ const navByRole: Record<UserRole, NavItem[]> = {
   ],
   admin: [
     { href: "/admin", label: "Home", icon: Home },
-    { href: "/admin/users", label: "Players", icon: Users },
-    { href: "/admin/tasks", label: "Reviews", icon: Target },
+    { href: "/admin/reviews", label: "Reviews", icon: ClipboardCheck },
     { href: "/admin/withdrawals", label: "Payouts", icon: Wallet },
+    { href: "/admin/fraud", label: "Fraud", icon: ShieldAlert },
+    { href: "/admin/users", label: "Players", icon: Users },
+    { href: "/admin/tasks", label: "Quests", icon: Target },
+    { href: "/admin/campaigns", label: "Campaigns", icon: Flag },
     { href: "/admin/challenges", label: "Races", icon: Trophy },
     { href: "/admin/analytics", label: "Stats", icon: ChartNoAxesCombined },
+    { href: "/admin/audit", label: "Audit log", icon: ScrollText },
     { href: "/admin/settings", label: "Settings", icon: Settings },
   ],
 };
@@ -81,8 +89,10 @@ export function DashboardShell({
   const router = useRouter();
   const { user, ready } = useAuthGuard([role]);
   const logout = useAuthStore((s) => s.logout);
+  const announcement = useConfigStore((c) => c.config.announcement);
   const [moreOpen, setMoreOpen] = useState(false);
   const items = navByRole[role];
+  const width = role === "admin" ? "max-w-7xl" : "max-w-5xl";
   const root = items[0].href;
   const bottom = items.slice(0, BOTTOM_COUNT);
   const overflow = items.slice(BOTTOM_COUNT);
@@ -148,7 +158,7 @@ export function DashboardShell({
 
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 border-b-2 border-ink-700 bg-ink-950">
-          <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-3 px-4">
+          <div className={cn("mx-auto flex h-16 items-center justify-between gap-3 px-4", width)}>
             <div className="flex min-w-0 items-center gap-3">
               <span className="lg:hidden">
                 <Avatar url={user.photoURL} initial={initial} />
@@ -179,7 +189,13 @@ export function DashboardShell({
           </div>
         </header>
 
-        <main className="mx-auto max-w-5xl px-4 pb-28 pt-5 lg:pb-10">{children}</main>
+        {announcement && role !== "admin" ? (
+          <div className="border-b-2 border-flame/40 bg-flame/10 px-4 py-2.5 text-center text-sm font-extrabold text-flame">
+            {announcement}
+          </div>
+        ) : null}
+
+        <main className={cn("mx-auto px-4 pb-28 pt-5 lg:pb-10", width)}>{children}</main>
       </div>
 
       <nav

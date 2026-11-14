@@ -1,5 +1,7 @@
+import { AggregateField } from "firebase-admin/firestore";
+import { getSettings } from "@/lib/server/settings";
 import { col, dayKey, db, requireSession, respond, rows } from "@/lib/server/http";
-import type { Campaign, Task } from "@/types";
+import type { Campaign, Task, Withdrawal } from "@/types";
 
 export const runtime = "nodejs";
 
@@ -15,13 +17,24 @@ export async function GET(request: Request) {
     });
     const since = dayKey(days[0]);
 
-    const [users, pendingReviews, pendingPayouts, earnings, tasks, campaigns] = await Promise.all([
+    const settings = await getSettings();
+    const [users, pendingReviews, pendingPayouts, earnings, tasks, campaigns, money, openFlags, banned, waiting] = await Promise.all([
       firestore.collection(col.users).count().get(),
       firestore.collection(col.submissions).where("status", "==", "submitted").count().get(),
       firestore.collection(col.withdrawals).where("status", "in", ["pending", "under_review"]).count().get(),
       firestore.collection(col.earnings).where("day", ">=", since).get(),
       firestore.collection(col.tasks).limit(500).get(),
       firestore.collection(col.campaigns).limit(500).get(),
+      firestore
+        .collection(col.users)
+        .aggregate({
+          balance: AggregateField.sum("wallet.balance"),
+          pending: AggregateField.sum("wallet.pendingBalance"),
+        })
+        .get(),
+      firestore.collection(col.flags).where("status", "==", "open").count().get(),
+      firestore.collection(col.users).where("isBanned", "==", true).count().get(),
+      firestore.collection(col.withdrawals).where("status", "in", ["pending", "under_review", "approved", "processing"]).get(),
     ]);
 
     const perDay = new Map<string, number>();
@@ -43,6 +56,16 @@ export async function GET(request: Request) {
       pendingPayouts: pendingPayouts.data().count,
       series,
       categories: [...byCategory.entries()].map(([category, completions]) => ({ category, completions })),
+      fraudOpen: openFlags.data().count,
+      bannedUsers: banned.data().count,
+      walletLiability: Number(money.data().balance ?? 0),
+      pendingRewards: Number(money.data().pending ?? 0),
+      payoutQueueAmount: rows<Withdrawal>(waiting).reduce((sum, w) => sum + w.amount, 0),
+      switches: {
+        signupsOpen: settings.signupsOpen,
+        questsOpen: settings.questsOpen,
+        withdrawalsOpen: settings.withdrawalsOpen,
+      },
       campaignSpend: rows<Campaign>(campaigns).reduce((sum, c) => sum + (c.spentCredits ?? 0), 0),
     };
   });

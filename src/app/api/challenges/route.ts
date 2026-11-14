@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { auditNow } from "@/lib/server/audit";
 import { col, db, HttpError, optStr, readJson, requireSession, respond, rows, str, amount } from "@/lib/server/http";
 import type { Challenge, ChallengeType } from "@/types";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const types: ChallengeType[] = ["referral_race", "weekly", "flash", "milestone"];
 
@@ -28,7 +30,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   return respond(async () => {
-    await requireSession(request, ["admin"]);
+    const { uid, profile } = await requireSession(request, ["admin"]);
     const body = await readJson<Record<string, unknown>>(request);
     const type = (types.includes(body.type as ChallengeType) ? body.type : "weekly") as ChallengeType;
     const startsAt = new Date(str(body.startsAt, "Start", 40));
@@ -47,6 +49,14 @@ export async function POST(request: Request) {
       status: "upcoming",
     };
     const ref = await db().collection(col.challenges).add(challenge);
+    await auditNow(db(), {
+      actorId: uid,
+      actorName: profile.displayName,
+      action: "challenge.create",
+      entityType: "challenge",
+      entityId: ref.id,
+      summary: `Created race "${challenge.title}" with TSh ${challenge.rewardPool} pool`,
+    });
     return withStatus({ id: ref.id, ...challenge });
   }, 201);
 }

@@ -1,3 +1,4 @@
+import { auditNow } from "@/lib/server/audit";
 import { amount, col, db, httpUrl, HttpError, readJson, requireSession, respond, rows, str } from "@/lib/server/http";
 import type { Task, TaskCategory, TaskType } from "@/types";
 
@@ -16,7 +17,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   return respond(async () => {
-    const { uid } = await requireSession(request, ["admin"]);
+    const { uid, profile } = await requireSession(request, ["admin"]);
     const body = await readJson<Record<string, unknown>>(request);
     if (!categories.includes(body.category as TaskCategory)) {
       throw new HttpError(400, "INVALID_INPUT", "Pick a category");
@@ -24,6 +25,11 @@ export async function POST(request: Request) {
     const maxCompletions = body.maxCompletions ? amount(body.maxCompletions, "Max completions") : undefined;
     const minutes = body.timeLimitMinutes ? amount(body.timeLimitMinutes, "Time limit") : undefined;
     const targetUrl = httpUrl(body.targetUrl, "Target link");
+    const minSeconds =
+      body.minSeconds !== undefined && body.minSeconds !== "" && Number(body.minSeconds) >= 0
+        ? Math.min(3600, Math.round(Number(body.minSeconds)))
+        : undefined;
+    const expiresInHours = body.expiresInHours ? amount(body.expiresInHours, "Expires in") : undefined;
 
     const task: Omit<Task, "id"> = {
       title: str(body.title, "Title", 120),
@@ -41,8 +47,20 @@ export async function POST(request: Request) {
       ...(maxCompletions ? { maxCompletions } : {}),
       ...(minutes ? { timeLimitMinutes: minutes } : {}),
       ...(targetUrl ? { targetUrl } : {}),
+      ...(minSeconds !== undefined ? { minSeconds } : {}),
+      ...(expiresInHours
+        ? { expiresAt: new Date(Date.now() + expiresInHours * 3_600_000).toISOString() }
+        : {}),
     };
     const ref = await db().collection(col.tasks).add(task);
+    await auditNow(db(), {
+      actorId: uid,
+      actorName: profile.displayName,
+      action: "task.create",
+      entityType: "task",
+      entityId: ref.id,
+      summary: `Published quest "${task.title}" for TSh ${task.reward}`,
+    });
     return { id: ref.id, ...task };
   }, 201);
 }

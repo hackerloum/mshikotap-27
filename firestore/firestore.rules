@@ -72,5 +72,16 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;
     }
+
+    // Anti-cheat and admin data: Admin SDK only. Players must never read or
+    // write risk scores, fraud alerts, quest timers, proof hashes, limits,
+    // system settings or the audit log from the browser.
+    match /userSecurity/{docId} { allow read, write: if false; }
+    match /fraudFlags/{docId} { allow read, write: if false; }
+    match /questSessions/{docId} { allow read, write: if false; }
+    match /dailyLimits/{docId} { allow read, write: if false; }
+    match /proofIndex/{docId} { allow read, write: if false; }
+    match /auditLogs/{docId} { allow read, write: if false; }
+    match /settings/{docId} { allow read, write: if false; }
   }
 }

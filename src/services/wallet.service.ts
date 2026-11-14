@@ -1,13 +1,25 @@
 import { api } from "@/lib/api-client";
 import type { ApiResult, Withdrawal, WithdrawalMethod } from "@/types";
 
+export interface EligibilityCheck {
+  key: string;
+  label: string;
+  ok: boolean;
+  detail: string;
+}
+
+export interface Eligibility {
+  checks: EligibilityCheck[];
+  canWithdraw: boolean;
+}
+
 export const walletService = {
   listWithdrawals(): Promise<ApiResult<Withdrawal[]>> {
     return api<Withdrawal[]>("/api/withdrawals");
   },
 
-  listAllWithdrawals(): Promise<ApiResult<Withdrawal[]>> {
-    return api<Withdrawal[]>("/api/withdrawals?scope=all");
+  eligibility(): Promise<ApiResult<Eligibility>> {
+    return api<Eligibility>("/api/withdrawals/eligibility");
   },
 
   requestWithdrawal(input: {
@@ -16,9 +28,5 @@ export const walletService = {
     destination: string;
   }): Promise<ApiResult<Withdrawal>> {
     return api<Withdrawal>("/api/withdrawals", { method: "POST", body: input });
-  },
-
-  updateStatus(id: string, status: Withdrawal["status"], notes?: string): Promise<ApiResult<Withdrawal>> {
-    return api<Withdrawal>(`/api/withdrawals/${id}`, { method: "PATCH", body: { status, notes } });
   },
 };

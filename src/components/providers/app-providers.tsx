@@ -3,13 +3,16 @@
 import { useEffect } from "react";
 import { Toaster } from "sonner";
 import { useAuthStore } from "@/store/auth-store";
+import { useConfigStore } from "@/store/config-store";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const init = useAuthStore((s) => s.init);
+  const loadConfig = useConfigStore((s) => s.load);
 
   useEffect(() => {
     init();
-  }, [init]);
+    void loadConfig();
+  }, [init, loadConfig]);
 
   return (
     <>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Brain,
@@ -11,6 +11,7 @@ import {
   PlayCircle,
   Search,
   Share2,
+  ShieldCheck,
   ThumbsUp,
   X,
   type LucideIcon,
@@ -20,7 +21,8 @@ import { Button } from "@/components/ui/button";
 import { Coin } from "@/components/ui/coin";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input, Label, Textarea } from "@/components/ui/input";
-import { tasksService } from "@/services/tasks.service";
+import { tasksService, type QuestSession } from "@/services/tasks.service";
+import { useConfigStore } from "@/store/config-store";
 import { useAuthStore } from "@/store/auth-store";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { Task, TaskCategory } from "@/types";
@@ -48,15 +50,12 @@ const look: Record<string, { icon: LucideIcon; tone: string }> = {
 };
 
 export default function UserTasksPage() {
-  const user = useAuthStore((s) => s.user);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<TaskCategory | "all">("all");
+  const questsOpen = useConfigStore((c) => c.config.questsOpen);
   const [selected, setSelected] = useState<Task | null>(null);
-  const [proofUrl, setProofUrl] = useState("");
-  const [notes, setNotes] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   const load = useCallback(async () => {
     const res = await tasksService.list({ category, query });
@@ -66,28 +65,6 @@ export default function UserTasksPage() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!user || !selected) return;
-    setSubmitting(true);
-    const res = await tasksService.submit({
-      taskId: selected.id,
-      proofUrl: proofUrl || undefined,
-      notes: notes || undefined,
-    });
-    setSubmitting(false);
-    if (!res.ok) {
-      toast.error(res.error.message);
-      return;
-    }
-    toast.success("Quest sent! We'll review it soon.");
-    void refreshProfile();
-    void load();
-    setSelected(null);
-    setProofUrl("");
-    setNotes("");
-  }
 
   return (
     <DashboardShell role="user" title="Quests">
@@ -119,6 +96,12 @@ export default function UserTasksPage() {
             </button>
           ))}
         </div>
+
+        {!questsOpen ? (
+          <div className="rounded-2xl border-2 border-flame/50 bg-flame/10 p-4 text-sm font-bold text-flame">
+            Quests are paused for a moment. Check back soon.
+          </div>
+        ) : null}
 
         {tasks.length === 0 ? (
           <EmptyState
@@ -180,73 +163,183 @@ export default function UserTasksPage() {
         )}
 
         {selected ? (
-          <div
-            className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center sm:p-4"
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Submit ${selected.title}`}
-          >
-            <div className="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl border-2 border-ink-600 bg-ink-900 p-5 sm:rounded-3xl">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-extrabold uppercase tracking-wider text-coin">Quest</p>
-                  <h2 className="font-display text-2xl leading-tight text-white">{selected.title}</h2>
-                </div>
-                <button
-                  onClick={() => setSelected(null)}
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-ink-800 text-white"
-                  aria-label="Close"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              <div className="mt-4 rounded-2xl bg-ink-800 p-4">
-                <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">How to do it</p>
-                <p className="mt-1 text-sm font-semibold text-slate-200">{selected.instructions}</p>
-                {selected.targetUrl ? (
-                  <a
-                    href={selected.targetUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-3 inline-flex h-10 items-center rounded-xl bg-sky px-4 font-display text-ink-950"
-                  >
-                    Open link
-                  </a>
-                ) : null}
-              </div>
-
-              <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
-                <div>
-                  <Label htmlFor="proof">
-                    Proof link {selected.requiresScreenshot ? "(required)" : "(optional)"}
-                  </Label>
-                  <Input
-                    id="proof"
-                    placeholder="https://..."
-                    inputMode="url"
-                    value={proofUrl}
-                    onChange={(e) => setProofUrl(e.target.value)}
-                    required={selected.requiresScreenshot}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    placeholder="Anything we should know?"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                  />
-                </div>
-                <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-                  {submitting ? "Sending…" : `Claim ${formatCurrency(selected.reward)}`}
-                </Button>
-              </form>
-            </div>
-          </div>
+          <QuestSheet
+            task={selected}
+            onClose={() => setSelected(null)}
+            onSent={() => {
+              void refreshProfile();
+              void load();
+              setSelected(null);
+            }}
+          />
         ) : null}
       </div>
     </DashboardShell>
+  );
+}
+
+function QuestSheet({
+  task,
+  onClose,
+  onSent,
+}: {
+  task: Task;
+  onClose: () => void;
+  onSent: () => void;
+}) {
+  const [session, setSession] = useState<QuestSession | null>(null);
+  const [offset, setOffset] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
+  const [starting, setStarting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [proofUrl, setProofUrl] = useState("");
+  const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    if (!session) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 500);
+    return () => window.clearInterval(timer);
+  }, [session]);
+
+  const waitSeconds = useMemo(() => {
+    if (!session) return 0;
+    const readyAt = new Date(session.readyAt).getTime() - offset;
+    return Math.max(0, Math.ceil((readyAt - now) / 1000));
+  }, [session, offset, now]);
+
+  const timeLeft = useMemo(() => {
+    if (!session?.expiresAt) return null;
+    const end = new Date(session.expiresAt).getTime() - offset;
+    return Math.max(0, Math.ceil((end - now) / 1000));
+  }, [session, offset, now]);
+
+  async function start() {
+    setStarting(true);
+    const res = await tasksService.start(task.id);
+    setStarting(false);
+    if (!res.ok) {
+      toast.error(res.error.message);
+      return;
+    }
+    setOffset(new Date(res.data.serverNow).getTime() - Date.now());
+    setNow(Date.now());
+    setSession(res.data);
+    if (task.targetUrl) window.open(task.targetUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    const res = await tasksService.submit({
+      taskId: task.id,
+      proofUrl: proofUrl || undefined,
+      notes: notes || undefined,
+    });
+    setSubmitting(false);
+    if (!res.ok) {
+      toast.error(res.error.message);
+      if (res.error.code === "SESSION_EXPIRED") setSession(null);
+      return;
+    }
+    toast.success("Quest sent! We'll review it soon.");
+    onSent();
+  }
+
+  const ready = session !== null && waitSeconds === 0;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Quest ${task.title}`}
+    >
+      <div className="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl border-2 border-ink-600 bg-ink-900 p-5 sm:rounded-3xl">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-wider text-coin">Quest</p>
+            <h2 className="font-display text-2xl leading-tight text-white">{task.title}</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-ink-800 text-white"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="mt-4 rounded-2xl bg-ink-800 p-4">
+          <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">How to do it</p>
+          <p className="mt-1 text-sm font-semibold text-slate-200">{task.instructions}</p>
+        </div>
+
+        <p className="mt-3 flex items-start gap-2 rounded-2xl border-2 border-mint/30 bg-mint/10 p-3 text-xs font-bold text-mint">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+          Play fair. Use your own real proof. Reused, fake or rushed proof is blocked and can get your account suspended.
+        </p>
+
+        {!session ? (
+          <Button size="lg" className="mt-4 w-full" onClick={() => void start()} disabled={starting}>
+            {starting ? "Starting…" : task.targetUrl ? "Start and open link" : "Start quest"}
+          </Button>
+        ) : (
+          <form className="mt-4 space-y-4" onSubmit={submit}>
+            <div
+              className={cn(
+                "rounded-2xl border-2 p-3 text-center font-display text-xl",
+                ready ? "border-mint/40 bg-mint/10 text-mint" : "border-coin/40 bg-coin/10 text-coin",
+              )}
+              aria-live="polite"
+            >
+              {ready ? "Ready. Send your proof." : `Finish the steps. Proof unlocks in ${waitSeconds}s`}
+              {timeLeft !== null ? (
+                <p className="mt-0.5 font-sans text-xs font-bold text-slate-300">
+                  Time left: {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
+                </p>
+              ) : null}
+            </div>
+            {task.targetUrl ? (
+              <a
+                href={task.targetUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-10 items-center rounded-xl bg-sky px-4 font-display text-ink-950"
+              >
+                Open link again
+              </a>
+            ) : null}
+            <div>
+              <Label htmlFor="proof">
+                Proof link {task.requiresScreenshot ? "(required)" : "(optional)"}
+              </Label>
+              <Input
+                id="proof"
+                placeholder="https://..."
+                inputMode="url"
+                value={proofUrl}
+                onChange={(e) => setProofUrl(e.target.value)}
+                required={task.requiresScreenshot}
+              />
+              <p className="mt-1.5 text-xs font-semibold text-slate-500">
+                Link to your screenshot or post. Each proof can only be used once.
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                placeholder="Anything we should know?"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </div>
+            <Button type="submit" size="lg" className="w-full" disabled={submitting || !ready}>
+              {submitting ? "Sending…" : ready ? `Claim ${formatCurrency(task.reward)}` : `Wait ${waitSeconds}s`}
+            </Button>
+          </form>
+        )}
+      </div>
+    </div>
   );
 }

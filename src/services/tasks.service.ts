@@ -1,6 +1,15 @@
 import { api } from "@/lib/api-client";
 import type { ApiResult, Task, TaskCategory, TaskSubmission } from "@/types";
 
+export interface QuestSession {
+  taskId: string;
+  startedAt: string;
+  readyAt: string;
+  expiresAt?: string;
+  minSeconds: number;
+  serverNow: string;
+}
+
 export const tasksService = {
   list(filters?: { category?: TaskCategory | "all"; query?: string }): Promise<ApiResult<Task[]>> {
     const params = new URLSearchParams();
@@ -13,18 +22,11 @@ export const tasksService = {
     return api<TaskSubmission[]>("/api/submissions");
   },
 
-  listAllSubmissions(): Promise<ApiResult<TaskSubmission[]>> {
-    return api<TaskSubmission[]>("/api/submissions?scope=all");
+  start(taskId: string): Promise<ApiResult<QuestSession>> {
+    return api<QuestSession>("/api/tasks/start", { method: "POST", body: { taskId } });
   },
 
   submit(input: { taskId: string; proofUrl?: string; notes?: string }): Promise<ApiResult<TaskSubmission>> {
     return api<TaskSubmission>("/api/tasks", { method: "POST", body: input });
-  },
-
-  review(submissionId: string, decision: "approved" | "rejected", reason?: string) {
-    return api<{ id: string; status: string }>(`/api/submissions/${submissionId}`, {
-      method: "PATCH",
-      body: { decision, reason },
-    });
   },
 };

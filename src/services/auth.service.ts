@@ -1,3 +1,4 @@
+import { deviceId } from "@/lib/api-client";
 import {
   GoogleAuthProvider,
   signInWithPopup,
@@ -37,6 +38,7 @@ export const authService = {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
+            ...(deviceId() ? { "x-device-id": deviceId() as string } : {}),
           },
           body: JSON.stringify({ referral: this.takeReferral() }),
         });

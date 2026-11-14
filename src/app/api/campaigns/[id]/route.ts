@@ -1,3 +1,4 @@
+import { auditNow } from "@/lib/server/audit";
 import { col, db, HttpError, readJson, requireSession, respond } from "@/lib/server/http";
 import type { Campaign, CampaignStatus } from "@/types";
 
@@ -32,6 +33,16 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       { merge: true },
     );
     await batch.commit();
+    if (profile.role === "admin") {
+      await auditNow(firestore, {
+        actorId: uid,
+        actorName: profile.displayName,
+        action: "campaign.status",
+        entityType: "campaign",
+        entityId: id,
+        summary: `Campaign "${campaign.title}" set to ${status}`,
+      });
+    }
     return { ...campaign, status };
   });
 }

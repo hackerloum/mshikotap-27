@@ -13,7 +13,7 @@ import { StatCard } from "@/components/ui/stat";
 import { challengesService } from "@/services/challenges.service";
 import { useAuthStore } from "@/store/auth-store";
 import { cn, formatCurrency, formatNumber } from "@/lib/utils";
-import { REFERRAL_BONUS } from "@/config/site";
+import { useConfigStore } from "@/store/config-store";
 import type { LeaderboardEntry, ReferralStats } from "@/types";
 import { toast } from "sonner";
 
@@ -24,6 +24,7 @@ const tiers = [
 ];
 
 export default function UserReferralsPage() {
+  const referralBonus = useConfigStore((c) => c.config.referralBonus);
   const user = useAuthStore((s) => s.user);
   const [stats, setStats] = useState<ReferralStats | null>(null);
   const [board, setBoard] = useState<LeaderboardEntry[]>([]);
@@ -85,7 +86,7 @@ export default function UserReferralsPage() {
                 Bring friends. Win together.
               </h2>
               <p className="mt-1 text-sm font-bold text-ink-950/75">
-                Earn {formatCurrency(REFERRAL_BONUS)} when a friend you invite gets their first quest approved.
+                Earn {formatCurrency(referralBonus)} when a friend you invite gets their first quest approved.
               </p>
             </div>
             <Users className="hidden h-14 w-14 shrink-0 sm:block" />

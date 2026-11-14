@@ -1,4 +1,5 @@
 import { FieldValue } from "firebase-admin/firestore";
+import { auditInTx } from "@/lib/server/audit";
 import { notify } from "@/lib/server/ledger";
 import { col, db, HttpError, optStr, readJson, requireSession, respond } from "@/lib/server/http";
 import type { Withdrawal, WithdrawalStatus } from "@/types";
@@ -10,7 +11,7 @@ const closed: WithdrawalStatus[] = ["completed", "rejected", "cancelled"];
 
 export async function PATCH(request: Request, ctx: { params: Promise<{ id: string }> }) {
   return respond(async () => {
-    await requireSession(request, ["admin"]);
+    const { uid: adminId, profile: admin } = await requireSession(request, ["admin"]);
     const { id } = await ctx.params;
     const body = await readJson<{ status?: string; notes?: string }>(request);
     if (!allowed.includes(body.status as WithdrawalStatus)) {
@@ -18,6 +19,9 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     }
     const status = body.status as WithdrawalStatus;
     const notes = optStr(body.notes, 300);
+    if (status === "rejected" && !notes) {
+      throw new HttpError(400, "INVALID_INPUT", "Add a reason so the player knows why");
+    }
 
     const firestore = db();
     const ref = firestore.collection(col.withdrawals).doc(id);
@@ -51,6 +55,14 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
           "/user/withdraw",
         );
       }
+      auditInTx(tx, firestore, {
+        actorId: adminId,
+        actorName: admin.displayName,
+        action: `withdrawal.${status}`,
+        entityType: "withdrawal",
+        entityId: id,
+        summary: `Marked TSh ${current.amount.toLocaleString("en-US")} payout as ${status.replaceAll("_", " ")}${notes ? `: ${notes}` : ""}`,
+      });
       return { ...current, status, processedAt: stamp, notes };
     });
   });

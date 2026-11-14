@@ -1,66 +1,54 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { Loading, PillTabs } from "@/components/admin/parts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/input";
-import { Label, Select, Textarea } from "@/components/ui/input";
+import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { adminService } from "@/services/admin.service";
-import { tasksService } from "@/services/tasks.service";
 import { formatCurrency, relativeTime } from "@/lib/utils";
-import type { Task, TaskCategory, TaskSubmission } from "@/types";
-import { toast } from "sonner";
+import type { Task, TaskCategory } from "@/types";
 
-const statusTone = {
-  submitted: "warning",
-  approved: "success",
-  rejected: "danger",
-} as const;
+const categoryList: TaskCategory[] = ["social", "youtube", "video", "survey", "daily", "typing", "quiz", "app_install", "screenshot"];
 
-export default function AdminTasksPage() {
-  const [subs, setSubs] = useState<TaskSubmission[]>([]);
+const emptyForm = {
+  title: "",
+  description: "",
+  instructions: "",
+  category: "social" as TaskCategory,
+  reward: "500",
+  xpReward: "10",
+  targetUrl: "",
+  maxCompletions: "",
+  minSeconds: "",
+  expiresInHours: "",
+  requiresScreenshot: true,
+};
+
+type Filter = "open" | "closed" | "all";
+
+export default function AdminQuestsPage() {
   const [quests, setQuests] = useState<Task[]>([]);
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    instructions: "",
-    category: "social" as TaskCategory,
-    reward: "500",
-    xpReward: "10",
-    targetUrl: "",
-    maxCompletions: "",
-    requiresScreenshot: true,
-  });
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
-  const [reason, setReason] = useState("Insufficient proof");
+  const [filter, setFilter] = useState<Filter>("open");
+  const [editing, setEditing] = useState<string | null>(null);
+  const [edit, setEdit] = useState({ reward: "", maxCompletions: "" });
 
   const load = useCallback(async () => {
-    const [res, list] = await Promise.all([tasksService.listAllSubmissions(), adminService.tasks()]);
-    if (res.ok) setSubs(res.data);
-    if (list.ok) setQuests(list.data);
+    const res = await adminService.tasks();
+    if (res.ok) setQuests(res.data);
+    else toast.error(res.error.message);
+    setLoading(false);
   }, []);
 
   useEffect(() => {
     void load();
   }, [load]);
-
-  async function review(
-    id: string,
-    decision: "approved" | "rejected",
-  ) {
-    const res = await tasksService.review(id, decision, decision === "rejected" ? reason : undefined);
-    if (!res.ok) {
-      toast.error(res.error.message);
-      return;
-    }
-    toast.success(`Submission ${decision}`);
-    void load();
-  }
-
-  const taskTitle = (s: TaskSubmission) => s.taskTitle ?? s.taskId;
 
   async function createQuest(e: React.FormEvent) {
     e.preventDefault();
@@ -74,6 +62,8 @@ export default function AdminTasksPage() {
       xpReward: Number(form.xpReward) || undefined,
       targetUrl: form.targetUrl || undefined,
       maxCompletions: form.maxCompletions ? Number(form.maxCompletions) : undefined,
+      minSeconds: form.minSeconds !== "" ? Number(form.minSeconds) : undefined,
+      expiresInHours: form.expiresInHours ? Number(form.expiresInHours) : undefined,
       requiresScreenshot: form.requiresScreenshot,
     });
     setSaving(false);
@@ -82,20 +72,40 @@ export default function AdminTasksPage() {
       return;
     }
     toast.success("Quest is live");
-    setForm({ ...form, title: "", description: "", instructions: "", targetUrl: "" });
+    setForm({ ...emptyForm, category: form.category, reward: form.reward, xpReward: form.xpReward });
     void load();
   }
 
-  async function toggleQuest(q: Task) {
-    const res = await adminService.setTaskStatus(q.id, q.status === "open" ? "expired" : "open");
+  async function setStatus(q: Task) {
+    const res = await adminService.updateTask(q.id, { status: q.status === "open" ? "expired" : "open" });
     if (!res.ok) {
       toast.error(res.error.message);
       return;
     }
+    toast.success(q.status === "open" ? "Quest closed" : "Quest reopened");
     void load();
   }
 
-  const pending = subs.filter((s) => s.status === "submitted");
+  async function saveEdit(q: Task) {
+    const res = await adminService.updateTask(q.id, {
+      reward: Number(edit.reward),
+      maxCompletions: edit.maxCompletions ? Number(edit.maxCompletions) : null,
+    });
+    if (!res.ok) {
+      toast.error(res.error.message);
+      return;
+    }
+    toast.success("Quest updated");
+    setEditing(null);
+    void load();
+  }
+
+  const isClosed = (q: Task) =>
+    q.status !== "open" ||
+    (q.expiresAt ? new Date(q.expiresAt).getTime() <= Date.now() : false) ||
+    Boolean(q.maxCompletions && q.completions >= q.maxCompletions);
+
+  const shown = quests.filter((q) => (filter === "all" ? true : filter === "open" ? !isClosed(q) : isClosed(q)));
 
   return (
     <DashboardShell role="admin" title="Quests">
@@ -105,29 +115,31 @@ export default function AdminTasksPage() {
             <CardTitle>New quest</CardTitle>
           </CardHeader>
           <CardContent>
-            <form className="grid gap-4 md:grid-cols-2" onSubmit={createQuest}>
-              <div className="md:col-span-2">
+            <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" onSubmit={createQuest}>
+              <div className="md:col-span-2 xl:col-span-4">
                 <Label htmlFor="q-title">Title</Label>
                 <Input id="q-title" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
               </div>
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 xl:col-span-4">
                 <Label htmlFor="q-desc">Short description</Label>
                 <Input id="q-desc" required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 xl:col-span-4">
                 <Label htmlFor="q-ins">How to do it</Label>
                 <Textarea id="q-ins" required value={form.instructions} onChange={(e) => setForm({ ...form, instructions: e.target.value })} />
               </div>
               <div>
                 <Label htmlFor="q-cat">Category</Label>
                 <Select id="q-cat" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as TaskCategory })}>
-                  {["social", "youtube", "video", "survey", "daily", "typing", "quiz", "app_install", "screenshot"].map((c) => (
-                    <option key={c} value={c}>{c.replace("_", " ")}</option>
+                  {categoryList.map((c) => (
+                    <option key={c} value={c}>
+                      {c.replace("_", " ")}
+                    </option>
                   ))}
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="q-link">Link (optional)</Label>
+              <div className="md:col-span-1 xl:col-span-3">
+                <Label htmlFor="q-link">Quest link (optional)</Label>
                 <Input id="q-link" inputMode="url" placeholder="https://..." value={form.targetUrl} onChange={(e) => setForm({ ...form, targetUrl: e.target.value })} />
               </div>
               <div>
@@ -139,119 +151,117 @@ export default function AdminTasksPage() {
                 <Input id="q-xp" type="number" min={1} value={form.xpReward} onChange={(e) => setForm({ ...form, xpReward: e.target.value })} />
               </div>
               <div>
-                <Label htmlFor="q-max">Max players (optional)</Label>
-                <Input id="q-max" type="number" min={1} value={form.maxCompletions} onChange={(e) => setForm({ ...form, maxCompletions: e.target.value })} />
+                <Label htmlFor="q-max">Max players</Label>
+                <Input id="q-max" type="number" min={1} placeholder="No limit" value={form.maxCompletions} onChange={(e) => setForm({ ...form, maxCompletions: e.target.value })} />
               </div>
-              <label className="flex items-center gap-3 self-end rounded-2xl border-2 border-ink-700 bg-ink-950 px-4 py-3 text-sm font-extrabold text-slate-200">
+              <div>
+                <Label htmlFor="q-exp">Ends in (hours)</Label>
+                <Input id="q-exp" type="number" min={1} placeholder="Never" value={form.expiresInHours} onChange={(e) => setForm({ ...form, expiresInHours: e.target.value })} />
+              </div>
+              <div>
+                <Label htmlFor="q-min">Min seconds to finish</Label>
+                <Input id="q-min" type="number" min={0} max={3600} placeholder="Default" value={form.minSeconds} onChange={(e) => setForm({ ...form, minSeconds: e.target.value })} />
+                <p className="mt-1 text-xs font-semibold text-slate-500">Players cannot send proof before this. Stops instant claims.</p>
+              </div>
+              <label className="flex items-center gap-3 self-end rounded-2xl border-2 border-ink-700 bg-ink-950 px-4 py-3 text-sm font-extrabold text-slate-200 md:col-span-2 xl:col-span-3">
                 <input type="checkbox" className="h-5 w-5 accent-[#ffc21a]" checked={form.requiresScreenshot} onChange={(e) => setForm({ ...form, requiresScreenshot: e.target.checked })} />
-                Needs proof link
+                Players must send a proof link
               </label>
-              <Button type="submit" size="lg" className="md:col-span-2" disabled={saving}>
+              <Button type="submit" size="lg" className="md:col-span-2 xl:col-span-4" disabled={saving}>
                 {saving ? "Publishing…" : "Publish quest"}
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Live quests</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {quests.length === 0 ? (
-              <p className="text-sm font-semibold text-slate-400">No quests yet. Publish the first one above.</p>
-            ) : (
-              quests.map((q) => (
-                <div key={q.id} className="flex items-center justify-between gap-3 rounded-2xl border-2 border-ink-700 bg-ink-800 px-3 py-2.5">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-extrabold text-white">{q.title}</p>
-                    <p className="text-xs font-semibold text-slate-400">{formatCurrency(q.reward)} · {q.completions}{q.maxCompletions ? ` / ${q.maxCompletions}` : ""} done</p>
-                  </div>
-                  <Button size="sm" variant={q.status === "open" ? "secondary" : "mint"} onClick={() => void toggleQuest(q)}>
-                    {q.status === "open" ? "Close" : "Reopen"}
-                  </Button>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Default rejection reason</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Input value={reason} onChange={(e) => setReason(e.target.value)} />
-          </CardContent>
-        </Card>
-
-        {pending.length === 0 ? (
-          <EmptyState
-            title="No pending submissions"
-            description="Reviewed items stay in the history below."
+        <div className="space-y-3">
+          <PillTabs
+            value={filter}
+            onChange={setFilter}
+            options={[
+              { id: "open", label: "Live", count: quests.filter((q) => !isClosed(q)).length },
+              { id: "closed", label: "Closed", count: quests.filter(isClosed).length },
+              { id: "all", label: "All", count: quests.length },
+            ]}
           />
-        ) : (
-          <div className="grid gap-4">
-            {pending.map((s) => (
-              <Card key={s.id}>
-                <CardHeader className="flex flex-row items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <CardTitle className="truncate">{taskTitle(s)}</CardTitle>
-                    <p className="mt-1 break-words text-sm text-slate-400">
-                      {s.userName ?? s.userId} · {formatCurrency(s.reward ?? 0)} · {relativeTime(s.submittedAt)}
-                    </p>
-                  </div>
-                  <Badge tone={statusTone[s.status]}>{s.status}</Badge>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {s.proofUrl ? (
-                    <p className="truncate text-sm font-bold text-sky">{s.proofUrl}</p>
-                  ) : (
-                    <p className="text-sm text-slate-500">No proof URL</p>
-                  )}
-                  <div className="grid grid-cols-2 gap-2 sm:flex">
-                    <Button
-                      size="sm"
-                      variant="mint"
-                      className="min-h-11"
-                      onClick={() => void review(s.id, "approved")}
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      className="min-h-11"
-                      onClick={() => void review(s.id, "rejected")}
-                    >
-                      Reject
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>History</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {subs.length === 0 ? <p className="text-sm font-semibold text-slate-400">Nothing submitted yet.</p> : null}
-            {subs.map((s) => (
-              <div
-                key={s.id}
-                className="flex items-center justify-between gap-2 rounded-2xl border-2 border-ink-700 bg-ink-800 px-3 py-2.5"
-              >
-                <span className="min-w-0 truncate text-sm font-bold text-slate-200">
-                  {taskTitle(s)} · {s.userName ?? s.userId}
-                </span>
-                <Badge tone={statusTone[s.status]}>{s.status}</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+          {loading ? (
+            <Loading />
+          ) : shown.length === 0 ? (
+            <p className="rounded-2xl border-2 border-dashed border-ink-700 p-6 text-center text-sm font-semibold text-slate-400">
+              No quests here. Publish the first one above.
+            </p>
+          ) : (
+            <div className="grid gap-3 xl:grid-cols-2">
+              {shown.map((q) => (
+                <Card key={q.id}>
+                  <CardContent className="space-y-3 pt-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-display text-xl text-white">{q.title}</p>
+                        <p className="text-xs font-semibold text-slate-400">
+                          {q.category.replace("_", " ")} · created {relativeTime(q.createdAt)}
+                          {q.campaignId ? " · from a campaign" : ""}
+                        </p>
+                      </div>
+                      <Badge tone={isClosed(q) ? "default" : "success"}>{isClosed(q) ? "closed" : "live"}</Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-xs font-extrabold">
+                      <span className="rounded-full bg-coin/15 px-2.5 py-1 text-coin">{formatCurrency(q.reward)}</span>
+                      <span className="rounded-full bg-ink-800 px-2.5 py-1 text-slate-300">
+                        {q.completions}
+                        {q.maxCompletions ? ` / ${q.maxCompletions}` : ""} approved
+                      </span>
+                      <span className="rounded-full bg-ink-800 px-2.5 py-1 text-slate-300">
+                        Min {q.minSeconds ?? "default"}s
+                      </span>
+                      {q.expiresAt ? (
+                        <span className="rounded-full bg-ink-800 px-2.5 py-1 text-slate-300">
+                          Ends {new Date(q.expiresAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    {editing === q.id ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label htmlFor={`r-${q.id}`}>Reward</Label>
+                          <Input id={`r-${q.id}`} type="number" min={1} value={edit.reward} onChange={(e) => setEdit({ ...edit, reward: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label htmlFor={`m-${q.id}`}>Max players</Label>
+                          <Input id={`m-${q.id}`} type="number" min={1} placeholder="No limit" value={edit.maxCompletions} onChange={(e) => setEdit({ ...edit, maxCompletions: e.target.value })} />
+                        </div>
+                        <Button variant="mint" className="min-h-11" onClick={() => void saveEdit(q)}>
+                          Save
+                        </Button>
+                        <Button variant="secondary" className="min-h-11" onClick={() => setEditing(null)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          variant="secondary"
+                          className="min-h-11"
+                          onClick={() => {
+                            setEditing(q.id);
+                            setEdit({ reward: String(q.reward), maxCompletions: q.maxCompletions ? String(q.maxCompletions) : "" });
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button variant={q.status === "open" ? "danger" : "mint"} className="min-h-11" onClick={() => void setStatus(q)}>
+                          {q.status === "open" ? "Close" : "Reopen"}
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </DashboardShell>
   );

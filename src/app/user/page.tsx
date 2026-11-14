@@ -25,6 +25,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { earningsService } from "@/services/admin.service";
 import { tasksService } from "@/services/tasks.service";
 import { useAuthStore } from "@/store/auth-store";
+import { useConfigStore } from "@/store/config-store";
 import { cn, formatCurrency, formatNumber, relativeTime, xpForLevel } from "@/lib/utils";
 import type { EarningsPoint, Task, TaskSubmission } from "@/types";
 
@@ -56,6 +57,7 @@ function remaining(ms: number) {
 
 export default function UserOverviewPage() {
   const user = useAuthStore((s) => s.user);
+  const config = useConfigStore((c) => c.config);
   const claimDaily = useAuthStore((s) => s.claimDaily);
   const [submissions, setSubmissions] = useState<TaskSubmission[]>([]);
   const [quests, setQuests] = useState<Task[]>([]);
@@ -98,7 +100,7 @@ export default function UserOverviewPage() {
     : 0;
   const wait = lastClaim ? lastClaim + COOLDOWN_MS - now : 0;
   const canClaim = wait <= 0;
-  const nextReward = 100 + Math.min(gamification.streakDays + 1, 7) * 50;
+  const nextReward = config.dailyBonusBase + Math.min(gamification.streakDays + 1, 7) * config.dailyBonusStep;
   const firstName = user.displayName.split(" ")[0];
 
 

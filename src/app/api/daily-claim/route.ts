@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { verifyRequest } from "@/lib/server/auth";
 import { bumpEarnings } from "@/lib/server/ledger";
+import { getSettings } from "@/lib/server/settings";
 import { levelFromXp } from "@/lib/utils";
 import type { UserProfile } from "@/types";
 
@@ -24,6 +25,7 @@ export async function POST(request: Request) {
   const db = getAdminDb();
   if (!db) return fail(503, "DB_UNAVAILABLE", "Rewards are warming up. Try again soon.");
 
+  const settings = await getSettings();
   const ref = db.collection("users").doc(decoded.uid);
 
   try {
@@ -49,7 +51,7 @@ export async function POST(request: Request) {
 
       const streak = last && now - last < STREAK_BREAK_MS ? profile.gamification.streakDays + 1 : 1;
       const bonusSteps = Math.min(streak, 7);
-      const reward = 100 + bonusSteps * 50;
+      const reward = settings.dailyBonusBase + bonusSteps * settings.dailyBonusStep;
       const xpGain = 10 + bonusSteps * 2;
       const xp = profile.gamification.xp + xpGain;
       const stamp = new Date(now).toISOString();

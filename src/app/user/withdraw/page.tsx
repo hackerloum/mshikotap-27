@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Banknote, Building2, Bitcoin, CreditCard, Smartphone } from "lucide-react";
+import { Banknote, Building2, Bitcoin, Check, CreditCard, Lock, Smartphone } from "lucide-react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -11,8 +11,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input, Label } from "@/components/ui/input";
 import { ProgressBar } from "@/components/ui/progress";
 import { StatCard } from "@/components/ui/stat";
-import { siteConfig } from "@/config/site";
-import { walletService } from "@/services/wallet.service";
+import { walletService, type Eligibility } from "@/services/wallet.service";
+import { useConfigStore } from "@/store/config-store";
 import { useAuthStore } from "@/store/auth-store";
 import { cn, formatCurrency, relativeTime } from "@/lib/utils";
 import type { Withdrawal, WithdrawalMethod } from "@/types";
@@ -42,16 +42,19 @@ const statusTone = {
 export default function UserWithdrawPage() {
   const user = useAuthStore((s) => s.user);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
+  const config = useConfigStore((c) => c.config);
   const [history, setHistory] = useState<Withdrawal[]>([]);
-  const [amount, setAmount] = useState(String(siteConfig.minWithdrawal));
+  const [eligibility, setEligibility] = useState<Eligibility | null>(null);
+  const [amount, setAmount] = useState("");
   const [method, setMethod] = useState<WithdrawalMethod>("mobile_money");
   const [destination, setDestination] = useState("");
   const [loading, setLoading] = useState(false);
 
   const load = useCallback(async () => {
     if (!user) return;
-    const res = await walletService.listWithdrawals();
+    const [res, gate] = await Promise.all([walletService.listWithdrawals(), walletService.eligibility()]);
     if (res.ok) setHistory(res.data);
+    if (gate.ok) setEligibility(gate.data);
   }, [user]);
 
   useEffect(() => {
@@ -80,10 +83,10 @@ export default function UserWithdrawPage() {
 
   const balance = user?.wallet.balance ?? 0;
   const pending = user?.wallet.pendingBalance ?? 0;
-  const canCashOut = balance >= siteConfig.minWithdrawal;
-  const remaining = Math.max(0, siteConfig.minWithdrawal - balance);
+  const canCashOut = balance >= config.minWithdrawal;
+  const remaining = Math.max(0, config.minWithdrawal - balance);
   const feePreview = Math.round(
-    Number(amount || 0) * (siteConfig.withdrawalFeePercent / 100),
+    Number(amount || 0) * (config.withdrawalFeePercent / 100),
   );
   const netPreview = Math.max(0, Number(amount || 0) - feePreview);
 
@@ -114,13 +117,13 @@ export default function UserWithdrawPage() {
                 {canCashOut ? "Ready to cash out" : "Next cash out"}
               </span>
               <span className={canCashOut ? "text-mint" : "text-coin"}>
-                {formatCurrency(Math.min(balance, siteConfig.minWithdrawal))} /{" "}
-                {formatCurrency(siteConfig.minWithdrawal)}
+                {formatCurrency(Math.min(balance, config.minWithdrawal))} /{" "}
+                {formatCurrency(config.minWithdrawal)}
               </span>
             </div>
             <ProgressBar
               value={balance}
-              max={siteConfig.minWithdrawal}
+              max={config.minWithdrawal}
               tone={canCashOut ? "mint" : "coin"}
               label="Progress toward minimum cash out"
             />
@@ -152,12 +155,48 @@ export default function UserWithdrawPage() {
           />
           <StatCard
             label="Cash out fee"
-            value={`${siteConfig.withdrawalFeePercent}%`}
-            hint={`Min ${formatCurrency(siteConfig.minWithdrawal)}`}
+            value={`${config.withdrawalFeePercent}%`}
+            hint={`Min ${formatCurrency(config.minWithdrawal)}`}
             tone="sky"
             icon={<CreditCard className="h-6 w-6" />}
           />
         </div>
+
+        {eligibility && !eligibility.canWithdraw ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-2xl">
+                <Lock className="h-5 w-5 text-coin" /> Unlock cash out
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {eligibility.checks.map((c) => (
+                <div
+                  key={c.key}
+                  className="flex items-center justify-between gap-3 rounded-2xl border-2 border-ink-700 bg-ink-800 px-3 py-2.5"
+                >
+                  <span className="flex min-w-0 items-center gap-2 text-sm font-bold text-white">
+                    <span
+                      className={cn(
+                        "grid h-6 w-6 shrink-0 place-items-center rounded-full",
+                        c.ok ? "bg-mint text-ink-950" : "bg-ink-700 text-slate-400",
+                      )}
+                    >
+                      {c.ok ? <Check className="h-4 w-4" /> : <Lock className="h-3.5 w-3.5" />}
+                    </span>
+                    <span className="truncate">{c.label}</span>
+                  </span>
+                  <span className={cn("shrink-0 text-xs font-extrabold", c.ok ? "text-mint" : "text-slate-400")}>
+                    {c.detail}
+                  </span>
+                </div>
+              ))}
+              <p className="pt-1 text-xs font-semibold text-slate-500">
+                These checks keep the game fair for everyone and protect your earnings.
+              </p>
+            </CardContent>
+          </Card>
+        ) : null}
 
         <div className="grid gap-6 lg:grid-cols-2">
           <Card id="cashout" className="scroll-mt-24">
@@ -172,7 +211,8 @@ export default function UserWithdrawPage() {
                     id="amount"
                     type="number"
                     inputMode="decimal"
-                    min={siteConfig.minWithdrawal}
+                    min={config.minWithdrawal}
+                    placeholder={String(config.minWithdrawal)}
                     step="100"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
@@ -217,7 +257,7 @@ export default function UserWithdrawPage() {
                   <Label htmlFor="destination">Where to send it</Label>
                   <Input
                     id="destination"
-                    placeholder="Phone, account, or wallet"
+                    placeholder={method === "mobile_money" ? "0712 345 678" : "Account or wallet"}
                     value={destination}
                     onChange={(e) => setDestination(e.target.value)}
                     required
@@ -229,7 +269,7 @@ export default function UserWithdrawPage() {
                   variant="mint"
                   size="lg"
                   className="w-full"
-                  disabled={loading}
+                  disabled={loading || (eligibility ? !eligibility.canWithdraw : false)}
                 >
                   {loading ? "Sending…" : "Cash out now"}
                 </Button>

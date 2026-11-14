@@ -30,6 +30,12 @@ export const col = {
   listings: "marketplaceListings",
   notifications: "notifications",
   earnings: "earningsDaily",
+  sessions: "questSessions",
+  limits: "dailyLimits",
+  proofs: "proofIndex",
+  security: "userSecurity",
+  flags: "fraudFlags",
+  audit: "auditLogs",
 } as const;
 
 export function db() {

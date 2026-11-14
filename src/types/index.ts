@@ -95,6 +95,7 @@ export interface UserProfile {
   gamification: GamificationProfile;
   advertiserCredits?: number;
   isBanned: boolean;
+  banReason?: string;
   deviceIds: string[];
   createdAt: string;
   updatedAt: string;
@@ -112,6 +113,7 @@ export interface Task {
   status: TaskStatus;
   requiresScreenshot: boolean;
   timeLimitMinutes?: number;
+  minSeconds?: number;
   maxCompletions?: number;
   completions: number;
   advertiserId?: string;
@@ -136,8 +138,8 @@ export interface TaskSubmission {
   rejectionReason?: string;
   submittedAt: string;
   reviewedAt?: string;
-  ipAddress?: string;
-  deviceId?: string;
+  elapsedSeconds?: number;
+  riskScore?: number;
 }
 
 export interface Withdrawal {

@@ -3,6 +3,7 @@ import { col, db, rows } from "@/lib/server/http";
 import type { LeaderboardEntry, UserProfile } from "@/types";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {

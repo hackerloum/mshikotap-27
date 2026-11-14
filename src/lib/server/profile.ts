@@ -11,10 +11,11 @@ function referralCodeFor(uid: string) {
   return `MT${hash.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase()}`;
 }
 
-function sanitizeReferral(code?: string | null) {
+function sanitizeReferral(code: string | null | undefined, uid: string) {
   if (!code) return undefined;
   const clean = code.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
-  return clean.length >= 4 ? clean : undefined;
+  if (clean.length < 4 || clean === referralCodeFor(uid)) return undefined;
+  return clean;
 }
 
 function adminEmails() {
@@ -39,7 +40,7 @@ export function newProfile(
     photoURL: decoded.picture,
     role: isAdmin ? "admin" : "user",
     referralCode: referralCodeFor(decoded.uid),
-    referredBy: sanitizeReferral(referral),
+    referredBy: sanitizeReferral(referral, decoded.uid),
     subscription: "free",
     wallet: {
       balance: 0,
@@ -69,7 +70,8 @@ function stripUndefined<T extends object>(value: T): T {
 export async function ensureProfile(
   decoded: DecodedIdToken,
   referral?: string | null,
-): Promise<{ profile: UserProfile; persisted: boolean }> {
+  options: { allowSignup?: boolean } = {},
+): Promise<{ profile: UserProfile; persisted: boolean; signupsClosed?: boolean }> {
   const fresh = newProfile(decoded, referral);
   const db = getAdminDb();
   if (!db) return { profile: fresh, persisted: false };
@@ -79,6 +81,7 @@ export async function ensureProfile(
     const snap = await ref.get();
 
     if (!snap.exists) {
+      if (options.allowSignup === false) return { profile: fresh, persisted: false, signupsClosed: true };
       await ref.set(stripUndefined(fresh));
       return { profile: fresh, persisted: true };
     }

@@ -1,23 +1,34 @@
 import { FieldValue } from "firebase-admin/firestore";
+import { auditInTx } from "@/lib/server/audit";
 import { bumpEarnings, notify } from "@/lib/server/ledger";
 import { col, db, HttpError, optStr, readJson, requireSession, respond } from "@/lib/server/http";
+import { applyRisk, readSecurity, securityRef, toSecurity } from "@/lib/server/security";
+import { getSettings } from "@/lib/server/settings";
 import { levelFromXp } from "@/lib/utils";
-import { REFERRAL_BONUS } from "@/config/site";
 import type { Campaign, Task, TaskSubmission, UserProfile } from "@/types";
 
 export const runtime = "nodejs";
 
+const REJECT_POINTS = 5;
+const FRAUD_POINTS = 30;
+const APPROVE_RELIEF = -2;
+
 export async function PATCH(request: Request, ctx: { params: Promise<{ id: string }> }) {
   return respond(async () => {
-    const { uid: reviewerId } = await requireSession(request, ["admin"]);
+    const { uid: reviewerId, profile: reviewer } = await requireSession(request, ["admin"]);
     const { id } = await ctx.params;
-    const body = await readJson<{ decision?: string; reason?: string }>(request);
+    const body = await readJson<{ decision?: string; reason?: string; fraud?: boolean }>(request);
     if (body.decision !== "approved" && body.decision !== "rejected") {
       throw new HttpError(400, "INVALID_INPUT", "decision must be approved or rejected");
     }
     const decision = body.decision;
     const reason = optStr(body.reason, 300);
+    const fraud = decision === "rejected" && body.fraud === true;
+    if (decision === "rejected" && !reason) {
+      throw new HttpError(400, "INVALID_INPUT", "Add a reason so the player knows what to fix");
+    }
 
+    const settings = await getSettings();
     const firestore = db();
     const subRef = firestore.collection(col.submissions).doc(id);
 
@@ -37,15 +48,23 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
         ? firestore.collection(col.campaigns).doc(task.campaignId)
         : null;
       const campaignSnap = campaignRef ? await tx.get(campaignRef) : null;
+      const sec = await readSecurity(tx, firestore, sub.userId);
 
       const referee = userSnap.exists ? (userSnap.data() as UserProfile) : null;
       const referrerSnap =
-        decision === "approved" && referee?.referredBy && referee.wallet.lifetimeEarnings === 0
+        decision === "approved" && referee?.referredBy && sec.approvedCount === 0
           ? await tx.get(
               firestore.collection(col.users).where("referralCode", "==", referee.referredBy).limit(1),
             )
           : null;
-      const referrerDoc = referrerSnap && !referrerSnap.empty && referrerSnap.docs[0].id !== sub.userId ? referrerSnap.docs[0] : null;
+      const referrerDoc =
+        referrerSnap && !referrerSnap.empty && referrerSnap.docs[0].id !== sub.userId
+          ? referrerSnap.docs[0]
+          : null;
+      const referrerSecSnap = referrerDoc ? await tx.get(securityRef(firestore, referrerDoc.id)) : null;
+      const referrerSec = toSecurity(
+        referrerSecSnap?.exists ? (referrerSecSnap.data() as Record<string, unknown>) : undefined,
+      );
 
       const reward = sub.reward ?? 0;
       const xpReward = sub.xpReward ?? 0;
@@ -57,6 +76,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
         reviewedBy: reviewerId,
         reviewedAt: stamp,
         ...(decision === "rejected" && reason ? { rejectionReason: reason } : {}),
+        ...(fraud ? { fraud: true } : {}),
       });
 
       if (userSnap.exists) {
@@ -78,25 +98,90 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
             updatedAt: stamp,
           });
           bumpEarnings(tx, firestore, sub.userId, reward, now);
-          notify(tx, firestore, sub.userId, "Quest approved", `You earned ${reward} TZS and ${xpReward} XP.`, "/user/withdraw");
+          tx.set(
+            securityRef(firestore, sub.userId),
+            { approvedCount: FieldValue.increment(1), updatedAt: stamp },
+            { merge: true },
+          );
+          sec.approvedCount += 1;
+          applyRisk(tx, firestore, sub.userId, sec, APPROVE_RELIEF, settings, undefined, user.isBanned);
+          notify(
+            tx,
+            firestore,
+            sub.userId,
+            "Quest approved",
+            `You earned TSh ${reward.toLocaleString("en-US")} and ${xpReward} XP.`,
+            "/user/withdraw",
+          );
         } else {
           tx.update(userRef, {
             "wallet.pendingBalance": pending,
             "wallet.updatedAt": stamp,
           });
-          notify(tx, firestore, sub.userId, "Quest not approved", reason || "Your proof did not pass review.", "/user/tasks");
+          tx.set(
+            securityRef(firestore, sub.userId),
+            { rejectedCount: FieldValue.increment(1), updatedAt: stamp },
+            { merge: true },
+          );
+          applyRisk(
+            tx,
+            firestore,
+            sub.userId,
+            sec,
+            fraud ? FRAUD_POINTS : REJECT_POINTS,
+            settings,
+            fraud
+              ? { kind: "admin_fraud_reject", severity: "high", detail: reason ?? "Marked as fraud", entityId: id }
+              : undefined,
+            user.isBanned,
+          );
+          notify(tx, firestore, sub.userId, "Quest not approved", reason ?? "Your proof did not pass review.", "/user/tasks");
         }
       }
 
       if (referrerDoc) {
-        tx.update(referrerDoc.ref, {
-          "wallet.balance": FieldValue.increment(REFERRAL_BONUS),
-          "wallet.lifetimeEarnings": FieldValue.increment(REFERRAL_BONUS),
-          "wallet.updatedAt": stamp,
-          referralEarnings: FieldValue.increment(REFERRAL_BONUS),
-        });
-        bumpEarnings(tx, firestore, referrerDoc.id, REFERRAL_BONUS, now);
-        notify(tx, firestore, referrerDoc.id, "Squad bonus", `A friend finished their first quest. You earned ${REFERRAL_BONUS} TZS.`, "/user/referrals");
+        const referrer = referrerDoc.data() as UserProfile;
+        const sharedDevice = sec.deviceHashes.some((d) => referrerSec.deviceHashes.includes(d));
+        const underCap = referrerSec.referralPaidCount < settings.maxReferralBonuses;
+
+        if (sharedDevice) {
+          applyRisk(
+            tx,
+            firestore,
+            sub.userId,
+            sec,
+            15,
+            settings,
+            {
+              kind: "referral_same_device",
+              severity: "high",
+              detail: `Referred by ${referrer.displayName} on the same device`,
+              entityId: referrerDoc.id,
+            },
+            referee?.isBanned,
+          );
+        } else if (!referrer.isBanned && underCap && settings.referralBonus > 0) {
+          tx.update(referrerDoc.ref, {
+            "wallet.balance": FieldValue.increment(settings.referralBonus),
+            "wallet.lifetimeEarnings": FieldValue.increment(settings.referralBonus),
+            "wallet.updatedAt": stamp,
+            referralEarnings: FieldValue.increment(settings.referralBonus),
+          });
+          tx.set(
+            securityRef(firestore, referrerDoc.id),
+            { referralPaidCount: FieldValue.increment(1) },
+            { merge: true },
+          );
+          bumpEarnings(tx, firestore, referrerDoc.id, settings.referralBonus, now);
+          notify(
+            tx,
+            firestore,
+            referrerDoc.id,
+            "Squad bonus",
+            `A friend finished their first quest. You earned TSh ${settings.referralBonus.toLocaleString("en-US")}.`,
+            "/user/referrals",
+          );
+        }
       }
 
       if (decision === "approved") {
@@ -109,6 +194,15 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
           });
         }
       }
+
+      auditInTx(tx, firestore, {
+        actorId: reviewerId,
+        actorName: reviewer.displayName,
+        action: decision === "approved" ? "submission.approve" : fraud ? "submission.reject_fraud" : "submission.reject",
+        entityType: "submission",
+        entityId: id,
+        summary: `${decision === "approved" ? "Approved" : "Rejected"} "${sub.taskTitle ?? sub.taskId}" by ${sub.userName ?? sub.userId}${reason ? `: ${reason}` : ""}`,
+      });
 
       return { id, status: decision };
     });

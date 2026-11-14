@@ -4,12 +4,8 @@ export const siteConfig = {
     "Clear quick quests, keep your streak, race your friends and cash out. The game that pays, built for East Africa.",
   url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   supportEmail: "support@mshikotap.com",
-  minWithdrawal: 5000,
-  withdrawalFeePercent: 2.5,
   currency: "TZS",
 } as const;
-
-export const REFERRAL_BONUS = 500;
 
 export const roleHome: Record<"user" | "advertiser" | "admin", string> = {
   user: "/user",
