@@ -75,8 +75,8 @@ export const defaultSettings: SystemSettings = {
   maxTopUp: 2_000_000,
   minCostPerAction: 500,
   aiMaxAutoApproveReward: 2000,
-  aiMinOpenQuests: 5,
-  aiDailyQuestBudget: 20000,
+  aiMinOpenQuests: 15,
+  aiDailyQuestBudget: 60000,
 
   signupsOpen: true,
   questsOpen: true,

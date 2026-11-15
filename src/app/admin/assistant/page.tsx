@@ -17,7 +17,7 @@ type Msg = { role: "user" | "assistant"; content: string; actions?: { tool: stri
 const ideas = [
   "Give me today's summary",
   "Check the proofs waiting and clear the easy ones",
-  "Create 3 new quests for today",
+  "Fill the platform with fresh quests",
   "Are there advertiser quests waiting?",
 ];
 

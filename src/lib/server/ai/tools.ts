@@ -22,6 +22,33 @@ export type ActionLog = { tool: string; summary: string };
 const MAX_QUEST_REWARD = 3000;
 const MAX_QUEST_SLOTS = 300;
 const MAX_AUTO_REVIEWS = 20;
+const MAX_AUTO_CREATES = 25;
+
+const questSchema = z.object({
+  title: z.string().min(4).max(80),
+  category: z.enum(creatableCategories as [TaskCategory, ...TaskCategory[]]),
+  reward: z.number().int().min(100).max(MAX_QUEST_REWARD),
+  maxCompletions: z.number().int().min(1).max(MAX_QUEST_SLOTS),
+  platform: z.string().optional(),
+  action: z.string().optional(),
+  targetUrl: z.string().optional(),
+  appName: z.string().optional(),
+  watchSeconds: z.number().int().optional(),
+  passMark: z.number().int().optional(),
+  phrase: z.string().optional(),
+  notes: z.string().max(600).optional(),
+  questions: z
+    .array(
+      z.object({
+        text: z.string(),
+        kind: z.enum(["choice", "multi", "text", "rating"]).default("choice"),
+        options: z.array(z.string()).optional(),
+        correct: z.array(z.number().int()).optional(),
+      }),
+    )
+    .optional(),
+  expiresInHours: z.number().int().min(1).max(168).optional(),
+});
 
 function openAiKey() {
   const direct = process.env.OPENAI_API_KEY?.trim();
@@ -72,6 +99,7 @@ export function buildTools(mode: Mode, log: ActionLog[]) {
     });
 
   let reviewsDone = 0;
+  let created = 0;
   const verdicts = new Map<string, { valid: boolean | null; confidence: string }>();
 
   const tools = {
@@ -95,6 +123,8 @@ export function buildTools(mode: Mode, log: ActionLog[]) {
           (t) => (!t.maxCompletions || t.completions < t.maxCompletions) && (!t.expiresAt || new Date(t.expiresAt).getTime() > Date.now()),
         );
         const paid = payments.docs.map((d) => d.data() as PaymentDoc);
+        const openByCategory: Record<string, number> = {};
+        for (const t of openQuests) openByCategory[t.category] = (openByCategory[t.category] ?? 0) + 1;
         return {
           players: players.data().count,
           proofsWaiting: reviews.data().count,
@@ -102,6 +132,8 @@ export function buildTools(mode: Mode, log: ActionLog[]) {
           openFraudAlerts: flags.data().count,
           advertiserQuestsWaitingApproval: drafts.data().count,
           openQuests: openQuests.length,
+          openByCategory,
+          targetOpenQuests: settings.aiMinOpenQuests,
           moneyIn30dTsh: paid.filter((p) => (p.completedAt ?? "") > monthAgo).reduce((s, p) => s + p.amount, 0),
           switches: { signupsOpen: settings.signupsOpen, questsOpen: settings.questsOpen, withdrawalsOpen: settings.withdrawalsOpen },
           aiQuestBudgetLeftToday: Math.max(0, settings.aiDailyQuestBudget - (await aiBudgetUsedToday())),
@@ -304,73 +336,67 @@ export function buildTools(mode: Mode, log: ActionLog[]) {
       },
     }),
 
-    create_quest: tool({
-      description: `Publish a new house quest paid by the platform. Fill the fields that fit the category: social needs platform, action and targetUrl; youtube needs action and targetUrl (watchSeconds when action is watch); video needs targetUrl and watchSeconds; survey needs questions; quiz needs questions with one correct option index each; app_install needs appName and targetUrl; typing needs phrase; screenshot needs notes. Reward at most TSh ${MAX_QUEST_REWARD}, at most ${MAX_QUEST_SLOTS} players, and it must fit the AI daily budget. Never invent links. If the tool refuses, read the message and fix the missing field.`,
-      inputSchema: z.object({
-        title: z.string().min(4).max(80),
-        category: z.enum(creatableCategories as [TaskCategory, ...TaskCategory[]]),
-        reward: z.number().int().min(100).max(MAX_QUEST_REWARD),
-        maxCompletions: z.number().int().min(1).max(MAX_QUEST_SLOTS),
-        platform: z.string().optional(),
-        action: z.string().optional(),
-        targetUrl: z.string().optional(),
-        appName: z.string().optional(),
-        watchSeconds: z.number().int().optional(),
-        passMark: z.number().int().optional(),
-        phrase: z.string().optional(),
-        notes: z.string().max(600).optional(),
-        questions: z
-          .array(
-            z.object({
-              text: z.string(),
-              kind: z.enum(["choice", "multi", "text", "rating"]).default("choice"),
-              options: z.array(z.string()).optional(),
-              correct: z.array(z.number().int()).optional(),
-            }),
-          )
-          .optional(),
-        expiresInHours: z.number().int().min(1).max(168).optional(),
-      }),
-      execute: async (input) => {
+    create_quests: tool({
+      description: `Publish several house quests at once (up to 10 per call, paid by the platform). Each item needs title, category, reward (TSh 100-${MAX_QUEST_REWARD}), maxCompletions (1-${MAX_QUEST_SLOTS}) and the fields for its category: social needs platform, action and targetUrl; youtube needs action and targetUrl (watchSeconds when action is watch); video needs targetUrl and watchSeconds; survey needs questions; quiz needs questions with one correct option index each; app_install needs appName and targetUrl; typing needs phrase; screenshot needs notes. Items must fit the AI daily budget; over-budget items are refused, so use fewer slots per quest (20-60) to publish more quests. Never invent links. Read each refusal and fix it.`,
+      inputSchema: z.object({ quests: z.array(questSchema).min(1).max(10) }),
+      execute: async ({ quests }) => {
         const settings = await getSettings();
-        const quest = validateQuest(input);
-        if (!quest.ok) return { refused: quest.message };
-        const q = quest.value;
-        if (q.targetUrl) {
-          if (!/^https:\/\//i.test(q.targetUrl)) return { refused: "Links must start with https://" };
-          if (autopilot && !q.targetUrl.startsWith(appUrl())) {
-            return { refused: "In autopilot only links to MshikoTap itself are allowed. Use surveys, quizzes or typing, or create link quests through the chat." };
+        let used = await aiBudgetUsedToday();
+        const results: Record<string, unknown>[] = [];
+        for (const input of quests) {
+          if (autopilot && created >= MAX_AUTO_CREATES) {
+            results.push({ title: input.title, refused: "Quest limit for this run reached." });
+            continue;
           }
+          const quest = validateQuest(input);
+          if (!quest.ok) {
+            results.push({ title: input.title, refused: quest.message });
+            continue;
+          }
+          const q = quest.value;
+          if (q.targetUrl) {
+            if (!/^https:\/\//i.test(q.targetUrl)) {
+              results.push({ title: input.title, refused: "Links must start with https://" });
+              continue;
+            }
+            if (autopilot && !q.targetUrl.startsWith(appUrl())) {
+              results.push({ title: input.title, refused: "In autopilot only links to MshikoTap itself are allowed. Use surveys, quizzes, typing or other tasks." });
+              continue;
+            }
+          }
+          const cost = input.reward * input.maxCompletions;
+          if (used + cost > settings.aiDailyQuestBudget) {
+            results.push({ title: input.title, refused: `Needs TSh ${cost} but only TSh ${Math.max(0, settings.aiDailyQuestBudget - used)} is left in today's AI quest budget. Use fewer slots.` });
+            continue;
+          }
+          const task: Omit<Task, "id"> = {
+            title: input.title.trim(),
+            description: q.instructions.split("\n")[0].slice(0, 160),
+            instructions: q.instructions,
+            category: q.category,
+            type: q.type,
+            spec: q.spec,
+            reward: input.reward,
+            xpReward: 10,
+            status: "open",
+            requiresScreenshot: q.requiresScreenshot,
+            completions: 0,
+            advertiserId: AI_ACTOR.uid,
+            createdBy: "ai",
+            maxCompletions: input.maxCompletions,
+            createdAt: new Date().toISOString(),
+            ...(q.targetUrl ? { targetUrl: q.targetUrl } : {}),
+            ...(q.minSeconds ? { minSeconds: q.minSeconds } : {}),
+            ...(input.expiresInHours ? { expiresAt: new Date(Date.now() + input.expiresInHours * 3_600_000).toISOString() } : {}),
+          };
+          const ref = await db().collection(col.tasks).add(task);
+          used += cost;
+          created += 1;
+          await audit("quest.create", "task", ref.id, `Published ${q.category} quest "${task.title}" for TSh ${task.reward} x ${task.maxCompletions}`);
+          note("create_quests", `Published ${categoryLabel(q.category).toLowerCase()} quest "${task.title}" (TSh ${task.reward} each, ${task.maxCompletions} players)`);
+          results.push({ title: task.title, ok: true, questId: ref.id });
         }
-        const cost = input.reward * input.maxCompletions;
-        const used = await aiBudgetUsedToday();
-        if (used + cost > settings.aiDailyQuestBudget) {
-          return { refused: `That would use TSh ${cost} but only TSh ${Math.max(0, settings.aiDailyQuestBudget - used)} is left in today's AI quest budget.` };
-        }
-        const task: Omit<Task, "id"> = {
-          title: input.title.trim(),
-          description: q.instructions.split("\n")[0].slice(0, 160),
-          instructions: q.instructions,
-          category: q.category,
-          type: q.type,
-          spec: q.spec,
-          reward: input.reward,
-          xpReward: 10,
-          status: "open",
-          requiresScreenshot: q.requiresScreenshot,
-          completions: 0,
-          advertiserId: AI_ACTOR.uid,
-          createdBy: "ai",
-          maxCompletions: input.maxCompletions,
-          createdAt: new Date().toISOString(),
-          ...(q.targetUrl ? { targetUrl: q.targetUrl } : {}),
-          ...(q.minSeconds ? { minSeconds: q.minSeconds } : {}),
-          ...(input.expiresInHours ? { expiresAt: new Date(Date.now() + input.expiresInHours * 3_600_000).toISOString() } : {}),
-        };
-        const ref = await db().collection(col.tasks).add(task);
-        await audit("quest.create", "task", ref.id, `Published ${q.category} quest "${task.title}" for TSh ${task.reward} x ${task.maxCompletions}`);
-        note("create_quest", `Published ${categoryLabel(q.category).toLowerCase()} quest "${task.title}" (TSh ${task.reward} each, ${task.maxCompletions} players)`);
-        return { ok: true, questId: ref.id };
+        return { results, budgetLeftTsh: Math.max(0, settings.aiDailyQuestBudget - used) };
       },
     }),
 
@@ -415,19 +441,20 @@ export function buildTools(mode: Mode, log: ActionLog[]) {
       },
     }),
 
+    set_announcement: tool({
+      description: "Change the banner shown at the top of every player screen (max 240 characters). Use it for a short, honest, upbeat message about new quests or bonuses. Empty text hides it.",
+      inputSchema: z.object({ text: z.string().max(240) }),
+      execute: async ({ text }) => {
+        await saveSettings(validateSettingsPatch({ announcement: text }));
+        await audit("settings.announcement", "settings", undefined, `Announcement set to "${text}"`);
+        note("set_announcement", text ? `Banner set to "${text}"` : "Banner cleared");
+        return { ok: true };
+      },
+    }),
+
     ...(autopilot
       ? {}
       : {
-          set_announcement: tool({
-            description: "Change the banner shown at the top of every player screen. Empty text hides it.",
-            inputSchema: z.object({ text: z.string().max(240) }),
-            execute: async ({ text }) => {
-              await saveSettings(validateSettingsPatch({ announcement: text }));
-              await audit("settings.announcement", "settings", undefined, `Announcement set to "${text}"`);
-              note("set_announcement", text ? `Banner set to "${text}"` : "Banner cleared");
-              return { ok: true };
-            },
-          }),
           update_settings: tool({
             description:
               "Change number settings only (rewards, limits, prices, fees). Never switches. Keys: minWithdrawal, withdrawalFeePercent, referralBonus, dailyBonusBase, dailyBonusStep, maxSubmissionsPerDay, maxDailyQuestReward, premiumPrice, premiumDays, premiumMultiplier, playerSharePercent, minCostPerAction, minTopUp, maxTopUp, aiMaxAutoApproveReward, aiMinOpenQuests, aiDailyQuestBudget.",
