@@ -8,7 +8,7 @@ export const maxDuration = 120;
 export async function POST(request: Request) {
   return respond(async () => {
     await requireSession(request, ["admin"]);
-    if (!aiConfigured()) throw new HttpError(503, "AI_OFF", "AI is not connected. Add AI_GATEWAY_API_KEY in Vercel.");
+    if (!aiConfigured()) throw new HttpError(503, "AI_OFF", "AI is not connected. Add OPENAI_API_KEY in Vercel.");
     const body = await readJson<{ messages?: { role?: string; content?: string }[] }>(request);
     const messages = (body.messages ?? [])
       .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string" && m.content.trim())

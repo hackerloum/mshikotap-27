@@ -4,7 +4,7 @@ import { col, db } from "@/lib/server/http";
 import { getSettings } from "@/lib/server/settings";
 import { appUrl } from "@/lib/server/snippe";
 import { auditNow } from "@/lib/server/audit";
-import { aiConfigured, AI_ACTOR, buildTools, modelId, type ActionLog, type Mode } from "./tools";
+import { aiConfigured, AI_ACTOR, buildTools, getModel, type ActionLog, type Mode } from "./tools";
 
 const brief = (mode: Mode) => `You are the AI Manager of MshikoTap, a Tanzanian gamified earning app. Players do small quests (follow, watch, survey, install apps) and earn TSh. Advertisers pay for quests. The owner has almost no time, so you run the daily operations for them.
 Money is TSh. Speak simply and briefly.
@@ -34,7 +34,7 @@ export async function runManager(
   const settings = await getSettings(true);
   const actions: ActionLog[] = [];
   const agent = new ToolLoopAgent({
-    model: modelId(),
+    model: getModel(),
     instructions: brief(mode),
     tools: buildTools(mode, actions),
     stopWhen: isStepCount(mode === "autopilot" ? 70 : 20),
@@ -52,7 +52,7 @@ export async function runAutopilot(trigger: "cron" | "manual", startedBy?: strin
   let actions: ActionLog[] = [];
   let error: string | undefined;
   if (!aiConfigured()) {
-    error = "AI is not connected. Add AI_GATEWAY_API_KEY in Vercel.";
+    error = "AI is not connected. Add OPENAI_API_KEY (or AI_GATEWAY_API_KEY) in Vercel.";
   } else {
     try {
       const out = await runManager("autopilot", {});

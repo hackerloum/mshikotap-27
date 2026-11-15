@@ -10,6 +10,7 @@
     "env:check": "node scripts/check-env.mjs"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^4.0.118",
     "ai": "^7.0.173",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

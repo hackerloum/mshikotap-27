@@ -124,4 +124,4 @@ Each category shows its own fields (`src/config/quests.ts` is the single source 
 
 ## AI manager
 
-Admin, AI Manager. Chat with the AI in plain words, or turn on autopilot for a daily run (cron at 05:00 UTC, `vercel.json`). It approves or rejects advertiser quests, checks proof screenshots with vision, and keeps quests stocked within a daily budget. It cannot move money, pay out, suspend players or change switches. Everything it does is in the audit log as "AI Manager". Needs `AI_GATEWAY_API_KEY` and `CRON_SECRET`.
+Admin, AI Manager. Chat with the AI in plain words, or turn on autopilot for a daily run (cron at 05:00 UTC, `vercel.json`). It approves or rejects advertiser quests, checks proof screenshots with vision, and keeps quests stocked within a daily budget. It cannot move money, pay out, suspend players or change switches. Everything it does is in the audit log as "AI Manager". Needs `OPENAI_API_KEY` (or `AI_GATEWAY_API_KEY`) and `CRON_SECRET`.

@@ -106,7 +106,7 @@ export default function AdminAssistantPage() {
           <CardContent className="flex flex-1 flex-col gap-3">
             {!status.configured && (
               <p className="rounded-lg bg-coral/10 p-3 text-sm font-semibold text-coral">
-                AI is not connected yet. Add AI_GATEWAY_API_KEY in Vercel, then redeploy.
+                AI is not connected yet. Add OPENAI_API_KEY in Vercel, then redeploy.
               </p>
             )}
             <div className="flex-1 space-y-3 overflow-y-auto pr-1">

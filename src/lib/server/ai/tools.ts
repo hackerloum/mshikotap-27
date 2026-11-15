@@ -1,5 +1,6 @@
 import "server-only";
-import { generateText, tool } from "ai";
+import { createOpenAI } from "@ai-sdk/openai";
+import { generateText, tool, type LanguageModel } from "ai";
 import { z } from "zod";
 import { categoryLabel, creatableCategories, validateQuest } from "@/config/quests";
 import { riskLevel } from "@/config/system";
@@ -22,12 +23,23 @@ const MAX_QUEST_REWARD = 3000;
 const MAX_QUEST_SLOTS = 300;
 const MAX_AUTO_REVIEWS = 20;
 
-export function modelId() {
+function openAiKey() {
+  const direct = process.env.OPENAI_API_KEY?.trim();
+  if (direct) return direct;
+  const gateway = process.env.AI_GATEWAY_API_KEY?.trim();
+  return gateway?.startsWith("sk-") ? gateway : undefined;
+}
+
+export function getModel(): LanguageModel {
+  const key = openAiKey();
+  if (key) {
+    return createOpenAI({ apiKey: key })(process.env.OPENAI_MODEL?.trim() || "gpt-5.4-mini");
+  }
   return process.env.AI_MODEL?.trim() || "anthropic/claude-sonnet-5.5";
 }
 
 export function aiConfigured() {
-  return Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || process.env.VERCEL === "1");
+  return Boolean(openAiKey() || process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN);
 }
 
 function startOfTodayUtc() {
@@ -143,7 +155,7 @@ export function buildTools(mode: Mode, log: ActionLog[]) {
         const task = taskSnap.exists ? (taskSnap.data() as Task) : null;
         try {
           const result = await generateText({
-            model: modelId(),
+            model: getModel(),
             messages: [
               {
                 role: "user",

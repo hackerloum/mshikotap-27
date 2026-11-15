@@ -40,7 +40,7 @@ Targets: **Production**, **Preview**, **Development** (unless noted).
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | from Firebase `messagingSenderId` | All | No |
 | `SNIPPE_API_KEY` | Snippe dashboard API key (starts `snp_`) | Production | Yes |
 | `SNIPPE_WEBHOOK_SECRET` | Snippe dashboard, Settings, Webhook Secret (starts `whsec_`) | Production | Yes |
-| `AI_GATEWAY_API_KEY` | Vercel, AI Gateway, API Keys | Production | Yes |
+| `OPENAI_API_KEY` | platform.openai.com, API keys (or use `AI_GATEWAY_API_KEY` from Vercel AI Gateway instead) | Production | Yes |
 | `CRON_SECRET` | any long random string | Production | Yes |
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | from Firebase `appId` | All | No |
 | `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | optional `measurementId` | All | No |
