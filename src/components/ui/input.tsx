@@ -41,6 +41,6 @@ export const Select = React.forwardRef<
   HTMLSelectElement,
   React.SelectHTMLAttributes<HTMLSelectElement>
 >(({ className, ...props }, ref) => (
-  <select ref={ref} className={cn(field, "h-11", className)} {...props} />
+  <select ref={ref} className={cn(field, "h-11 pl-2.5", className)} {...props} />
 ));
 Select.displayName = "Select";

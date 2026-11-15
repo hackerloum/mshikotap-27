@@ -37,6 +37,7 @@ body {
   color: #e6e9fb;
   font-family: var(--font-sans);
   font-feature-settings: "cv11", "ss01";
+  word-spacing: 0.04em;
   min-height: 100dvh;
   overflow-x: hidden;
 }
@@ -48,7 +49,8 @@ body {
 
 .font-display {
   font-family: var(--font-display);
-  letter-spacing: -0.015em;
+  letter-spacing: 0;
+  word-spacing: 0.14em;
   font-weight: 700;
 }
 
